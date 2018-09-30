@@ -61,7 +61,7 @@
                       <Component id="jButRead" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="jButSaveMip" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="51" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="jButClear" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -85,9 +85,13 @@
                       <Component id="jCD9" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jCD10" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jCD11" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jCD12" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabelCdName" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="55" max="32767" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -102,7 +106,7 @@
                           <Component id="jButSaveMip" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="210" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="212" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jCD1" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -115,6 +119,8 @@
                           <Component id="jCD8" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jCD9" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jCD10" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCD11" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCD12" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabelCdName" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -223,6 +229,22 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCD10ActionPerformed"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JRadioButton" name="jCD11">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="11"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCD11ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JRadioButton" name="jCD12">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="12"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCD12ActionPerformed"/>
+              </Events>
+            </Component>
             <Component class="javax.swing.JLabel" name="jLabelCdName">
               <Properties>
                 <Property name="text" type="java.lang.String" value="1"/>
@@ -288,7 +310,7 @@
                       <Component id="jButDelAll" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jScrollPane2" alignment="0" pref="526" max="32767" attributes="0"/>
+                  <Component id="jScrollPane2" alignment="0" pref="579" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -386,7 +408,7 @@
                                   <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="44" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="97" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
@@ -400,20 +422,24 @@
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jTextN" min="-2" pref="48" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jTextNumDays" min="-2" pref="52" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jChkForceDicomDir" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jTextN" min="-2" pref="48" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -447,10 +473,13 @@
                           <Component id="jTextPath" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jTextNumDays" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jCheckAutoSort" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jTextNumDays" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jCheckAutoSort" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="jChkForceDicomDir" alignment="1" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -478,7 +507,7 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="jLabel2">
               <Properties>
-                <Property name="text" type="java.lang.String" value="This program reads from up to 10 locations, which may include CD&apos;s."/>
+                <Property name="text" type="java.lang.String" value="This program reads from up to 12 locations, which may include CD&apos;s."/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel3">
@@ -494,7 +523,7 @@
             <Component class="javax.swing.JComboBox" name="jComboLocation">
               <Properties>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                  <StringArray count="10">
+                  <StringArray count="12">
                     <StringItem index="0" value="1"/>
                     <StringItem index="1" value="2"/>
                     <StringItem index="2" value="3"/>
@@ -505,6 +534,8 @@
                     <StringItem index="7" value="8"/>
                     <StringItem index="8" value="9"/>
                     <StringItem index="9" value="10"/>
+                    <StringItem index="10" value="11"/>
+                    <StringItem index="11" value="12"/>
                   </StringArray>
                 </Property>
               </Properties>
@@ -656,13 +687,21 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel12">
               <Properties>
-                <Property name="text" type="java.lang.String" value="version: 2.01"/>
+                <Property name="text" type="java.lang.String" value="version: 2.08"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabJava">
               <Properties>
                 <Property name="text" type="java.lang.String" value="jLabel13"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChkForceDicomDir">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="force use DicomDir"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jChkForceDicomDirActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

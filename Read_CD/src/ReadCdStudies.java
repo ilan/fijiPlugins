@@ -8,6 +8,7 @@ import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.plugin.MontageMaker;
 import ij.process.ImageProcessor;
+import ij.util.DicomTools;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -105,6 +106,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		Integer sl1 = jPrefer.getInt("cd montage slices", 20);
 		jTextN.setText(sl1.toString());
 		jCheckTile.setSelected(jPrefer.getBoolean("cd tile windows", false));
+//		jChkForceDicomDir.setSelected(jPrefer.getBoolean("force use dicomdir", false));
 		sl1 = jPrefer.getInt("postage stamp size", 0);
 		jTextStamp.setText(sl1.toString());
 		Rectangle scr1 = ChoosePetCt.getScreenDimensions();
@@ -290,7 +292,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		numDays = ChoosePetCt.parseInt(tmp1);
 		JRadioButton curBut;
 		buttonGroup1 = new javax.swing.ButtonGroup();
-		for( i=1; i<=10; i++) {
+		for( i=1; i<=12; i++) {
 			curBut = getCDButton(i);
 			curBut.setVisible(false);
 			buttonGroup1.add(curBut);
@@ -693,6 +695,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			imp2.setProperty("bidb", curr1);
 			if( n0 == 1+bad || depth > 1) imp2.setProperty("Info", info);
 			if(fi != null) imp2.setFileInfo(fi);
+			double voxelDepth = DicomTools.getVoxelDepth(stack);
+			if (voxelDepth>0.0 && cal!=null) cal.pixelDepth = voxelDepth;
 			imp2.setCalibration(cal);
 			if( frameText != null) for( j=0; j < frameText.length; j++) {
 				label1 = frameText[j];
@@ -708,7 +712,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 					stack.setSliceLabel(label1, i1);
 				}
 			}
-			myMakeMontage( imp2, info, frameText != null);
+			imp2 = myMakeMontage( imp2, info, frameText != null);
 			imgList.add(imp2);	// keep track of images loaded
 		}
 		IJ.showProgress(1.0);
@@ -733,7 +737,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		return ret1;
 	}
 
-	void myMakeMontage(ImagePlus imp, String info, boolean label) {
+	ImagePlus myMakeMontage(ImagePlus imp, String info, boolean label) {
 		int nSlices = imp.getStackSize();
 		ImagePlus impMon;
 		FileInfo fi;
@@ -744,7 +748,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		int maxSlice = ChoosePetCt.parseInt(jTextN.getText());
 		if( nSlices < 2 || nSlices > maxSlice) {
 			imp.show();	// show a normal stack
-			return;
+			return imp;
 		}
 		GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 		scrWidth = devices[0].getDisplayMode().getWidth();
@@ -774,7 +778,9 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			fi = imp.getOriginalFileInfo();
 			impMon.setFileInfo(fi);
 			impMon.show();
+			return impMon;
 		}
+		return imp;
 	}
 	
 	void changeCDSelectedAndErase( int indx1) {
@@ -823,6 +829,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		int i = ChoosePetCt.parseInt(jTextN.getText());
 		jPrefer.putInt("cd montage slices", i);
 		jPrefer.putBoolean("cd tile windows", jCheckTile.isSelected());
+//		jPrefer.putBoolean("force use dicomdir", isForceDicomDir());
 		i = ChoosePetCt.parseInt(jTextStamp.getText());
 		jPrefer.putInt("postage stamp size", i);
 		Dimension sz1 = getSize();
@@ -912,6 +919,14 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			case 10:
 				ret1 = jCD10;
 				break;
+
+			case 11:
+				ret1 = jCD11;
+				break;
+
+			case 12:
+				ret1 = jCD12;
+				break;
 		}
 		return ret1;
 	}
@@ -989,7 +1004,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 	void fillReadTable(boolean readFlg) {
 		JTable jTab = jTable1;
 		int type1 = 0;
-		boolean isBF;
+		boolean isBF, isWindows;
 		if( !readFlg) {
 			jTab = jTable3;
 			type1 = 2;
@@ -997,18 +1012,41 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		DefaultTableModel mod1;
 		mod1 = (DefaultTableModel) jTab.getModel();
 		mod1.setNumRows(0);
-		int i;
+		int i, j;
 		String tmp;
 		CD_dirInfo tableEntry, nextEntry;
 		tableList = new ArrayList<CD_dirInfo>();
 		String path = getCurrPath();
-		if( path == null) {
-			tmp = "No Dicom path defined. See Setup, Browse.";
-			JOptionPane.showMessageDialog(this, tmp);
-			return;
-		}
-		setOrSaveColumnWidths(type1, false);
 		try {
+			if( path == null) {
+				// may be burned onto a CD, see if there is a DICOMDIR
+				path = System.getProperty("user.dir");
+				i = 0;
+				isWindows = (File.separatorChar == '\\');
+				if( path.startsWith("/media/") || isWindows) {
+					i = 2;	// windows c:\
+					if( !isWindows) i = path.indexOf('/', 8);
+					if( i > 0) path = path.substring(0, i);
+					DicomFormat dcm = new DicomFormat();
+					i = dcm.checkFile(path, isForceDicomDir());
+					if( i == 0) {	// allow 1 directory deep
+						File flPath = new File(path);
+						File [] results = flPath.listFiles();
+						if( results != null && results.length > 0) {
+							flPath = results[0];
+							path = flPath.getPath();
+							i = dcm.checkFile(path, isForceDicomDir());
+						}
+					}
+				}
+				if( i<=0) {
+					tmp = "No Dicom path defined. See Setup, Browse.";
+					JOptionPane.showMessageDialog(this, tmp);
+					return;
+				}
+				jButRead.setEnabled(i > 0);
+			}
+			setOrSaveColumnWidths(type1, false);
 			recurseDirectory(path);
 			if( jCheckAutoSort.isSelected()) sortTableList();
 			for( i=0; i<tableList.size(); i++) {
@@ -1113,7 +1151,11 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		}
 		tableList = sortedList;
 	}
-	
+
+	boolean isForceDicomDir() {
+		return jChkForceDicomDir.isSelected();
+	}
+
 	void recurseDirectory( String path) {
 		File flPath = new File(path);
 		String path1, tmp1;
@@ -1126,7 +1168,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		DicomFormat.imageEntry img1, img2;
 		CD_dirInfo tableEntry;
 		// first see if there is a dicomdir file
-		n = dcm.checkFile(path);
+		n = dcm.checkFile(path, isForceDicomDir());
 		if( n> 0) {
 			n = dcm.m_aStudy.size();
 			off1 = off2 = 0;
@@ -1262,6 +1304,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
         jCD8 = new javax.swing.JRadioButton();
         jCD9 = new javax.swing.JRadioButton();
         jCD10 = new javax.swing.JRadioButton();
+        jCD11 = new javax.swing.JRadioButton();
+        jCD12 = new javax.swing.JRadioButton();
         jLabelCdName = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -1298,6 +1342,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
         jButHelp = new javax.swing.JButton();
         jLabel12 = new javax.swing.JLabel();
         jLabJava = new javax.swing.JLabel();
+        jChkForceDicomDir = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Read Studies from CD, or location on disk");
@@ -1388,6 +1433,20 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
+        jCD11.setText("11");
+        jCD11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCD11ActionPerformed(evt);
+            }
+        });
+
+        jCD12.setText("12");
+        jCD12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCD12ActionPerformed(evt);
+            }
+        });
+
         jLabelCdName.setText("1");
         jLabelCdName.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
@@ -1422,7 +1481,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addComponent(jButRead)
                 .addGap(18, 18, 18)
                 .addComponent(jButSaveMip)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButClear)
                 .addContainerGap())
             .addGroup(jPanelReadLayout.createSequentialGroup()
@@ -1445,9 +1504,13 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addComponent(jCD9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jCD10)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCD11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCD12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabelCdName)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 55, Short.MAX_VALUE))
             .addComponent(jScrollPane1)
         );
         jPanelReadLayout.setVerticalGroup(
@@ -1459,7 +1522,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                     .addComponent(jButClear)
                     .addComponent(jButSaveMip))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelReadLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jCD1)
@@ -1472,6 +1535,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                     .addComponent(jCD8)
                     .addComponent(jCD9)
                     .addComponent(jCD10)
+                    .addComponent(jCD11)
+                    .addComponent(jCD12)
                     .addComponent(jLabelCdName)))
         );
 
@@ -1525,7 +1590,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addGap(18, 18, 18)
                 .addComponent(jButDelAll)
                 .addContainerGap())
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
         );
         jPanelDeleteLayout.setVerticalGroup(
             jPanelDeleteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1546,13 +1611,13 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel2.setText("This program reads from up to 10 locations, which may include CD's.");
+        jLabel2.setText("This program reads from up to 12 locations, which may include CD's.");
 
         jLabel3.setText("If the study is PET-CT, then PetCtViewer will be called automatically.");
 
         jLabel4.setText("Location number:");
 
-        jComboLocation.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
+        jComboLocation.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" }));
         jComboLocation.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jComboLocationActionPerformed(evt);
@@ -1646,9 +1711,16 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.01");
+        jLabel12.setText("version: 2.08");
 
         jLabJava.setText("jLabel13");
+
+        jChkForceDicomDir.setText("force use DicomDir");
+        jChkForceDicomDir.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jChkForceDicomDirActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);
@@ -1668,7 +1740,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                         .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel3))
-                        .addGap(0, 44, Short.MAX_VALUE)))
+                        .addGap(0, 97, Short.MAX_VALUE)))
                 .addGap(12, 12, 12))
             .addGroup(jPanelSetupLayout.createSequentialGroup()
                 .addComponent(jLabel6)
@@ -1678,18 +1750,21 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addComponent(jButPath)
                 .addContainerGap())
             .addGroup(jPanelSetupLayout.createSequentialGroup()
-                .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanelSetupLayout.createSequentialGroup()
+                            .addComponent(jLabel8)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jTextN, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabel9))
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanelSetupLayout.createSequentialGroup()
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextNumDays, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanelSetupLayout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextN, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel9))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jTextNumDays, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jChkForceDicomDir)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jCheckAutoSort, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -1717,10 +1792,12 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                     .addComponent(jButPath)
                     .addComponent(jTextPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(jTextNumDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jCheckAutoSort))
+                .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel7)
+                        .addComponent(jTextNumDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jCheckAutoSort))
+                    .addComponent(jChkForceDicomDir, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
@@ -1847,6 +1924,18 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		saveMip();
     }//GEN-LAST:event_jButSaveMipActionPerformed
 
+    private void jCD11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCD11ActionPerformed
+		changeCDSelectedAndErase(11);
+    }//GEN-LAST:event_jCD11ActionPerformed
+
+    private void jCD12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCD12ActionPerformed
+		changeCDSelectedAndErase(12);
+    }//GEN-LAST:event_jCD12ActionPerformed
+
+    private void jChkForceDicomDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jChkForceDicomDirActionPerformed
+		fillReadTable(true);
+    }//GEN-LAST:event_jChkForceDicomDirActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -1860,6 +1949,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
     private javax.swing.JButton jButTile;
     private javax.swing.JRadioButton jCD1;
     private javax.swing.JRadioButton jCD10;
+    private javax.swing.JRadioButton jCD11;
+    private javax.swing.JRadioButton jCD12;
     private javax.swing.JRadioButton jCD2;
     private javax.swing.JRadioButton jCD3;
     private javax.swing.JRadioButton jCD4;
@@ -1871,6 +1962,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
     private javax.swing.JCheckBox jCheckAccession;
     private javax.swing.JCheckBox jCheckAutoSort;
     private javax.swing.JCheckBox jCheckTile;
+    private javax.swing.JCheckBox jChkForceDicomDir;
     private javax.swing.JComboBox jComboLocation;
     private javax.swing.JLabel jLabJava;
     private javax.swing.JLabel jLabel1;
