@@ -520,10 +520,10 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		jButSide.setSelected(cineSid);
 	}
 	
-	double getSliceThickness() {
+/*	double getSliceThickness() {
 		if( display3Panel1.mouse1.page != 1) return 0;
-		return Math.abs(display3Panel1.d3Pipe.data1.spacingBetweenSlices);
-	}
+		return Math.abs(display3Panel1.d3Pipe.data1.sliceThickness);
+	}*/
 
 	void savePrefs() {
 		if( openMode <= 0) return;
@@ -776,6 +776,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jMenuSaveMip = new javax.swing.JMenuItem();
+        jMenuSaveSignificant = new javax.swing.JMenuItem();
         jMenuExit = new javax.swing.JMenuItem();
         jMenuEdit = new javax.swing.JMenu();
         jMenuFitWindow = new javax.swing.JMenuItem();
@@ -1057,6 +1058,15 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
         });
         jMenuFile.add(jMenuSaveMip);
 
+        jMenuSaveSignificant.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuSaveSignificant.setText("Save Significant Image");
+        jMenuSaveSignificant.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuSaveSignificantActionPerformed(evt);
+            }
+        });
+        jMenuFile.add(jMenuSaveSignificant);
+
         jMenuExit.setText("Exit");
         jMenuExit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1258,6 +1268,13 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		changeMriColor();
     }//GEN-LAST:event_jCheckMriLutActionPerformed
 
+    private void jMenuSaveSignificantActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuSaveSignificantActionPerformed
+		myWriteDicom dcm1 = new myWriteDicom(this);
+		dcm1.specialType = 2;	// significant image
+		dcm1.writeDicomHeader();
+		dcm1.writeLogMessage();
+    }//GEN-LAST:event_jMenuSaveSignificantActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private Display3Panel display3Panel1;
@@ -1294,6 +1311,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
     private javax.swing.JMenuItem jMenuMixReset;
     private javax.swing.JMenuItem jMenuOptions;
     private javax.swing.JMenuItem jMenuSaveMip;
+    private javax.swing.JMenuItem jMenuSaveSignificant;
     private javax.swing.JMenuItem jMenuSync;
     private javax.swing.JMenu jMenuWindow;
     private javax.swing.JPanel jPanel1;

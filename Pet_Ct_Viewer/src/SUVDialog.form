@@ -143,9 +143,6 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="jInjectionTime">
-      <Properties>
-        <Property name="editable" type="boolean" value="false"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel6">
       <Properties>
@@ -153,9 +150,6 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="jSeriesTime">
-      <Properties>
-        <Property name="editable" type="boolean" value="false"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="jAmerican">
       <Properties>

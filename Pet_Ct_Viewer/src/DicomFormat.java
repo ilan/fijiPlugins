@@ -1,3 +1,4 @@
+import ij.IJ;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -79,7 +80,7 @@ public class DicomFormat {
 			if(im1 == null) return null;
 			String ret = im1.dirName;
 			if( ret == null) return null;
-			int i = ret.lastIndexOf('/');
+			int i = ret.lastIndexOf(DIR_SEP_CHAR);
 			if( i<=0) return null;
 			ret = ret.substring(0, i);
 			parDir = ret;
@@ -99,7 +100,7 @@ public class DicomFormat {
 		float posZ = 0;
 	}
 
-	public int checkFile(String dataDir) {
+	public int checkFile(String dataDir, boolean forceDicomDir) {
 		int i, j, k, entLoc, len1, len2, retVal = 0;
 		String [] dirList;
 		RandomAccessFile fis;
@@ -108,7 +109,7 @@ public class DicomFormat {
 			fl1 = new File(dataDir + DIR_SEP_CHAR + "DICOMDIR");
 			if (fl1.exists()) {
 				fis = new RandomAccessFile(fl1, "r");
-				retVal = parseDicomDir(fis, dataDir);
+				retVal = parseDicomDir(fis, dataDir, forceDicomDir);
 				fis.close();
 				return retVal;
 			}
@@ -116,7 +117,7 @@ public class DicomFormat {
 			fl1 = new File(dataDir + DIR_SEP_CHAR + "dicomdir");
 			if (fl1.exists()) {
 				fis = new RandomAccessFile(fl1, "r");
-				retVal = parseDicomDir(fis, dataDir);
+				retVal = parseDicomDir(fis, dataDir, forceDicomDir);
 				fis.close();
 				return retVal;
 			}
@@ -352,7 +353,7 @@ public class DicomFormat {
 
 						case 0x21:
 						case 0x23:
-							if (m_studyDate.length() > 0) {
+							if (m_studyDate != null && m_studyDate.length() > 0) {
 								tmp1 = getDcmString(byt2, len);
 								if( !tmp1.equals(m_studyDate)) {
 									// there is a study where the series date isn't study date
@@ -406,6 +407,7 @@ public class DicomFormat {
 							m_modelName = getDcmString(byt2, len);
 							break;
 
+						case 0x51:
 						case 0x1032:
 						case 0x1052:
 						case 0x1062:
@@ -810,7 +812,7 @@ public class DicomFormat {
 	}
 
 	
-	public int parseDicomDir(RandomAccessFile fis, String dataDir) {
+	public int parseDicomDir(RandomAccessFile fis, String dataDir, boolean forceDicomDir) {
 		byte[] byt1 = new byte[16384];
 		ByteBuffer byt2;
 		studyEntry st1 = new studyEntry();
@@ -974,7 +976,7 @@ public class DicomFormat {
 							srTmp = sr1;
 							n1 = m_aSeries.size();
 							if( im1.dirName != null) {
-								i = im1.dirName.lastIndexOf('/');
+								i = im1.dirName.lastIndexOf(DIR_SEP_CHAR);
 								j = n1;
 								if( i>0) {
 									tmp1 = im1.dirName.substring(0, i);
@@ -983,7 +985,12 @@ public class DicomFormat {
 										if( !sr1.isSameDir(tmp1) ) for( j=0; j<n1; j++) {
 											srTmp = m_aSeries.get(j);
 											if( srTmp.parDir == null) srTmp.parDir = tmp1;
-											if( srTmp.isSameDir(tmp1)) break;
+											if( !forceDicomDir && srTmp.isSameDir(tmp1)) {
+												tmp1 = "not using DICOMDIR. " + patName + "  ";
+												tmp1 += st1.styDate + "\npath: " + dataDir;
+												IJ.log(tmp1);
+												return 0;
+											}
 										}
 										if( j<n1) {
 											sr1.numImages--;
@@ -1040,6 +1047,8 @@ public class DicomFormat {
 
 						case 0x103e:
 							sr1.serName = getDcmString(byt2, len);
+//							if( sr1.serName.startsWith("OEUFS"))
+//								group = 0x8;
 							break;
 
 						case 0x1032:
@@ -1173,7 +1182,7 @@ public class DicomFormat {
 		if( dirType >= 0) return dirType;
 		String tmp1;
 		int i, nFile, nDir;
-		i = dir.lastIndexOf('/');
+		i = dir.lastIndexOf(DIR_SEP_CHAR);
 		if( i<=0) return 0;
 		tmp1 = dir.substring(0, i);
 		File fl0, fl1 = new File(dataDir + DIR_SEP_CHAR + tmp1);

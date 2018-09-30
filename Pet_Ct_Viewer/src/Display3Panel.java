@@ -6,8 +6,8 @@ import java.awt.geom.Line2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.*;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /*
  * Display3Panel.java
@@ -549,7 +549,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		if( ct4fused != null) {
 			d3Pipe.imgPos[0].x = d3Pipe.imgPos[1].x = d3Pipe.imgPos[2].x = -1;
 			d3Pipe.aspect = aspect = 1.0 * d3Pipe.data1.height / d3Pipe.data1.width;
-			d3Pipe.mriOffY0 = ChoosePetCt.round((1.0 - aspect)*d3Pipe.data1.width/2);
+			d3Pipe.mriOffY0 = (1.0 - aspect)*d3Pipe.data1.width/2;
 			ct4fused.imgPos = d3Pipe.imgPos;
 			d3Pipe.offscrMode = ct4fused.offscrMode = 1;
 			useXY = srcPipe.useShiftXY;
@@ -580,15 +580,18 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 				ct4fused.avgSliceDiff = ctPipe.avgSliceDiff;	// usually 1.0
 			}
 			// MRI data can be non square
-			aspect = 1.0 * ct4fused.data1.height * ct4fused.data1.y2XMri / ct4fused.data1.width;
+			aspect = ct4fused.data1.height * ct4fused.data1.y2XMri / ct4fused.data1.width;
 			ct4fused.aspect = aspect;
-			ct4fused.mriOffY0 = ChoosePetCt.round((1.0 - aspect)*ct4fused.data1.width/2);
-			ct4fused.corFactor = (d3Pipe.zoomX * ct4fused.data1.height) / (d3Pipe.data1.height * ct4fused.zoomX * aspect);
+			ct4fused.mriOffY0 = (1.0 - aspect)*ct4fused.data1.width/2;
+			ct4fused.corFactor = (d3Pipe.aspect*d3Pipe.zoomX * ct4fused.data1.height) / (d3Pipe.data1.height * ct4fused.zoomX * aspect);
 			ct4fused.sagFactor = (d3Pipe.zoomX * ct4fused.data1.width) / (d3Pipe.data1.width * ct4fused.zoomX);
 			ct4fused.obliqueFactor = 0;
 			ct4fused.sagOffset = ct4fused.data1.width* ( 1- d3Pipe.zoomX/ct4fused.zoomX)/2 ;
-			ct4fused.corOffset = (ct4fused.sagOffset - ct4fused.mriOffY0)/ ct4fused.data1.y2XMri;
-		}
+			ct4fused.corOffset = (ct4fused.sagOffset - ct4fused.mriOffY0 + d3Pipe.mriOffY0*ct4fused.corFactor)/ ct4fused.data1.y2XMri;
+			// Terry Weizeman shows this problem
+			ct4fused.sagOffset -= ct4fused.sagFactor*(d3Pipe.shiftXY[0] - ct4fused.shiftXY[0]);
+			ct4fused.corOffset -= ct4fused.corFactor*(d3Pipe.shiftXY[1] - ct4fused.shiftXY[1]);
+	}
 		if(ct4fused != null) setWinLevel(d3Pipe.fuseWidth, d3Pipe.fuseLevel, false);
 		else setWinLevel(srcPipe.winWidth, srcPipe.winLevel, false);
 		isInitializing = false;
@@ -830,7 +833,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		radpx = (radMm/spac1);
 		totalSum = curMax = 0;
 		numPts = z0 = z0a = 0;
-		spacOut = Math.abs(d3Pipe.data1.spacingBetweenSlices/ spac1);
+		spacOut = Math.abs(d3Pipe.data1.sliceThickness/ spac1);
 		if( styType != CT_STUDY && styType != MRI_STUDY) {
 			while(true) {
 				spacz = spacOut;
@@ -995,7 +998,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		if( resizeCnt < 2 ) {
 			if(++resizeCnt == 2) parent.fitWindow();
 		}
-		double scl2=1, scl1 = getScale();
+		double petSag, scl2=1, scl1 = getScale();
 		int i, ctPos, numGate, numFrm, gateOffset = 0;
 		Point pt1 = new Point(0, 0);
 		numGate = d3Pipe.data1.numTimeSlots;
@@ -1016,10 +1019,10 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			ct4fused.drawImages(g, scl2, this);
 			d3Pipe.drawFusedImage(g, scl1, ct4fused, pt1, this, JFijiPipe.DSP_AXIAL);
 		}
-		d3Pipe.prepareCoronalSagital(d3Coronal, d3Sagital, d3Color, gateOffset);
+		petSag = d3Pipe.prepareCoronalSagital(d3Coronal, d3Sagital, d3Color, gateOffset, 0);
 		d3Pipe.drawCorSagImages(g, scl1, this, true);	// coronal
 		if( ct4fused != null) {
-			ct4fused.prepareCoronalSagital(d3Coronal, d3Sagital, d3FusedColor, 0);
+			ct4fused.prepareCoronalSagital(d3Coronal, d3Sagital, d3FusedColor, 0, petSag);
 			ct4fused.drawCorSagImages(g, scl2, this, true);
 			pt1.x = 1;
 			d3Pipe.drawFusedImage(g, scl1, ct4fused, pt1, this, JFijiPipe.DSP_CORONAL);

@@ -1,4 +1,3 @@
-
 import java.util.prefs.Preferences;
 import javax.swing.SpinnerNumberModel;
 
@@ -20,6 +19,7 @@ public class ManualSync extends javax.swing.JDialog {
 	PetCtFrame parent;
 	JFijiPipe refPipe, setPipe;
 	Preferences jPrefer;
+	boolean isMRI = true;
 	int currStoreIndx = 0;
 
 	/** Creates new form ManualSync
@@ -33,10 +33,6 @@ public class ManualSync extends javax.swing.JDialog {
 	}
 	
 	private void init() {
-		buttonGroup1 = new javax.swing.ButtonGroup();
-		buttonGroup1.add(jRadioMRI);
-		buttonGroup1.add(jRadioPET);
-		jRadioMRI.setSelected(true);
 		jPrefer = parent.jPrefer;
 		setPipes();
 		getStoreValues();
@@ -49,7 +45,7 @@ public class ManualSync extends javax.swing.JDialog {
 		refPipe.data1.mriOffZ = 0;
 		refPipe.mriOffX = refPipe.mriOffY = 0;
 		zShft = setPipe.data1.mriOffZ;
-		if( jRadioMRI.isSelected() && zShft != 0) {
+		if( isMRI && zShft != 0) {
 			parent.getPetCtPanel1().maybeSetMriOffset();
 			zShft = 0;
 			xShft = setPipe.mriOffX;
@@ -62,7 +58,7 @@ public class ManualSync extends javax.swing.JDialog {
 			refhi = refPipe.data1.zpos.get(n-1);
 			n = setPipe.data1.numFrms;
 			sethi = setPipe.data1.zpos.get(n-1);
-			zShft = (int) ((refhi - sethi + reflo - setlo)/(2*setPipe.data1.spacingBetweenSlices));
+			zShft = (int) ((refhi - sethi + reflo - setlo)/(2*setPipe.data1.sliceThickness));
 		}
 		jSpinOffset.setValue(zShft);
 		jSpinOffY.setValue(yShft);
@@ -120,7 +116,7 @@ public class ManualSync extends javax.swing.JDialog {
 			jPrefer.putInt(tmp1, saveVal);
 		tmp1 = "sync store label" + i;
 		jPrefer.put(tmp1,jTextStore.getText());
-		parent.getPetCtPanel1().updateDisp3Value(jRadioMRI.isSelected());
+		parent.getPetCtPanel1().updateDisp3Value(isMRI);
 		parent.repaint();
 	}
 	
@@ -169,7 +165,7 @@ public class ManualSync extends javax.swing.JDialog {
 	
 	private void setPipes() {
 		PetCtPanel panel1 = parent.getPetCtPanel1();
-		if( jRadioMRI.isSelected()) {
+		if( isMRI) {
 			refPipe = panel1.getCorrectedOrUncorrectedPipe(false);
 			setPipe = panel1.getMriOrCtPipe();
 		} else {
@@ -187,15 +183,9 @@ public class ManualSync extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jRadioMRI = new javax.swing.JRadioButton();
-        jRadioPET = new javax.swing.JRadioButton();
         jLabel6 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jButReset = new javax.swing.JButton();
@@ -208,10 +198,10 @@ public class ManualSync extends javax.swing.JDialog {
         jLabSag = new javax.swing.JLabel();
         jSpinOffSag = new javax.swing.JSpinner();
         jLabel7 = new javax.swing.JLabel();
-        jSpinStore = new javax.swing.JSpinner();
-        jTextStore = new javax.swing.JTextField();
         jButHelp = new javax.swing.JButton();
         jCheckIgnore = new javax.swing.JCheckBox();
+        jSpinStore = new javax.swing.JSpinner();
+        jTextStore = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Sync MRI data");
@@ -221,33 +211,6 @@ public class ManualSync extends javax.swing.JDialog {
         jLabel2.setText("compared to the PET-CT study.");
 
         jLabel3.setText("This program allows a manual correction to be applied.");
-
-        jLabel4.setText("It should most likely be applied to the CT-MRI data but can");
-
-        jLabel5.setText("also be used to align uncorrected PET to corrected PET.");
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("apply correction to"));
-
-        jRadioMRI.setText("CT-MRI");
-
-        jRadioPET.setText("PET-SPECT");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jRadioMRI)
-                .addGap(18, 18, 18)
-                .addComponent(jRadioPET)
-                .addContainerGap(80, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(jRadioMRI)
-                .addComponent(jRadioPET))
-        );
 
         jLabel6.setText("Reset gives an initial estimate for the Z value.");
 
@@ -312,7 +275,7 @@ public class ManualSync extends javax.swing.JDialog {
                 .addComponent(jLabSag)
                 .addGap(1, 1, 1)
                 .addComponent(jSpinOffSag, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(45, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -330,19 +293,6 @@ public class ManualSync extends javax.swing.JDialog {
 
         jLabel7.setText("Choose where to store data and set label:");
 
-        jSpinStore.setModel(new javax.swing.SpinnerNumberModel(0, 0, 10, 1));
-        jSpinStore.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSpinStoreStateChanged(evt);
-            }
-        });
-
-        jTextStore.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                jTextStoreKeyReleased(evt);
-            }
-        });
-
         jButHelp.setText("Help");
         jButHelp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -357,6 +307,19 @@ public class ManualSync extends javax.swing.JDialog {
             }
         });
 
+        jSpinStore.setModel(new javax.swing.SpinnerNumberModel(0, 0, 10, 1));
+        jSpinStore.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jSpinStoreStateChanged(evt);
+            }
+        });
+
+        jTextStore.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                jTextStoreKeyReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -365,28 +328,25 @@ public class ManualSync extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jSpinStore, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jTextStore)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jSpinStore)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jTextStore, javax.swing.GroupLayout.PREFERRED_SIZE, 359, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
-                            .addComponent(jLabel2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addGap(18, 18, 18)
+                                .addComponent(jButHelp))
                             .addComponent(jLabel3)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel5)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jCheckIgnore))
                             .addComponent(jLabel7))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButHelp)))
-                .addContainerGap())
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -394,20 +354,11 @@ public class ManualSync extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(jButHelp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addComponent(jButHelp)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -463,7 +414,6 @@ public class ManualSync extends javax.swing.JDialog {
     }//GEN-LAST:event_jCheckIgnoreActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButHelp;
     private javax.swing.JButton jButReset;
     private javax.swing.JCheckBox jCheckIgnore;
@@ -474,14 +424,9 @@ public class ManualSync extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JRadioButton jRadioMRI;
-    private javax.swing.JRadioButton jRadioPET;
     private javax.swing.JSpinner jSpinOffSag;
     private javax.swing.JSpinner jSpinOffX;
     private javax.swing.JSpinner jSpinOffY;

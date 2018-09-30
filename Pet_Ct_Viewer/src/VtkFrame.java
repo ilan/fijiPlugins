@@ -30,6 +30,11 @@ public class VtkFrame extends javax.swing.JFrame {
 
 	/**
 	 * Creates new form VtkFrame
+	 * @param parent
+	 * @param pointList
+	 * @param surfaceList
+	 * @param colorList
+	 * @param radioVal
 	 */
 	public VtkFrame(JFrame parent, int [] pointList, int [] surfaceList,
 			Color[] colorList, int radioVal) {
@@ -85,10 +90,10 @@ public class VtkFrame extends javax.swing.JFrame {
 		if( ylo < 0) ylo = 0;
 		yhi = ymax - pointList[3];
 		if( yhi < 0) yhi = 0;
-		xlo = pan1.shift2Ct(ct1, pointList[0]);
-		xhi = pan1.shift2Ct(ct1, pointList[1]);
-		ylo = pan1.shift2Ct(ct1, ylo);
-		yhi = pan1.shift2Ct(ct1, yhi);
+		xlo = pan1.shift2Ct(ct1, pointList[0], 0);
+		xhi = pan1.shift2Ct(ct1, pointList[1], 0);
+		ylo = pan1.shift2Ct(ct1, ylo, 1);
+		yhi = pan1.shift2Ct(ct1, yhi, 1);
 		if( xlo > xhi) {
 			i = xlo;
 			xlo = xhi;

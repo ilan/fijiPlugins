@@ -181,6 +181,7 @@ public class FollowUp extends javax.swing.JDialog {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	void rereadList() {
 		int i, j, n;
 		String in1, lab1;

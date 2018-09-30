@@ -34,6 +34,7 @@ import org.dcm4che3.tool.storescu.StoreSCU;
  */
 public class myWriteDicom {
 	PetCtFrame par1 = null;
+	Display3Frame d3 = null;
 	Window dbWindow = null;
 	JFijiPipe mipPipe = null;
 	BufferedImage inBufImg = null;
@@ -79,6 +80,7 @@ public class myWriteDicom {
 			int i;
 			String key1, tmp1;
 			File tmpFl;
+			if( par1 == null) return false;
 			Preferences prefer1 = par1.jPrefer;
 			Character dup1 = 'a';
 			AETitle = null;
@@ -121,7 +123,7 @@ public class myWriteDicom {
 			if( !isExist) outFile1.mkdirs();
 			path1 += "/";
 			String patName = ChoosePetCt.getCompressedPatName(meta);
-			patName = patName.replaceAll("'", "");
+			patName = patName.replaceAll("['/]", "");
 			i = patName.indexOf(',');
 			if( i>0) patName = patName.substring(0, i);
 			Date tmpDate = new Date();
@@ -153,7 +155,12 @@ public class myWriteDicom {
 		this.par1 = par1;
 		dbWindow = dbWin;
 	}
-	
+
+	public myWriteDicom(Display3Frame d3f) {
+		par1 = d3f.srcFrame;
+		d3 = d3f;
+	}
+
 	public myWriteDicom( BufferedImage img1, PetCtFrame par1) {
 		this.par1 = par1;
 		inBufImg = img1;
@@ -225,7 +232,25 @@ public class myWriteDicom {
 		}
 		doImgPlusSaveDataSub(0);
 	}
-	
+
+	void fakeGroup2(String tmpSOPInstanceUID) {
+		String tmp = ChoosePetCt.getDicomValue(meta, "0008,0016");
+		strElement = tmp;
+		writeElement(2, 2, UI);
+		strElement = tmpSOPInstanceUID;
+		if( strElement == null) strElement = ChoosePetCt.getDicomValue(meta, "0008,0018");
+		writeElement(2, 3, UI);
+		strElement = "1.2.840.10008.1.2";	// implicit little endian
+		if(explicitLE) strElement += ".1";	// explicit little endian
+		writeElement(2, 0x10, UI);
+		strElement = "1.2.16.840.1.113664.3"; // my Implementation class UID
+		writeElement(2, 0x12, UI);
+		strElement = "FAKE_GROUP2";
+		writeElement(2, 0x13, SH);
+		strElement = "PET_CT_VIEWER"; //AETitle);
+		writeElement(2, 0x16, AE);
+	}
+
 	void doImgPlusSaveDataSub(int sliceNum) {
 		int pos1, pos2, group, element, i, numFrms, coef0 = 0;
 		int offst, depth, dataSz, sz1, j, k, tmpi1, group2 = 0;
@@ -262,13 +287,11 @@ public class myWriteDicom {
 				group = currElement.group;
 				element = currElement.element;
 				if( group2 == 0) {
-					if( group != 2) group2 = -1;	// no group2
-					else {
-						group2 = 1;	// started
-						intElement = 0;
-						writeElement(2, 0, UL);
-						writeElement(2, 1, OB);
-					}
+					group2 = 1;	// started
+					intElement = 0;
+					writeElement(2, 0, UL);
+					writeElement(2, 1, OB);
+					if( group != 2) fakeGroup2(tmpSOPInstanceUID);
 				}
 				if( group2 == 1 && group != 2) {
 					group2 = 2;	// ended
@@ -634,23 +657,8 @@ public class myWriteDicom {
 				if( robotType == 4) strElement += ", 3 Panes";
 				else strElement += ", Pane " + robotType.toString();
 			}
-			switch( specialType) {
-				case 1:
-					strElement = "TMTV Report";
-					break;
-
-				case 2:
-					strElement = "Significant Image";
-					break;
-
-				case 3:
-					strElement = "Annotations";
-					if( subType == 1) strElement = "Brown fat";
-					break;
-
-				default:	// do nothing
-					break;
-			}
+			tmp = getSpecial();
+			if(!tmp.isEmpty()) strElement = tmp;
 			writeElement( 8, 0x103e, LO);
 			if( SOPClassUID.equals(SOP_CLASS_TYPE_RAW)) {
 				strElement = "1.2.16.840.1.113664.3.1.0.0";
@@ -806,6 +814,40 @@ public class myWriteDicom {
 
 	}
 
+
+	String getSpecial()	{
+		String tmp = "";
+		switch( specialType) {
+			case 1:
+				tmp = "TMTV Report";
+				break;
+
+			case 2:
+				tmp = "Significant Image";
+				break;
+
+			case 3:
+				tmp = "Annotations";
+				if( subType == 1) tmp = "Brown fat";
+				break;
+
+			default:	// do nothing
+				break;
+		}
+		return tmp;
+	}
+
+	public void writeLogMessage() {
+		if( meta == null) return;
+		String tmp = getSpecial();
+		tmp += " for " + ChoosePetCt.getCompressedPatName(meta) + " written at ";
+		if( AETitle != null) tmp += AETitle;
+		else tmp += outFile1.getParent();
+		ImageJ ij = IJ.getInstance();
+		if( ij != null) ij.toFront();
+		IJ.showStatus(tmp);
+	}
+
 	public int writeDicomHeader() {
 		return writeDicomHeader(0,0,0);
 	}
@@ -900,7 +942,13 @@ public class myWriteDicom {
 	}
 
 	void getPetMeta() {
-		JFijiPipe pet1 = par1.getPetCtPanel1().petPipe;
+		JFijiPipe pet1;
+		if( d3 != null) {
+			pet1 = d3.getDisplay3Panel().d3Pipe;
+			meta = pet1.data1.metaData;
+			return;
+		}
+		pet1 = par1.getPetCtPanel1().petPipe;
 		meta = pet1.data1.metaData;
 	}
 	
@@ -1521,36 +1569,55 @@ public class myWriteDicom {
 
 	BufferedImage getDcmData() {
 		BufferedImage im1 = null;
+		PetCtPanel pan1 = null;
+		Display3Panel pan3 = null;
+		Rectangle rc1;
+		Point pt1;
 		int width1;
+		boolean isD3 = false;
 		double scl1;
 		JFijiPipe petPipe;
-		PetCtPanel pan1 = par1.getPetCtPanel1();
+		if( d3 != null) {
+			pan3 = d3.getDisplay3Panel();
+			isD3 = true;
+		}
+		else pan1 = par1.getPetCtPanel1();
 		try {
-			Rectangle rc1 = pan1.getBounds();
-			Point pt1 = pan1.getLocationOnScreen();
+			if( isD3) {
+				if( pan3 == null) return null;
+				rc1 = pan3.getBounds();
+				pt1 = pan3.getLocationOnScreen();
+			} else {
+				if( pan1 == null) return null;
+				rc1 = pan1.getBounds();
+				pt1 = pan1.getLocationOnScreen();
+			}
 			rc1.x = pt1.x;
 			rc1.y = pt1.y;
-			petPipe = pan1.petPipe;
-			scl1 = pan1.getScalePet();
-			width1 = ChoosePetCt.round(scl1 * petPipe.data1.width);
-			rc1.width = width1 * 3;
-			switch( robotType) {
-				case 1: // Pet part
-					rc1.width = width1;
-					break;
+			if( !isD3) {
+				if( pan1 == null) return null;
+				petPipe = pan1.petPipe;
+				scl1 = pan1.getScalePet();
+				width1 = ChoosePetCt.round(scl1 * petPipe.data1.width);
+				rc1.width = width1 * 3;
+				switch( robotType) {
+					case 1: // Pet part
+						rc1.width = width1;
+						break;
 
-				case 2: // Ct part
-					rc1.x += width1;
-					rc1.width = width1;
-					break;
+					case 2: // Ct part
+						rc1.x += width1;
+						rc1.width = width1;
+						break;
 
-				case 3: // MIP or fused part
-					rc1.x += 2*width1;
-					rc1.width = width1;
-					break;
+					case 3: // MIP or fused part
+						rc1.x += 2*width1;
+						rc1.width = width1;
+						break;
 
-				default: // everything, already set
-					break;
+					default: // everything, already set
+						break;
+				}
 			}
 			im1 = new Robot().createScreenCapture(rc1);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
@@ -1579,13 +1646,13 @@ public class myWriteDicom {
 		ArrayList<checkDcmElement> tmpList;
 		boolean goodList;*/
 // Pique - Tejedor is the tough patient here
-		int i, j, j0, el0, el1, n, prevGrp, rmOff;
+		int i, j, n, prevGrp, rmOff;
 		ArrayList<dupElement> tmpList;
 		dupElement currDup, compDup;
-		Integer[] dupIndx, goodIndx, elm1;
+		Integer[] dupIndx, goodIndx;
 		String tmp0, tmp1, val1;
 		short type1;
-		checkDcmElement currElement, cur0El;
+		checkDcmElement currElement;
 		goodDcmList = new ArrayList<checkDcmElement>();
 		goodSeqList = new ArrayList<checkSeqList>();
 		pos0 = 0;
@@ -1603,6 +1670,10 @@ public class myWriteDicom {
 			currElement.element = element = ChoosePetCt.parseInt(tmp0, 16);
 			type1 = getType(group, element);
 			if( type1 != 0) {
+				tmp0 = tmp1.substring(k2).trim();
+				if( tmp0.startsWith(">")) { // remove "floating" sequences
+					continue;
+				}
 				val1 = ChoosePetCt.getDicomValue(tmp1, null);
 				currElement.value = val1;
 				goodDcmList.add(currElement);

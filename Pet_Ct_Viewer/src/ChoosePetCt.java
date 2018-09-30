@@ -70,14 +70,15 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	static final int SERIES_PHILIPS_PET = 7;
 	static final int SERIES_GE_PRIVATE_PET = 8;
 	static final int SERIES_SPECT = 9;
-	static final int SERIES_MRI = 10;
-	static final int SERIES_NM3 = 11;	// for display3Frame
-	static final int SERIES_NM = 12;	// for simple NM, Gastric etc.
-	static final int SER_FORCE_CT = 13;
-	static final int SER_FORCE_CPET = 14;
-	static final int SER_FORCE_UPET = 15;
-	static final int SER_FORCE_MRI = 16;
-	static final int SERIES_MIP = 17;
+	static final int SERIES_SIEMENS_SPECT = 10;
+	static final int SERIES_MRI = 11;
+	static final int SERIES_NM3 = 12;	// for display3Frame
+	static final int SERIES_NM = 13;	// for simple NM, Gastric etc.
+	static final int SER_FORCE_CT = 14;
+	static final int SER_FORCE_CPET = 15;
+	static final int SER_FORCE_UPET = 16;
+	static final int SER_FORCE_MRI = 17;
+	static final int SERIES_MIP = 18;
 	
 	static final int BLACK_BKGD = 1;
 	static final int HOT_IRON_FUSE = 2;
@@ -117,6 +118,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		getStudyList();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void init() {
 		int i, x, y;
 		jPrefer = Preferences.userNodeForPackage(ChoosePetCt.class);
@@ -197,8 +199,8 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			if( val1 == SERIES_CT || val1 == SERIES_CT_VARICAM || val1 == SER_FORCE_CT) numCt++;
 			if( val1 == SERIES_MRI || val1 == SER_FORCE_MRI) numMri++;
 			if( val1 == SERIES_BQML_PET || val1 == SERIES_GML_PET
-				|| val1 == SERIES_PHILIPS_PET || val1 == SERIES_GE_PRIVATE_PET
-				|| val1 == SERIES_SPECT || val1 == SER_FORCE_CPET) numAPet++;
+				|| val1 == SERIES_PHILIPS_PET || val1 == SERIES_GE_PRIVATE_PET || val1 == SERIES_SPECT
+				|| val1 == SERIES_SIEMENS_SPECT || val1 == SER_FORCE_CPET) numAPet++;
 			if( val1 == SERIES_UPET || val1 == SER_FORCE_UPET) numUPet++;
 			if( val1 == SERIES_NM3) numNM++;
 		}
@@ -217,8 +219,8 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		int val3 = JFijiPipe.FORCE_NONE;
 		if( val1 == SERIES_CT || val1 == SERIES_CT_VARICAM) val3 = JFijiPipe.FORCE_CT;
 		if( val1 == SERIES_BQML_PET || val1 == SERIES_GML_PET || 
-			val1 == SERIES_PHILIPS_PET || val1 == SERIES_GE_PRIVATE_PET
-				|| val1 == SERIES_SPECT) val3 = JFijiPipe.FORCE_CPET;
+			val1 == SERIES_PHILIPS_PET || val1 == SERIES_GE_PRIVATE_PET || val1 == SERIES_SPECT
+				|| val1 == SERIES_SIEMENS_SPECT) val3 = JFijiPipe.FORCE_CPET;
 		if( val1 == SERIES_UPET) val3 = JFijiPipe.FORCE_UPET;
 		if( val1 == SERIES_MRI) val3 = JFijiPipe.FORCE_MRI;
 		if( val2 == val3) return val1;
@@ -313,7 +315,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		ImagePlus img1;
 		String meta, patName, study, series, tmp1;
 		Date date1;
-		int i, j, row0, col0, serType;
+		int i, j, k, row0, col0, serType;
 		int [] fullList = WindowManager.getIDList();
 		if( fullList == null) return;
 		for( i=0; i<fullList.length; i++) {
@@ -335,10 +337,22 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			row1[TBL_DATE] = UsaDateFormat(date1);
 			study = getDicomValue( meta, "0008,1030");
 			row1[TBL_STUDY] = study;
-			fillSerType(serType, row1);
 			series = checkEmpty(getDicomValue( meta, "0008,103E"));
 			if( series == null) series = getDicomValue( meta, "0054,0400");
+			if( series == null) series = "-";
+			// need a special case for GE SPECT
+			if(series.startsWith("Volumetrix MI RESULTS")) {
+				tmp1 = getDicomValue( meta, "0011,1012");
+				if( tmp1 != null && (k=tmp1.indexOf("_"))>0) {
+					if( tmp1.contains("EM_IRACRR")) series = tmp1.substring(0, k+1) + "corrected";
+					if( tmp1.contains("EM_IRNC")) {
+						series = tmp1.substring(0, k+1) + "uncorrected";
+						serType = SERIES_UPET;
+					}
+				}
+			}
 			row1[TBL_SERIES] = series;
+			fillSerType(serType, row1);
 			col0 = parseInt(getDicomValue(meta, "0028,0011"));
 			row0 = parseInt(getDicomValue(meta, "0028,0010"));
 			tmp1 = col0 + "*" + row0 + "*" + j;
@@ -354,7 +368,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		String val1 = "";
 		if(serType == SERIES_CT || serType == SERIES_CT_VARICAM) val1 = "CT";
 		if(serType == SERIES_BQML_PET || serType == SERIES_GML_PET || serType == SERIES_GE_PRIVATE_PET
-				|| serType == SERIES_PHILIPS_PET || serType == SERIES_SPECT) val1="CPet";
+				|| serType == SERIES_PHILIPS_PET || serType == SERIES_SPECT || serType == SERIES_SIEMENS_SPECT) val1="CPet";
 		if(serType == SERIES_UPET) val1 = "UPet";
 		if(serType == SERIES_MRI) val1 = "MRI";
 		row1[TBL_SER_TYPE] = val1;
@@ -420,7 +434,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		}
 		return ret1;
 	}
-	
+
+	static String encloseInQuotes(String in) {
+		return "\\\"" + in + "\\\"";
+	}
+
 	static String getFirstDicomValue( String meta, String key1) {
 		return getFirstLastSub(meta, key1, true);
 	}
@@ -450,6 +468,31 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		else ret1 = tmp1;
 		ret1 = ret1.trim();
 		if( ret1.isEmpty()) ret1 = null;
+		return ret1;
+	}
+
+// look for any of a list of possible values	
+	static String findDicomValue( String meta, String key1, String[] val) {
+		String tmp1, key2 = key1, ret1 = null;
+		int i, k1, k2, k0;
+		if( meta == null || key1 == null || val == null) return ret1;
+		k0 = meta.indexOf(key1);
+		if( k0 <= 0) key2 = key1.toLowerCase();
+		k0 = meta.indexOf(key2);
+		while( k0 > 0) {
+			k1 = meta.indexOf("\n", k0);
+			if( k1 < 0) return null;
+			tmp1 = meta.substring(k0, k1);
+			k2 = tmp1.indexOf(": ");
+			if( k2 > 0) ret1 = tmp1.substring(k2+2);
+			else ret1 = tmp1;
+			ret1 = ret1.trim();
+			if( ret1.isEmpty()) ret1 = null;
+			if( ret1 != null) {
+				for( i=0; i<val.length; i++) if( val[i].equals(ret1)) return ret1;
+			}
+			k0 = meta.indexOf(key2, k1);
+		}
 		return ret1;
 	}
 
@@ -534,11 +577,13 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				key0 = "0008,0023";
 				break;
 		}
-		if( key2 != null) {
+		if( key1 != null) {
+			time1 = getDicomValue( meta, key1);
+		}
+		if( key2 != null && time1 == null) {
 			time1 = getDicomValue( meta, key2);
 			if( time1 != null && time1.length() >= 14) return getDateTime(time1, null);
 		}
-		if( key1 != null) time1 = getDicomValue( meta, key1);
 		// use study date since the injection may be 24 or 48 hours earlier
 		tmp1 = getDicomValue(meta,key0);
 		if(tmp1==null) tmp1 = getDicomValue(meta,"0008,0020");
@@ -594,7 +639,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				if( tmp == null) {
 					tmp = getDicomValue(meta, "0054,0202");	// last chance
 					if( tmp == null) return SERIES_UNKNOWN;
-					if( tmp.startsWith("STEP")) return SERIES_SPECT;
+					if( tmp.startsWith("STEP")) {
+						tmp = getDicomValue(meta, "0008,0070");
+						if(tmp != null && tmp.startsWith("SIEMENS")) return SERIES_SIEMENS_SPECT;
+						return SERIES_SPECT;
+					}
 					return SERIES_UNKNOWN;
 				}
 				tmp = tmp.toLowerCase();
@@ -625,10 +674,12 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				tmp = getDicomValue(meta, "0054,1001");
 				if( tmp == null) return SERIES_UNKNOWN;
 				tmp1 = getDicomValue(meta, "7053,1000");
-				if( tmp1 != null && parseDouble(tmp1) > 0) return SERIES_PHILIPS_PET;
+				if( tmp1 != null && parseDouble(tmp1) > 0 && !tmp.equals("BQML")) {
+					return SERIES_PHILIPS_PET;
+				}
 				tmp2 = getDicomValue(meta, "0009,100D");
 				if( tmp2 != null && tmp.equals("BQML")) return SERIES_GE_PRIVATE_PET;
-				if( tmp.equals("BQML")) return SERIES_BQML_PET;
+				if( tmp.equals("BQML") || tmp.equals("MBq")) return SERIES_BQML_PET;
 				if( tmp.equals("GML")) return SERIES_GML_PET;
 				if( tmp.equals("CPS") || tmp.equals("PROPCNTS") || tmp.equals("PROPCPS")) return SERIES_UPET;
 				// and for Phillips we need an extra check to distinguish
@@ -876,20 +927,20 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 
 	public static String buildSeriesUIDs( ArrayList<ImagePlus> imgIn) {
 		String seriesUIDs, ctUID = null, petUID = null, upetUID = null;
-		String meta, mriUID = null, mipUID = null, ct2UID = null;
-		int i, imgType;
+		String meta, mriUID = null, mipUID = null, multipleUID = null;
+		int i, imgType, stkSz;
 		ImagePlus currImg;
 		for( i=0; i<imgIn.size(); i++) {
 			currImg = imgIn.get(i);
 			meta = getMeta(1, currImg);
+			stkSz = currImg.getStackSize();
+			if( stkSz <= 1) continue;
 			imgType = getImageType( meta);
-			// can only have a single instance of each type
 			switch( imgType) {
 				case SERIES_CT:
 				case SERIES_CT_VARICAM:
 					if( ctUID != null) {
-						if( ct2UID != null) return null;
-						ct2UID = getSeriesUID( meta);
+						multipleUID = getSeriesUID( meta);
 						break;
 					}
 					ctUID = getSeriesUID( meta);
@@ -900,17 +951,27 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				case SERIES_PHILIPS_PET:
 				case SERIES_GE_PRIVATE_PET:
 				case SERIES_SPECT:
-					if( petUID != null) return null;
+				case SERIES_SIEMENS_SPECT:
+					if( petUID != null) {
+						multipleUID = getSeriesUID( meta);
+						break;
+					}
 					petUID = getSeriesUID( meta);
 				break;
 
 				case SERIES_UPET:
-					if( upetUID != null) return null;
+					if( upetUID != null) {
+						multipleUID = getSeriesUID( meta);
+						break;
+					}
 					upetUID = getSeriesUID( meta);
 					break;
 
 				case SERIES_MRI:
-					if( mriUID != null) return null;
+					if( mriUID != null) {
+						multipleUID = getSeriesUID( meta);
+						break;
+					}
 					mriUID = getSeriesUID( meta);
 					break;
 
@@ -921,7 +982,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			}
 		}
 		if( ctUID == null || petUID == null) return null;
-		if( ct2UID != null) return "2CTs";
+		if( multipleUID != null) return "2CTs";
 		seriesUIDs = ctUID + ", " + petUID;
 		if( upetUID != null) seriesUIDs += ", " + upetUID;
 		if( mriUID != null) seriesUIDs += ", " + mriUID;

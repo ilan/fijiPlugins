@@ -24,579 +24,767 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
+          <Component id="jTabbedPane1" min="-2" pref="456" max="-2" attributes="0"/>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Component id="jTabbedPane1" pref="597" max="32767" attributes="0"/>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Container class="javax.swing.JTabbedPane" name="jTabbedPane1">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
+      <SubComponents>
+        <Container class="javax.swing.JPanel" name="jPanelBasic">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="basic">
+                <Property name="tabTitle" type="java.lang.String" value="basic"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+
+          <Layout>
+            <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jPanelSigImage" alignment="1" max="32767" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jCheckHotIron" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jCheckOperatorName" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jCheckAutoSize" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="jPanelStart" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="maxFactor" min="-2" pref="44" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jComboSUV" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jTextMm" min="-2" pref="40" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabelMm" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="jCheckSphere" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jCheckCircle" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jCheckInvertScroll" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace pref="26" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="jCheckBlackBackground" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="155" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jPanelLuts" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jButSave" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="jButTmp" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="jButHelp" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="jComboSUV2" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jCheckHotIron" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jCheckOperatorName" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jCheckAutoSize" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jPanelStart" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="jComboSUV2" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jTextMm2" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Component id="jComboSUV" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jTextMm" min="-2" pref="54" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jTextMm2" min="-2" pref="40" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabelMm2" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jCheckSphere2" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jCheckCircle2" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabelMm" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jCheckSphere" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jCheckCircle" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabelMm2" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jCheckSphere2" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jCheckCircle2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
                           </Group>
                           <Group type="102" attributes="0">
-                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="jTextPgUpDn" min="-2" pref="43" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-                              <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jLabelRight" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="maxFactor" min="-2" pref="52" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Component id="jLabelPgUpDn" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jTextPgUpDn" min="-2" pref="54" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jLabelSlices" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="jCheckSUL" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jCheckIgnoreSUV" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="233" max="-2" attributes="0"/>
-                              <Component id="jCheckBlackBackground" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
                               <Component id="jCheckQuality" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jTextZTri" min="-2" pref="44" max="-2" attributes="0"/>
+                              <Component id="jTextZTri" min="-2" pref="54" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabmm" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jButSave" min="-2" pref="152" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jButTmp" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="jButHelp" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="jCheckInvertScroll" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jPanelSigImage" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
-          </Group>
-      </Group>
-    </DimensionLayout>
-    <DimensionLayout dim="1">
-      <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+            </DimensionLayout>
+            <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="jCheckHotIron" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jCheckOperatorName" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jCheckAutoSize" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="jPanelStart" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jTextMm" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabelMm" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckSphere" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckCircle" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jComboSUV" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jComboSUV2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jTextMm2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabelMm2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckSphere2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckCircle2" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="maxFactor" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jTextPgUpDn" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckSUL" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jCheckIgnoreSUV" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jCheckBlackBackground" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jCheckQuality" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jTextZTri" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabmm" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jCheckInvertScroll" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanelLuts" min="-2" pref="155" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jButSave" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButTmp" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButHelp" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanelSigImage" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-          </Group>
-      </Group>
-    </DimensionLayout>
-  </Layout>
-  <SubComponents>
-    <Component class="javax.swing.JCheckBox" name="jCheckHotIron">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="hot iron fused display"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckOperatorName">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="display operator name"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckAutoSize">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="auto resize window to fit data"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="jTextMm">
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabelMm">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="mm"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckSphere">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="use sphere"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckCircle">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="show circle"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel3">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Right click - Slice max factor"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JSpinner" name="maxFactor">
-      <Properties>
-        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-          <SpinnerModel initial="1.0" maximum="2.0" minimum="0.4" numberType="java.lang.Double" stepSize="0.1" type="number"/>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel4">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="PgUp, PgDn ="/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="jTextPgUpDn">
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel5">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="slices"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JButton" name="jButSave">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Save as defaults"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButSaveActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="jButTmp">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Temporary"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButTmpActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="jButHelp">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Help"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButHelpActionPerformed"/>
-      </Events>
-    </Component>
-    <Container class="javax.swing.JPanel" name="jPanelSigImage">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Directory for Significant Image"/>
-          </Border>
-        </Property>
-      </Properties>
-
-      <Layout>
-        <DimensionLayout dim="0">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <Component id="jTextSignificantImage" max="32767" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jButBrowseSig" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jSpinSig" min="-2" max="-2" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-        <DimensionLayout dim="1">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jTextSignificantImage" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButBrowseSig" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jSpinSig" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-      </Layout>
-      <SubComponents>
-        <Component class="javax.swing.JTextField" name="jTextSignificantImage">
-        </Component>
-        <Component class="javax.swing.JButton" name="jButBrowseSig">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="browse"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseSigActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JSpinner" name="jSpinSig">
-          <Properties>
-            <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-              <SpinnerModel initial="0" maximum="9" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="Choose path number 0-9"/>
-          </Properties>
-          <Events>
-            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinSigStateChanged"/>
-          </Events>
-        </Component>
-      </SubComponents>
-    </Container>
-    <Container class="javax.swing.JPanel" name="jPanelStart">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Auto start"/>
-          </Border>
-        </Property>
-      </Properties>
-
-      <Layout>
-        <DimensionLayout dim="0">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" attributes="0">
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jCheckAnnotations" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jCheckROIs" alignment="0" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="32767" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-        <DimensionLayout dim="1">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <Component id="jCheckAnnotations" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
-                  <Component id="jCheckROIs" min="-2" max="-2" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-      </Layout>
-      <SubComponents>
-        <Component class="javax.swing.JCheckBox" name="jCheckAnnotations">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Annotations"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JCheckBox" name="jCheckROIs">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="BF, ROIs"/>
-          </Properties>
-        </Component>
-      </SubComponents>
-    </Container>
-    <Component class="javax.swing.JCheckBox" name="jCheckInvertScroll">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="invert coronal, sagittal scroll direction"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JComboBox" name="jComboSUV">
-      <Properties>
-        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="6">
-            <StringItem index="0" value="SUVmax"/>
-            <StringItem index="1" value="SUVpeak"/>
-            <StringItem index="2" value="SUVqpeak"/>
-            <StringItem index="3" value="SUVmean"/>
-            <StringItem index="4" value="SULmax"/>
-            <StringItem index="5" value="SULmean"/>
-          </StringArray>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JComboBox" name="jComboSUV2">
-      <Properties>
-        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="6">
-            <StringItem index="0" value="SUVmax"/>
-            <StringItem index="1" value="SUVpeak"/>
-            <StringItem index="2" value="SUVqpeak"/>
-            <StringItem index="3" value="SUVmean"/>
-            <StringItem index="4" value="SULmax"/>
-            <StringItem index="5" value="SULmean"/>
-          </StringArray>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="jTextMm2">
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabelMm2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="mm"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckSphere2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="use sphere"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckSUL">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="use SUL"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckCircle2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="show circle"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckBlackBackground">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Black background"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="jCheckQuality">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="best quality, z &gt;"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckQualityActionPerformed"/>
-      </Events>
-    </Component>
-    <Container class="javax.swing.JPanel" name="jPanelLuts">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="LUTs - updated on next start of Pet Ct Viewer"/>
-          </Border>
-        </Property>
-      </Properties>
-
-      <Layout>
-        <DimensionLayout dim="0">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="jCheckHotLut" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jTextHotLutMenu" max="32767" attributes="0"/>
-                      </Group>
-                      <Component id="jCheckFixedLUT" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="jCheckBluesLut" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
-                          <Component id="jTextBluesLutMenu" min="-2" pref="107" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="jCheckMriLut" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jTextMriLutMenu" min="-2" pref="107" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="jTextMriLut" max="32767" attributes="0"/>
-                      <Component id="jTextUserLUT" pref="140" max="32767" attributes="0"/>
-                      <Component id="jTextHotLut" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jTextBluesLut" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jButBrowseMri" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButBrowseBlues" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButBrowseHot" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButBrowseUser" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="32767" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-        <DimensionLayout dim="1">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jTextBluesLutMenu" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jTextBluesLut" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jButBrowseBlues" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Component id="jCheckBluesLut" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jTextHotLutMenu" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jTextHotLut" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jButBrowseHot" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Component id="jCheckHotLut" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="jCheckFixedLUT" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="jTextUserLUT" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButBrowseUser" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jButBrowseMri" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jTextMriLut" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jTextMriLutMenu" alignment="1" min="-2" max="-2" attributes="0"/>
-                          <Component id="jCheckMriLut" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jCheckHotIron" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jCheckOperatorName" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jCheckAutoSize" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="jPanelStart" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jComboSUV" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jTextMm" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabelMm" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckSphere" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckCircle" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jComboSUV2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jTextMm2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabelMm2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckSphere2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckCircle2" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabelRight" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="maxFactor" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabelPgUpDn" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jTextPgUpDn" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabelSlices" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckSUL" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckIgnoreSUV" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jCheckBlackBackground" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jCheckQuality" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jTextZTri" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabmm" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jCheckInvertScroll" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jPanelLuts" min="-2" pref="155" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jButSave" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jButTmp" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jButHelp" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jPanelSigImage" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Component class="javax.swing.JCheckBox" name="jCheckHotIron">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="hot iron fused display"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckOperatorName">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="display operator name"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckAutoSize">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="auto resize window to fit data"/>
+              </Properties>
+            </Component>
+            <Container class="javax.swing.JPanel" name="jPanelStart">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Auto start"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="jCheckAnnotations" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="jCheckROIs" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
-                  <EmptySpace max="-2" attributes="0"/>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="jCheckAnnotations" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
+                          <Component id="jCheckROIs" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+              <SubComponents>
+                <Component class="javax.swing.JCheckBox" name="jCheckAnnotations">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Annotations"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="jCheckROIs">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="BF, ROIs"/>
+                  </Properties>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JComboBox" name="jComboSUV">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="6">
+                    <StringItem index="0" value="SUVmax"/>
+                    <StringItem index="1" value="SUVpeak"/>
+                    <StringItem index="2" value="SUVqpeak"/>
+                    <StringItem index="3" value="SUVmean"/>
+                    <StringItem index="4" value="SULmax"/>
+                    <StringItem index="5" value="SULmean"/>
+                  </StringArray>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="jTextMm">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelMm">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="mm"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckSphere">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="use sphere"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckCircle">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="show circle"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JComboBox" name="jComboSUV2">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="6">
+                    <StringItem index="0" value="SUVmax"/>
+                    <StringItem index="1" value="SUVpeak"/>
+                    <StringItem index="2" value="SUVqpeak"/>
+                    <StringItem index="3" value="SUVmean"/>
+                    <StringItem index="4" value="SULmax"/>
+                    <StringItem index="5" value="SULmean"/>
+                  </StringArray>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="jTextMm2">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelMm2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="mm"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckSphere2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="use sphere"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckCircle2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="show circle"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelRight">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Right click - Slice max factor"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JSpinner" name="maxFactor">
+              <Properties>
+                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                  <SpinnerModel initial="1.0" maximum="2.0" minimum="0.4" numberType="java.lang.Double" stepSize="0.1" type="number"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelPgUpDn">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="PgUp, PgDn ="/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="jTextPgUpDn">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabelSlices">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="slices"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckSUL">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="use SUL"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckIgnoreSUV">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="ignore SUV"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckBlackBackground">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Black background"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckQuality">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="best quality, z &gt;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckQualityActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JTextField" name="jTextZTri">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabmm">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="mm"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckInvertScroll">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="invert coronal, sagittal scroll direction"/>
+              </Properties>
+            </Component>
+            <Container class="javax.swing.JPanel" name="jPanelLuts">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="LUTs - updated on next start of Pet Ct Viewer"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jCheckHotLut" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jTextHotLutMenu" max="32767" attributes="0"/>
+                              </Group>
+                              <Component id="jCheckFixedLUT" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jCheckBluesLut" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="jTextBluesLutMenu" min="-2" pref="107" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jCheckMriLut" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jTextMriLutMenu" min="-2" pref="107" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="jTextMriLut" max="32767" attributes="0"/>
+                              <Component id="jTextUserLUT" pref="140" max="32767" attributes="0"/>
+                              <Component id="jTextHotLut" alignment="0" max="32767" attributes="0"/>
+                              <Component id="jTextBluesLut" alignment="0" max="32767" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="jButBrowseMri" min="-2" max="-2" attributes="0"/>
+                              <Component id="jButBrowseBlues" min="-2" max="-2" attributes="0"/>
+                              <Component id="jButBrowseHot" min="-2" max="-2" attributes="0"/>
+                              <Component id="jButBrowseUser" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jTextBluesLutMenu" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jTextBluesLut" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jButBrowseBlues" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="jCheckBluesLut" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jTextHotLutMenu" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jTextHotLut" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jButBrowseHot" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="jCheckHotLut" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jCheckFixedLUT" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jTextUserLUT" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jButBrowseUser" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jButBrowseMri" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jTextMriLut" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jTextMriLutMenu" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jCheckMriLut" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+              <SubComponents>
+                <Component class="javax.swing.JCheckBox" name="jCheckBluesLut">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextBluesLutMenu">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="The blues"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="jCheckHotLut">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextHotLutMenu">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Hot iron"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="jCheckFixedLUT">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Fixed user LUT"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="jCheckMriLut">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextMriLutMenu">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="MRI/CT LUT"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextBluesLut">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextHotLut">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextUserLUT">
+                </Component>
+                <Component class="javax.swing.JTextField" name="jTextMriLut">
+                </Component>
+                <Component class="javax.swing.JButton" name="jButBrowseBlues">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="browse"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseBluesActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="jButBrowseHot">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="browse"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseHotActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="jButBrowseUser">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="browse"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseUserActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="jButBrowseMri">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="browse"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseMriActionPerformed"/>
+                  </Events>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JButton" name="jButSave">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Save as defaults"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButSaveActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="jButTmp">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Temporary"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButTmpActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="jButHelp">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Help"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButHelpActionPerformed"/>
+              </Events>
+            </Component>
+            <Container class="javax.swing.JPanel" name="jPanelSigImage">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Directory for Significant Image"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="jTextSignificantImage" pref="321" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="jButBrowseSig" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="jSpinSig" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jTextSignificantImage" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jButBrowseSig" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jSpinSig" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+              <SubComponents>
+                <Component class="javax.swing.JTextField" name="jTextSignificantImage">
+                </Component>
+                <Component class="javax.swing.JButton" name="jButBrowseSig">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="browse"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseSigActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="jSpinSig">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="0" maximum="9" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Choose path number 0-9"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinSigStateChanged"/>
+                  </Events>
+                </Component>
+              </SubComponents>
+            </Container>
+          </SubComponents>
+        </Container>
+        <Container class="javax.swing.JPanel" name="jPanelExtended">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="extended">
+                <Property name="tabTitle" type="java.lang.String" value="extended"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+
+          <Layout>
+            <DimensionLayout dim="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jPanelNifti" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="209" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jButSave1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
               </Group>
-          </Group>
-        </DimensionLayout>
-      </Layout>
-      <SubComponents>
-        <Component class="javax.swing.JCheckBox" name="jCheckBluesLut">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextBluesLutMenu">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="The blues"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JCheckBox" name="jCheckHotLut">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextHotLutMenu">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Hot iron"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JCheckBox" name="jCheckFixedLUT">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Fixed user LUT"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JCheckBox" name="jCheckMriLut">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextMriLutMenu">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="MRI/CT LUT"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextBluesLut">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextHotLut">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextUserLUT">
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextMriLut">
-        </Component>
-        <Component class="javax.swing.JButton" name="jButBrowseBlues">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="browse"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseBluesActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="jButBrowseHot">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="browse"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseHotActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="jButBrowseUser">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="browse"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseUserActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="jButBrowseMri">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="browse"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButBrowseMriActionPerformed"/>
-          </Events>
-        </Component>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jPanelNifti" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jButSave1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="365" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Container class="javax.swing.JPanel" name="jPanelNifti">
+              <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                    <TitledBorder title="Nifti"/>
+                  </Border>
+                </Property>
+              </Properties>
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="jCheckForceTmp" min="-2" max="-2" attributes="0"/>
+                      <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="jCheckForceTmp" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+              <SubComponents>
+                <Component class="javax.swing.JCheckBox" name="jCheckForceTmp">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Force &quot;use tmp file&quot; at starup"/>
+                  </Properties>
+                </Component>
+                <Container class="javax.swing.JPanel" name="jPanel1">
+                  <Properties>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                        <TitledBorder title="external Nifti files"/>
+                      </Border>
+                    </Property>
+                  </Properties>
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jCheckExFloat" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
+                                      <Component id="jCheckExMask" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jCheckExRelative" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="jCheckExCtMask" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="jCheckExCt" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jCheckExFloat" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jCheckExMask" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jCheckExRelative" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jCheckExCtMask" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jCheckExCt" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                  <SubComponents>
+                    <Component class="javax.swing.JCheckBox" name="jCheckExFloat">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="float"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JCheckBox" name="jCheckExRelative">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="relative"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JCheckBox" name="jCheckExCt">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="CT"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JCheckBox" name="jCheckExMask">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="mask"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JCheckBox" name="jCheckExCtMask">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="CT mask"/>
+                      </Properties>
+                    </Component>
+                  </SubComponents>
+                </Container>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JButton" name="jButSave1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Save"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButSave1ActionPerformed"/>
+              </Events>
+            </Component>
+          </SubComponents>
+        </Container>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JCheckBox" name="jCheckIgnoreSUV">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="ignore SUV"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="jTextZTri">
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabmm">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="mm"/>
-      </Properties>
-    </Component>
   </SubComponents>
 </Form>

@@ -1,4 +1,7 @@
+import ij.ImagePlus;
 import java.util.ArrayList;
+import javax.swing.JCheckBox;
+import net.imagej.ImageJ;
 
 /**
  *
@@ -6,13 +9,20 @@ import java.util.ArrayList;
  */
 public class SUVpoints {
 	ArrayList<SavePoint> volPointList;
+	ArrayList<RadioPoint> radioList;
+	ArrayList<CooccurencePoint>glcm;
 	int sliceType, SUVtype;
-	int zmin, zmax, ptListSz;
+	int zmin, zmax, ptListSz, red0;
+	ImageJ ij;
+	private ArrayList<SavePoint> modified;		
+	private short[][] summary;
+	private short[] roiNums;
 	
 	SUVpoints(int slcType) {
 		sliceType = slcType;
 		volPointList = new ArrayList<SavePoint>();
 		ptListSz = -1;
+		ij = null;
 	}
 	
 
@@ -24,7 +34,24 @@ public class SUVpoints {
 		double	petVal;
 		int		ctVal;
 	}
-	
+
+	class RadioPoint {
+		double	mean;
+		double	std;
+		String	label = null;
+		int		type = 0;	//PET, 1=CT, 2=MRI
+	}
+
+	public class CooccurencePoint {
+		double[][] matix;
+		int		numPnt = 0;
+		String	label;
+	}
+
+	RadioPoint newRadioPnt() {
+		return new RadioPoint();
+	}
+
 	SavePoint newPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0) {
 		SavePoint ret1 = new SavePoint();
 		ret1.petVal = pet1;
@@ -137,7 +164,7 @@ public class SUVpoints {
 		if( pntSave == null) return retVal;
 		retVal = pntSave.petVal;
 		sclX = sclY = pet1.data1.pixelSpacing[0];
-		sclZ = Math.abs(pet1.data1.spacingBetweenSlices);
+		sclZ = Math.abs(pet1.data1.sliceThickness);
 		if( sclX <= 0 || sclZ == 0) return retVal;
 		if( sliceType != JFijiPipe.DSP_AXIAL) {
 			sclY = sclZ;
@@ -202,6 +229,125 @@ public class SUVpoints {
 		return retVal;
 	}
 
+	// functionally this could be static
+	ArrayList<SavePoint> buildExcludedList(BrownFat.ExcludedROI[] excludedROI) {
+		int i, j, n1, n = excludedROI.length;
+		BrownFat.ExcludedROI exROI;
+		for( i=0; i<n; i++) {
+			if(excludedROI[i] != null) break;
+		}
+		if( i>=n ) return null;
+		ArrayList<SavePoint> removedPointList = new ArrayList<SavePoint>();
+		SavePoint tst1;
+		ArrayList<SavePoint> tstList;
+		for( i=0; i<n; i++) {
+			exROI = excludedROI[i];
+			if(exROI == null) continue;
+			tstList = exROI.suvPnt1.volPointList;
+			n1 = tstList.size();
+			for( j=0; j<n1; j++) {
+				tst1 = tstList.get(j);
+				if( isIncluded(removedPointList, tst1)) continue;
+				removedPointList.add(tst1);
+			}
+		}
+		return removedPointList;
+	}
+
+	private void buildExcludeObj(ArrayList<SavePoint>removedList) {
+		int i, j, z, zadd, zstart, maxZ=0;
+		SavePoint tst1;
+		modified = new ArrayList<SavePoint>();
+		if( removedList == null) return;
+		int n=removedList.size();
+		for( i=0; i<n; i++) {
+			tst1 = removedList.get(i);
+			if( tst1.z1 > maxZ) maxZ = tst1.z1;
+		}
+		summary = new short[maxZ+1][6];
+		for( j=0; j<=maxZ; j++) summary[j][0] = -1;
+
+		zstart = modified.size();
+		for ( i=0; i<n; i++) {
+			tst1 = removedList.get(i);
+			z = tst1.z1;
+			if( summary[z][0] < 0) {
+				summary[z][0] = tst1.x1;
+				summary[z][2] = tst1.y1;
+			}
+			if( summary[z][0] > tst1.x1) summary[z][0] = tst1.x1;
+			if( summary[z][1] < tst1.x1) summary[z][1] = tst1.x1;
+			if( summary[z][2] > tst1.y1) summary[z][2] = tst1.y1;
+			if( summary[z][3] < tst1.y1) summary[z][3] = tst1.y1;
+			summary[z][4]++;
+			for( j=zadd=0; j<=z; j++) zadd += summary[j][4];
+			modified.add(zstart+zadd-1, tst1);
+		}
+		for( i=zadd=0; i<=maxZ; i++) {
+			z = summary[i][4];
+			if( z==0) continue;
+			summary[i][4] = (short)(zadd+zstart);
+			zadd += z;
+			summary[i][5] = (short)(zadd+zstart);
+		}
+	}
+
+	boolean isIncluded( ArrayList<SavePoint> tst1, SavePoint pnt1) {
+		int i, n=tst1.size();
+		SavePoint tstPnt;
+		for( i=0; i<n; i++) {
+			tstPnt = tst1.get(i);
+			if( tstPnt.x1 == pnt1.x1 && tstPnt.y1 == pnt1.y1 && tstPnt.z1 == pnt1.z1) return true;
+		}
+		return false;
+	}
+
+	double removeExcluded( ArrayList<SavePoint>removedList, BrownFat.ExcludedROI[] excludedROI) {
+		double total = 0, max1 = -1;
+		red0 = 0;
+		buildExcludeObj(removedList);
+		if( modified == null || modified.isEmpty()) return total;
+		int i, j, jhi, n=volPointList.size();
+		ArrayList<SavePoint> tstList = new ArrayList<SavePoint>();
+		short x1, y1, z1, sumLen;
+		boolean isOK;
+		SavePoint excl, tst1;
+		for( i=0; i<n; i++) {
+			tst1 = volPointList.get(i);
+			x1 = tst1.x1;
+			y1 = tst1.y1;
+			z1 = tst1.z1;
+			isOK = true;
+			sumLen = (short) summary.length;
+			while(isOK) {
+				if( z1 >= sumLen) break;
+				if( summary[z1][0] < 0) break;
+				if( summary[z1][0] > x1 || summary[z1][1] < x1) break;
+				if( summary[z1][2] > y1 || summary[z1][3] < y1) break;
+				jhi = summary[z1][5];
+				for( j=summary[z1][4]; j<jhi; j++) {
+//				for( j=0; j<n; j++) {
+//					if( j>=0) break;
+					excl = modified.get(j);
+					if( x1 != excl.x1 || y1 != excl.y1 || z1 != excl.z1) continue;
+					total += excl.petVal;
+					isOK = false;
+					break;
+				}
+				break;
+			}
+			if(isOK) {
+				if( tst1.petVal > max1) {
+					max1 = tst1.petVal;
+					red0 = tstList.size();
+				}
+				tstList.add(tst1);
+			}
+		}
+		if( tstList.size() < n) volPointList = tstList;
+		return total;
+	}
+
 	double[] calCtVals() {
 		int i, n;
 		SavePoint ret1;
@@ -230,5 +376,54 @@ public class SUVpoints {
 		}
 		if( k>0) retVal /= k;
 		return retVal;
+	}
+
+	CooccurencePoint makeCoocur() {
+		return new CooccurencePoint();
+	}
+
+	void calcRadiomics(BrownFat bf, boolean isCalc) {
+		glcm = new ArrayList<CooccurencePoint>();
+		radioList = new ArrayList<RadioPoint>();
+		if( !isCalc) return;
+		RadioPoint res;
+		ImagePlus imp, imp2;
+		boolean isCt = bf.isCtRadiomics();
+		int i, type;
+		try {
+			Radionomic img2 = new Radionomic();
+			img2.init(bf);
+			for( i=0; i<=16; i++) {
+				JCheckBox cbox = bf.getRadioCB(i);
+				if( cbox.isSelected()) break;
+			}
+			if( i >= 16) return;	// nothing selected
+			imp = img2.buildPlus(this);
+			if( imp == null) return;
+			img2.calcGlcm(this, imp);
+			for( i=0; i<=16; i++) {
+				res = new RadioPoint();
+				img2.computeFunction(i, glcm, res, bf);
+				if(res.label != null) radioList.add(res);
+			}
+			res = new RadioPoint();
+			img2.computeFunction(17, this, res, bf);
+			if(res.label != null) radioList.add(res);
+			if( isCt) {
+				imp2 = img2.buildCtPlus(this, bf.parentPet, false);
+				// imp2 can be null if no point falls inside the CT limits
+				if( imp2 == null) return;
+				type = 1;
+				if( bf.parentPet.MRIflg) type = 2;
+				glcm = new ArrayList<CooccurencePoint>();
+				img2.calcGlcm(this, imp2);
+				for( i=0; i<=16; i++) {
+					res = new RadioPoint();
+					res.type = type;
+					img2.computeFunction(i, glcm, res, bf);
+					if(res.label != null) radioList.add(res);
+				}
+			}
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
 	}
 }

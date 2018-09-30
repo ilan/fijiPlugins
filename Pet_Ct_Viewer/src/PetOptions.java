@@ -70,6 +70,12 @@ public class PetOptions extends javax.swing.JDialog {
 		suv = parent.SUVmm2;
 		jTextMm2.setText(suv.toString());
 		maxFactor.setValue(parent.sliceMaxFactor);
+		jCheckForceTmp.setSelected(prefer1.getBoolean("force tmpFile", false));
+		jCheckExFloat.setSelected(prefer1.getBoolean("external float", true));
+		jCheckExRelative.setSelected(prefer1.getBoolean("external relative", true));
+		jCheckExCt.setSelected(prefer1.getBoolean("external ct file", true));
+		jCheckExMask.setSelected(prefer1.getBoolean("external mask", true));
+		jCheckExCtMask.setSelected(prefer1.getBoolean("external ctmask", true));
 		curSpin = prefer1.getInt("significant spin val", 0);
 		SpinnerNumberModel spin1 = (SpinnerNumberModel) jSpinSig.getModel();
 		spin1.setValue(curSpin);
@@ -104,6 +110,12 @@ public class PetOptions extends javax.swing.JDialog {
 		prefer1.putBoolean("use ext hotiron LUT",  jCheckHotLut.isSelected());
 		prefer1.putBoolean("use external LUT",  jCheckFixedLUT.isSelected());
 		prefer1.putBoolean("use MriCt LUT",  jCheckMriLut.isSelected());
+		prefer1.putBoolean("force tmpFile", jCheckForceTmp.isSelected());
+		prefer1.putBoolean("external float", jCheckExFloat.isSelected());
+		prefer1.putBoolean("external relative", jCheckExRelative.isSelected());
+		prefer1.putBoolean("external ct file", jCheckExCt.isSelected());
+		prefer1.putBoolean("external mask", jCheckExMask.isSelected());
+		prefer1.putBoolean("external ctmask", jCheckExCtMask.isSelected());
 		int suvType = getSUVtype(2);
 		prefer1.putInt("SUV type2", suvType);
 		suvType = getSUVtype(1);	// this determines last peak type
@@ -273,38 +285,36 @@ public class PetOptions extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanelBasic = new javax.swing.JPanel();
         jCheckHotIron = new javax.swing.JCheckBox();
         jCheckOperatorName = new javax.swing.JCheckBox();
         jCheckAutoSize = new javax.swing.JCheckBox();
+        jPanelStart = new javax.swing.JPanel();
+        jCheckAnnotations = new javax.swing.JCheckBox();
+        jCheckROIs = new javax.swing.JCheckBox();
+        jComboSUV = new javax.swing.JComboBox();
         jTextMm = new javax.swing.JTextField();
         jLabelMm = new javax.swing.JLabel();
         jCheckSphere = new javax.swing.JCheckBox();
         jCheckCircle = new javax.swing.JCheckBox();
-        jLabel3 = new javax.swing.JLabel();
-        maxFactor = new javax.swing.JSpinner();
-        jLabel4 = new javax.swing.JLabel();
-        jTextPgUpDn = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        jButSave = new javax.swing.JButton();
-        jButTmp = new javax.swing.JButton();
-        jButHelp = new javax.swing.JButton();
-        jPanelSigImage = new javax.swing.JPanel();
-        jTextSignificantImage = new javax.swing.JTextField();
-        jButBrowseSig = new javax.swing.JButton();
-        jSpinSig = new javax.swing.JSpinner();
-        jPanelStart = new javax.swing.JPanel();
-        jCheckAnnotations = new javax.swing.JCheckBox();
-        jCheckROIs = new javax.swing.JCheckBox();
-        jCheckInvertScroll = new javax.swing.JCheckBox();
-        jComboSUV = new javax.swing.JComboBox();
         jComboSUV2 = new javax.swing.JComboBox();
         jTextMm2 = new javax.swing.JTextField();
         jLabelMm2 = new javax.swing.JLabel();
         jCheckSphere2 = new javax.swing.JCheckBox();
-        jCheckSUL = new javax.swing.JCheckBox();
         jCheckCircle2 = new javax.swing.JCheckBox();
+        jLabelRight = new javax.swing.JLabel();
+        maxFactor = new javax.swing.JSpinner();
+        jLabelPgUpDn = new javax.swing.JLabel();
+        jTextPgUpDn = new javax.swing.JTextField();
+        jLabelSlices = new javax.swing.JLabel();
+        jCheckSUL = new javax.swing.JCheckBox();
+        jCheckIgnoreSUV = new javax.swing.JCheckBox();
         jCheckBlackBackground = new javax.swing.JCheckBox();
         jCheckQuality = new javax.swing.JCheckBox();
+        jTextZTri = new javax.swing.JTextField();
+        jLabmm = new javax.swing.JLabel();
+        jCheckInvertScroll = new javax.swing.JCheckBox();
         jPanelLuts = new javax.swing.JPanel();
         jCheckBluesLut = new javax.swing.JCheckBox();
         jTextBluesLutMenu = new javax.swing.JTextField();
@@ -321,9 +331,23 @@ public class PetOptions extends javax.swing.JDialog {
         jButBrowseHot = new javax.swing.JButton();
         jButBrowseUser = new javax.swing.JButton();
         jButBrowseMri = new javax.swing.JButton();
-        jCheckIgnoreSUV = new javax.swing.JCheckBox();
-        jTextZTri = new javax.swing.JTextField();
-        jLabmm = new javax.swing.JLabel();
+        jButSave = new javax.swing.JButton();
+        jButTmp = new javax.swing.JButton();
+        jButHelp = new javax.swing.JButton();
+        jPanelSigImage = new javax.swing.JPanel();
+        jTextSignificantImage = new javax.swing.JTextField();
+        jButBrowseSig = new javax.swing.JButton();
+        jSpinSig = new javax.swing.JSpinner();
+        jPanelExtended = new javax.swing.JPanel();
+        jPanelNifti = new javax.swing.JPanel();
+        jCheckForceTmp = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
+        jCheckExFloat = new javax.swing.JCheckBox();
+        jCheckExRelative = new javax.swing.JCheckBox();
+        jCheckExCt = new javax.swing.JCheckBox();
+        jCheckExMask = new javax.swing.JCheckBox();
+        jCheckExCtMask = new javax.swing.JCheckBox();
+        jButSave1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Options");
@@ -333,77 +357,6 @@ public class PetOptions extends javax.swing.JDialog {
         jCheckOperatorName.setText("display operator name");
 
         jCheckAutoSize.setText("auto resize window to fit data");
-
-        jLabelMm.setText("mm");
-
-        jCheckSphere.setText("use sphere");
-
-        jCheckCircle.setText("show circle");
-
-        jLabel3.setText("Right click - Slice max factor");
-
-        maxFactor.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.4d, 2.0d, 0.1d));
-
-        jLabel4.setText("PgUp, PgDn =");
-
-        jLabel5.setText("slices");
-
-        jButSave.setText("Save as defaults");
-        jButSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButSaveActionPerformed(evt);
-            }
-        });
-
-        jButTmp.setText("Temporary");
-        jButTmp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButTmpActionPerformed(evt);
-            }
-        });
-
-        jButHelp.setText("Help");
-        jButHelp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButHelpActionPerformed(evt);
-            }
-        });
-
-        jPanelSigImage.setBorder(javax.swing.BorderFactory.createTitledBorder("Directory for Significant Image"));
-
-        jButBrowseSig.setText("browse");
-        jButBrowseSig.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButBrowseSigActionPerformed(evt);
-            }
-        });
-
-        jSpinSig.setModel(new javax.swing.SpinnerNumberModel(0, 0, 9, 1));
-        jSpinSig.setToolTipText("Choose path number 0-9");
-        jSpinSig.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSpinSigStateChanged(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanelSigImageLayout = new javax.swing.GroupLayout(jPanelSigImage);
-        jPanelSigImage.setLayout(jPanelSigImageLayout);
-        jPanelSigImageLayout.setHorizontalGroup(
-            jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelSigImageLayout.createSequentialGroup()
-                .addComponent(jTextSignificantImage)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButBrowseSig)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinSig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        jPanelSigImageLayout.setVerticalGroup(
-            jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(jTextSignificantImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jButBrowseSig)
-                .addComponent(jSpinSig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
 
         jPanelStart.setBorder(javax.swing.BorderFactory.createTitledBorder("Auto start"));
 
@@ -430,9 +383,13 @@ public class PetOptions extends javax.swing.JDialog {
                 .addComponent(jCheckROIs))
         );
 
-        jCheckInvertScroll.setText("invert coronal, sagittal scroll direction");
-
         jComboSUV.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "SUVmax", "SUVpeak", "SUVqpeak", "SUVmean", "SULmax", "SULmean" }));
+
+        jLabelMm.setText("mm");
+
+        jCheckSphere.setText("use sphere");
+
+        jCheckCircle.setText("show circle");
 
         jComboSUV2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "SUVmax", "SUVpeak", "SUVqpeak", "SUVmean", "SULmax", "SULmean" }));
 
@@ -440,9 +397,19 @@ public class PetOptions extends javax.swing.JDialog {
 
         jCheckSphere2.setText("use sphere");
 
+        jCheckCircle2.setText("show circle");
+
+        jLabelRight.setText("Right click - Slice max factor");
+
+        maxFactor.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.4d, 2.0d, 0.1d));
+
+        jLabelPgUpDn.setText("PgUp, PgDn =");
+
+        jLabelSlices.setText("slices");
+
         jCheckSUL.setText("use SUL");
 
-        jCheckCircle2.setText("show circle");
+        jCheckIgnoreSUV.setText("ignore SUV");
 
         jCheckBlackBackground.setText("Black background");
 
@@ -452,6 +419,10 @@ public class PetOptions extends javax.swing.JDialog {
                 jCheckQualityActionPerformed(evt);
             }
         });
+
+        jLabmm.setText("mm");
+
+        jCheckInvertScroll.setText("invert coronal, sagittal scroll direction");
 
         jPanelLuts.setBorder(javax.swing.BorderFactory.createTitledBorder("LUTs - updated on next start of Pet Ct Viewer"));
 
@@ -557,88 +528,142 @@ public class PetOptions extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jCheckIgnoreSUV.setText("ignore SUV");
+        jButSave.setText("Save as defaults");
+        jButSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButSaveActionPerformed(evt);
+            }
+        });
 
-        jLabmm.setText("mm");
+        jButTmp.setText("Temporary");
+        jButTmp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButTmpActionPerformed(evt);
+            }
+        });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+        jButHelp.setText("Help");
+        jButHelp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButHelpActionPerformed(evt);
+            }
+        });
+
+        jPanelSigImage.setBorder(javax.swing.BorderFactory.createTitledBorder("Directory for Significant Image"));
+
+        jButBrowseSig.setText("browse");
+        jButBrowseSig.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButBrowseSigActionPerformed(evt);
+            }
+        });
+
+        jSpinSig.setModel(new javax.swing.SpinnerNumberModel(0, 0, 9, 1));
+        jSpinSig.setToolTipText("Choose path number 0-9");
+        jSpinSig.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jSpinSigStateChanged(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelSigImageLayout = new javax.swing.GroupLayout(jPanelSigImage);
+        jPanelSigImage.setLayout(jPanelSigImageLayout);
+        jPanelSigImageLayout.setHorizontalGroup(
+            jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelSigImageLayout.createSequentialGroup()
+                .addComponent(jTextSignificantImage, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButBrowseSig)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinSig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        jPanelSigImageLayout.setVerticalGroup(
+            jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelSigImageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jTextSignificantImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jButBrowseSig)
+                .addComponent(jSpinSig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        javax.swing.GroupLayout jPanelBasicLayout = new javax.swing.GroupLayout(jPanelBasic);
+        jPanelBasic.setLayout(jPanelBasicLayout);
+        jPanelBasicLayout.setHorizontalGroup(
+            jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelBasicLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jCheckBlackBackground)
+                .addGap(155, 155, 155))
+            .addComponent(jPanelLuts, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanelBasicLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanelSigImage, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jCheckHotIron)
-                                    .addComponent(jCheckOperatorName)
-                                    .addComponent(jCheckAutoSize))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jPanelStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
+                .addComponent(jButSave)
+                .addGap(18, 18, 18)
+                .addComponent(jButTmp)
+                .addGap(18, 18, 18)
+                .addComponent(jButHelp)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanelBasicLayout.createSequentialGroup()
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
+                        .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckHotIron)
+                            .addComponent(jCheckOperatorName)
+                            .addComponent(jCheckAutoSize))
+                        .addGap(18, 18, 18)
+                        .addComponent(jPanelStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
+                        .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addGroup(jPanelBasicLayout.createSequentialGroup()
+                                .addComponent(jComboSUV2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(maxFactor, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jTextMm2))
+                            .addGroup(jPanelBasicLayout.createSequentialGroup()
                                 .addComponent(jComboSUV, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextMm, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jTextMm, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanelBasicLayout.createSequentialGroup()
                                 .addComponent(jLabelMm)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jCheckSphere)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jCheckCircle))
-                            .addComponent(jCheckInvertScroll))
-                        .addContainerGap(26, Short.MAX_VALUE))
-                    .addComponent(jPanelLuts, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jComboSUV2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextMm2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(jPanelBasicLayout.createSequentialGroup()
                                 .addComponent(jLabelMm2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jCheckSphere2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jCheckCircle2))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextPgUpDn, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(12, 12, 12)
-                                .addComponent(jLabel5)
-                                .addGap(18, 18, 18)
-                                .addComponent(jCheckSUL)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jCheckIgnoreSUV))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(233, 233, 233)
-                                .addComponent(jCheckBlackBackground))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jCheckQuality)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabmm))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jButSave, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButTmp)
-                                .addGap(18, 18, 18)
-                                .addComponent(jButHelp)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                                .addComponent(jCheckCircle2))))
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
+                        .addComponent(jLabelRight)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(maxFactor, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
+                        .addComponent(jLabelPgUpDn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextPgUpDn, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabelSlices)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jCheckSUL)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jCheckIgnoreSUV))
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
+                        .addComponent(jCheckQuality)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabmm))
+                    .addComponent(jCheckInvertScroll)
+                    .addComponent(jPanelSigImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+        jPanelBasicLayout.setVerticalGroup(
+            jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelBasicLayout.createSequentialGroup()
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelBasicLayout.createSequentialGroup()
                         .addComponent(jCheckHotIron)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jCheckOperatorName)
@@ -646,34 +671,34 @@ public class PetOptions extends javax.swing.JDialog {
                         .addComponent(jCheckAutoSize))
                     .addComponent(jPanelStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboSUV, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jTextMm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabelMm)
                     .addComponent(jCheckSphere)
-                    .addComponent(jCheckCircle)
-                    .addComponent(jComboSUV, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jCheckCircle))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jComboSUV2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jTextMm2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabelMm2)
                     .addComponent(jCheckSphere2)
                     .addComponent(jCheckCircle2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelRight)
                     .addComponent(maxFactor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelPgUpDn)
                     .addComponent(jTextPgUpDn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5)
+                    .addComponent(jLabelSlices)
                     .addComponent(jCheckSUL)
                     .addComponent(jCheckIgnoreSUV))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jCheckBlackBackground)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jCheckQuality)
                     .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabmm))
@@ -681,14 +706,120 @@ public class PetOptions extends javax.swing.JDialog {
                 .addComponent(jCheckInvertScroll)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanelLuts, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(4, 4, 4)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButSave)
                     .addComponent(jButTmp)
                     .addComponent(jButHelp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanelSigImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("basic", jPanelBasic);
+
+        jPanelNifti.setBorder(javax.swing.BorderFactory.createTitledBorder("Nifti"));
+
+        jCheckForceTmp.setText("Force \"use tmp file\" at starup");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("external Nifti files"));
+
+        jCheckExFloat.setText("float");
+
+        jCheckExRelative.setText("relative");
+
+        jCheckExCt.setText("CT");
+
+        jCheckExMask.setText("mask");
+
+        jCheckExCtMask.setText("CT mask");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jCheckExFloat)
+                        .addGap(35, 35, 35)
+                        .addComponent(jCheckExMask))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jCheckExRelative)
+                        .addGap(18, 18, 18)
+                        .addComponent(jCheckExCtMask))
+                    .addComponent(jCheckExCt))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckExFloat)
+                    .addComponent(jCheckExMask))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckExRelative)
+                    .addComponent(jCheckExCtMask))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCheckExCt))
+        );
+
+        javax.swing.GroupLayout jPanelNiftiLayout = new javax.swing.GroupLayout(jPanelNifti);
+        jPanelNifti.setLayout(jPanelNiftiLayout);
+        jPanelNiftiLayout.setHorizontalGroup(
+            jPanelNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jCheckForceTmp)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        jPanelNiftiLayout.setVerticalGroup(
+            jPanelNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelNiftiLayout.createSequentialGroup()
+                .addComponent(jCheckForceTmp)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        jButSave1.setText("Save");
+        jButSave1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButSave1ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelExtendedLayout = new javax.swing.GroupLayout(jPanelExtended);
+        jPanelExtended.setLayout(jPanelExtendedLayout);
+        jPanelExtendedLayout.setHorizontalGroup(
+            jPanelExtendedLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelExtendedLayout.createSequentialGroup()
+                .addComponent(jPanelNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 209, Short.MAX_VALUE))
+            .addGroup(jPanelExtendedLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButSave1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanelExtendedLayout.setVerticalGroup(
+            jPanelExtendedLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelExtendedLayout.createSequentialGroup()
+                .addComponent(jPanelNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButSave1)
+                .addGap(0, 365, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("extended", jPanelExtended);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 456, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 597, Short.MAX_VALUE)
         );
 
         pack();
@@ -735,6 +866,11 @@ public class PetOptions extends javax.swing.JDialog {
 		browseSignificant();
     }//GEN-LAST:event_jButBrowseSigActionPerformed
 
+    private void jButSave1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButSave1ActionPerformed
+		saveVals();
+		dispose();
+    }//GEN-LAST:event_jButSave1ActionPerformed
+
  
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButBrowseBlues;
@@ -744,6 +880,7 @@ public class PetOptions extends javax.swing.JDialog {
     private javax.swing.JButton jButBrowseUser;
     private javax.swing.JButton jButHelp;
     private javax.swing.JButton jButSave;
+    private javax.swing.JButton jButSave1;
     private javax.swing.JButton jButTmp;
     private javax.swing.JCheckBox jCheckAnnotations;
     private javax.swing.JCheckBox jCheckAutoSize;
@@ -751,7 +888,13 @@ public class PetOptions extends javax.swing.JDialog {
     private javax.swing.JCheckBox jCheckBluesLut;
     private javax.swing.JCheckBox jCheckCircle;
     private javax.swing.JCheckBox jCheckCircle2;
+    private javax.swing.JCheckBox jCheckExCt;
+    private javax.swing.JCheckBox jCheckExCtMask;
+    private javax.swing.JCheckBox jCheckExFloat;
+    private javax.swing.JCheckBox jCheckExMask;
+    private javax.swing.JCheckBox jCheckExRelative;
     private javax.swing.JCheckBox jCheckFixedLUT;
+    private javax.swing.JCheckBox jCheckForceTmp;
     private javax.swing.JCheckBox jCheckHotIron;
     private javax.swing.JCheckBox jCheckHotLut;
     private javax.swing.JCheckBox jCheckIgnoreSUV;
@@ -765,16 +908,21 @@ public class PetOptions extends javax.swing.JDialog {
     private javax.swing.JCheckBox jCheckSphere2;
     private javax.swing.JComboBox jComboSUV;
     private javax.swing.JComboBox jComboSUV2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabelMm;
     private javax.swing.JLabel jLabelMm2;
+    private javax.swing.JLabel jLabelPgUpDn;
+    private javax.swing.JLabel jLabelRight;
+    private javax.swing.JLabel jLabelSlices;
     private javax.swing.JLabel jLabmm;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanelBasic;
+    private javax.swing.JPanel jPanelExtended;
     private javax.swing.JPanel jPanelLuts;
+    private javax.swing.JPanel jPanelNifti;
     private javax.swing.JPanel jPanelSigImage;
     private javax.swing.JPanel jPanelStart;
     private javax.swing.JSpinner jSpinSig;
+    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextField jTextBluesLut;
     private javax.swing.JTextField jTextBluesLutMenu;
     private javax.swing.JTextField jTextHotLut;

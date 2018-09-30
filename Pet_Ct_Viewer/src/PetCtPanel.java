@@ -9,8 +9,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import javax.swing.*;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /*
  * PetCtPanel.java
@@ -56,7 +56,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	Annotations.myOblique m_oblique = null;
 	int m_kvp = 0, m_ctMa = 0;
 	long nanoTime;
-	String petSeriesName = null, operatorName = null;
+	String petSeriesName = null, operatorName = null, niftiTmp = "";
 	int sliderOwner = -1, petColor = JFijiPipe.COLOR_INVERSE, upetOffset = 0, petIndx = 0;
 	int m_masterFlg = 0, m_sliceType = 0, CTval;
 	int gateIndx = 0, fusedColor = JFijiPipe.COLOR_BLUES;
@@ -359,7 +359,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 					break;
 
 				case JFijiPipe.DSP_CORONAL:
-					petCoronal = (petPipe.data1.width - 1) / 2;
+					petCoronal = (petPipe.data1.height - 1) / 2;
 					break;
 
 				case JFijiPipe.DSP_SAGITAL:
@@ -387,12 +387,12 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 					factor = ratioCt2Pet;
 				}
 				if( mousePage == 0) { // notify from another study
-					petAxial -= zDiffCm / petPipe.avgSliceDiff;
+					petAxial -= zDiffCm / Math.abs(petPipe.avgSliceDiff);
 					break;
 				}
 				zDiff = diff*factor;
 				petAxial -= zDiff;
-				zDiff *= petPipe.avgSliceDiff;
+				zDiff *= Math.abs(petPipe.avgSliceDiff);
 				break;
 
 			case JFijiPipe.DSP_CORONAL:
@@ -930,8 +930,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		ImagePlus currImg;
 		ImageJ ij;
 		String tmp1;
-		double aspect, height1, halfPixel, xshift=0, yshift=0, tmpd, ptY=0;
-		Double ctY;
+		double aspect, halfPixel, xshift=0, yshift=0, tmpd, ptY=0;
+		double ctY;
 		boolean isDicom = true;
 		boolean srcVisible = parent.isShowSource();
 		int format, i, k, n = inImgList.size();
@@ -942,6 +942,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			switch(k) {
 				case ChoosePetCt.SERIES_BQML_PET:
 				case ChoosePetCt.SERIES_SPECT:
+				case ChoosePetCt.SERIES_SIEMENS_SPECT:
 				case ChoosePetCt.SERIES_GML_PET:
 				case ChoosePetCt.SERIES_PHILIPS_PET:
 				case ChoosePetCt.SERIES_GE_PRIVATE_PET:
@@ -995,7 +996,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 //		IJ.log("Done load");
 		if( petPipe == null) return;	// error
 		petPipe.aspect = aspect = 1.0 * petPipe.data1.height/petPipe.data1.width;
-		petPipe.mriOffY0 = ChoosePetCt.round((1.0 - aspect)*petPipe.data1.width/2);
+// BN Lee has data Abdul Sawb bin Mohad which is 139*130
+		petPipe.mriOffY0 = (1.0 - aspect)*petPipe.data1.width/2;
 		maybeAddBlankSlicesInPet();
 		presetWindowLevels(1);	// CT window
 /*		if( mipPipe != null && mipPipe.data1.numFrms == 1) {
@@ -1061,7 +1063,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		mipPipe.data1.y2XMip = mipPipe.data1.y2xFactor;
 		petPipe.zoomX = mipPipe.zoomX = petRelativeZoom;
 		if( upetPipe != null) upetPipe.zoomX = petRelativeZoom;
-		petCoronal = petSagital = (petPipe.data1.width-1) / 2;
+		petCoronal = (petPipe.data1.height-1) / 2;
+		petSagital = (petPipe.data1.width-1) / 2;
 		if( petPipe.data1.pixelCenter != null && ctPipe.data1.pixelCenter != null) {
 			xshift = ctPipe.data1.pixelCenter[0] - petPipe.data1.pixelCenter[0];
 			yshift = ctPipe.data1.pixelCenter[1] - petPipe.data1.pixelCenter[1];
@@ -1120,22 +1123,28 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			if( currPipe != null) {
 				// for MRI pipe zoomx can be different from 1.0
 				// MRI data can be non square
-				height1 = currPipe.data1.height * currPipe.data1.y2XMri;
-				aspect = 1.0 * height1 / currPipe.data1.width;
+				// Abdul sawab bin Mohd has non square PET data
+				aspect = currPipe.data1.height * currPipe.data1.y2XMri / currPipe.data1.width;
 				currPipe.aspect = aspect;
-				currPipe.mriOffY0 = ChoosePetCt.round((1.0 - aspect)*currPipe.data1.width/2);
-				currPipe.corFactor = (petPipe.zoomX * currPipe.data1.height) / (petPipe.data1.height * currPipe.zoomX * aspect);
+				currPipe.mriOffY0 = (1.0 - aspect)*currPipe.data1.width/2;
+				currPipe.corFactor = (petPipe.aspect*petPipe.zoomX * currPipe.data1.height) / (petPipe.data1.height * currPipe.zoomX * aspect);
 				currPipe.sagFactor = (petPipe.zoomX * currPipe.data1.width) / (petPipe.data1.width * currPipe.zoomX);
 				currPipe.obliqueFactor = 0;
 				currPipe.sagOffset = currPipe.data1.width* ( 1- petPipe.zoomX/currPipe.zoomX)/2;
-				currPipe.corOffset = (currPipe.sagOffset - currPipe.mriOffY0)/currPipe.data1.y2XMri;
+				currPipe.corOffset = (currPipe.sagOffset - currPipe.mriOffY0 + petPipe.mriOffY0*currPipe.corFactor)/currPipe.data1.y2XMri;
 				// Terry Weizeman shows this problem
 				currPipe.sagOffset -= currPipe.sagFactor*(petPipe.shiftXY[0] - currPipe.shiftXY[0]);
 				currPipe.corOffset -= currPipe.corFactor*(petPipe.shiftXY[1] - currPipe.shiftXY[1]);
+/*				if( petPipe.zoomX != 1.0) {
+					tmp1 = "pet zoomx = " + petPipe.zoomX + ", ct zoomx = " + currPipe.zoomX;
+					tmp1 += "\npet aspect = " + petPipe.aspect + ", ct aspect = " + aspect;
+					IJ.log(tmp1);
+				}*/
 			}
 		}
 		ctPipe.setAvgSliceDiff();
 		petPipe.setAvgSliceDiff();
+		ctPipe.maybeSetCoronalDisplay();
 		ratioCt2Pet = Math.abs(ctPipe.avgSliceDiff / petPipe.avgSliceDiff);
 		if( ratioCt2Pet > 0.99 && ratioCt2Pet < 1.01) ratioCt2Pet = 1.0;
 		parent.fillPatientData();
@@ -1182,7 +1191,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		int numCPet = petPipe.data1.numFrms;
 		int numUPet = upetPipe.data1.numFrms;
 		if( numCPet >= numUPet) return;
-		if( petPipe.data1.spacingBetweenSlices != upetPipe.data1.spacingBetweenSlices) return;
+		if( petPipe.data1.sliceThickness != upetPipe.data1.sliceThickness) return;
 		float startPetPos = petPipe.data1.zpos.get(0);
 		ArrayList<Float> uPetPos = upetPipe.data1.zpos;
 		float curPos = uPetPos.get(0);
@@ -1291,7 +1300,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	void layoutMip(Graphics2D g, boolean fused) {
 		if( isInitializing) return;	// still loading
 		if( mipPipe == null) return;
-		double scl1 = getScalePet();
+		double upet=1.0, sagShift = 0, scl1 = getScalePet();
 		if( scl1 == 0) return;	// maybe closed window?
 		if( lastScale != scl1) {
 			lastScale = scl1;
@@ -1313,6 +1322,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 		JFijiPipe pet1 = getCorrectedOrUncorrectedPipe(true);
 		if( pet1 != null) {
+			if(pet1 == upetPipe) upet = petPipe.data1.width/pet1.data1.width;
 			numGate = pet1.data1.numTimeSlots;
 			if( numGate > 1) {
 				int numFrm = pet1.data1.numFrms / numGate;
@@ -1321,18 +1331,18 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			pet1.prepareFused(fusedColor);
 			if( m_sliceType == JFijiPipe.DSP_AXIAL) {
 				pet1.prepareFrame( petAxial + upetOffset + gateOffset, 0,petColor, 0);
-				pet1.drawImages(g, scl1, this);
+				pet1.drawImages(g, upet*scl1, this);
 			}
 			if( m_sliceType ==JFijiPipe.DSP_CORONAL) {
-				pet1.prepareCoronalSagital(petCoronal, -1, petColor, gateOffset);
-				pet1.drawCorSagImages(g, scl1, this, true);	// coronal
+				pet1.prepareCoronalSagital(petCoronal/upet, -1, petColor, gateOffset, 0);
+				pet1.drawCorSagImages(g, upet*scl1, this, true);	// coronal
 			}
 			if( m_sliceType == JFijiPipe.DSP_SAGITAL) {
-				pet1.prepareCoronalSagital(-1, petSagital, petColor, gateOffset);
-				pet1.drawCorSagImages(g, scl1, this, false);	// sagital
+				sagShift = pet1.prepareCoronalSagital(-1, petSagital/upet, petColor, gateOffset, 0);
+				pet1.drawCorSagImages(g, upet*scl1, this, false);	// sagital
 			}
 			if( m_sliceType == JFijiPipe.DSP_OBLIQUE) {
-				if(m_oblique != null) m_oblique.draw(g, scl1, pet1, petColor, petAxial + upetOffset);
+				if(m_oblique != null) m_oblique.draw(g, upet*scl1, pet1, petColor, petAxial + upetOffset);
 			}
 		} else printMissing(g);
 		Point pt1 = new Point(fusePos, 0);
@@ -1347,11 +1357,11 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 					ct1.drawImages(g, scl2, this);
 				}
 				if( m_sliceType == JFijiPipe.DSP_CORONAL) {
-					ct1.prepareCoronalSagital(petCoronal, -1, ctMriColor, 0);
+					ct1.prepareCoronalSagital(petCoronal, -1, ctMriColor, 0, 0);
 					ct1.drawCorSagImages(g, scl2, this, true);	// coronal
 				}
 				if( m_sliceType == JFijiPipe.DSP_SAGITAL) {
-					ct1.prepareCoronalSagital(-1, petSagital, ctMriColor, 0);
+					ct1.prepareCoronalSagital(-1, petSagital, ctMriColor, 0, sagShift);
 					ct1.drawCorSagImages(g, scl2, this, false);	// sagital
 				}
 				if( m_sliceType == JFijiPipe.DSP_OBLIQUE) {
@@ -1362,7 +1372,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 				}
 			}
 		}
-		draw3CursorsAndSUV(g, fused);
+		draw3CursorsAndSUV(g, scl1, fused);
 		draw3FrameText(g, pet1);
 		drawBrownFat(g);
 //		drawLungMip(g);
@@ -1456,8 +1466,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			petAxial = maxFrm - 1;
 
 		if( petCoronal < 0) petCoronal = 0;
-		if( petCoronal >= petPipe.data1.width - 1)
-			petCoronal = petPipe.data1.width - 1;
+		if( petCoronal >= petPipe.data1.height - 1)
+			petCoronal = petPipe.data1.height - 1;
 
 		if( petSagital < 0) petSagital = 0;
 		if( petSagital >= petPipe.data1.width - 1)
@@ -1592,7 +1602,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	}
 	
 	int getView3Slop() {
-		double slop = Math.abs((ctPipe.getZpos(ctPipe.data1.numFrms-1) - ctPipe.getZpos(0)) / ctPipe.data1.spacingBetweenSlices);
+		double slop = Math.abs((ctPipe.getZpos(ctPipe.data1.numFrms-1) - ctPipe.getZpos(0)) / ctPipe.data1.sliceThickness);
 		int islop = ChoosePetCt.round(0.06*slop);	// 6% of range
 		if( islop < 6) islop = 6;
 		return islop;
@@ -1664,7 +1674,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			z1 = upetPipe.data1.zpos.get(ipetAxial+upetOffset);
 			if( z0 != z1) {
 				if( maybeNull) pet1 = null;
-				spacing = petPipe.data1.spacingBetweenSlices;
+				spacing = petPipe.data1.sliceThickness;
 				if( spacing == 0) spacing = 1.0;	// sanity
 				if( Math.abs((z0-z1)/spacing) <= 0.5) return upetPipe;
 				while( z1 < z0 && ipetAxial + upetOffset > 0) {
@@ -1987,7 +1997,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		radpx = (radMm/spac1);
 		totalSum = curMax = 0;
 		numPts = z0 = z0a = 0;
-		spacOut = Math.abs(pet1.data1.spacingBetweenSlices/ spac1);
+		spacOut = Math.abs(pet1.data1.sliceThickness/ spac1);
 		while(true) {
 			spacz = 1.0;
 			if(m_sliceType == JFijiPipe.DSP_AXIAL) spacz = spacOut;
@@ -2103,7 +2113,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		radpx = (radMm/spac1);
 		totalSum = curMax = 0;
 		numPts = z0 = z0a = 0;
-		spacOut = Math.abs(pet1.data1.spacingBetweenSlices/ spac1);
+		spacOut = Math.abs(pet1.data1.sliceThickness/ spac1);
 		while(true) {
 			spacz = 1.0;
 			if(m_sliceType == JFijiPipe.DSP_AXIAL) spacz = spacOut;
@@ -2188,28 +2198,41 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	}
 	
 	// this routine has no roundoff errors, unlike the original
-	double shift2Ct1( JFijiPipe currPipe, int xyChoice) {
-		double inVal = petSagital, mriOff = currPipe.mriOffX;
-		double factor = currPipe.sagFactor, offst = currPipe.sagOffset;
-		if( xyChoice > 0) {
-			inVal = petCoronal;
-			mriOff = currPipe.mriOffY;
-			factor = currPipe.corFactor;
-			offst = currPipe.corOffset;
+	double shift2Ct1( JFijiPipe currPipe, int type) {
+		double inVal = petSagital;
+		if( type > 0) inVal = petCoronal;
+		return shift2Ctsub(currPipe, inVal, type);
+	}
+
+	int shift2Ct( JFijiPipe pipe1, int pos1, int type) {
+		return ChoosePetCt.round(shift2Ctsub(pipe1, pos1, type));
+	}
+
+	double shift2Ctsub( JFijiPipe pipe1, double pos1, int type) {
+		double inVal = pos1, mriOff = pipe1.mriOffX;
+		double factor = pipe1.sagFactor, offst = pipe1.sagOffset;
+		if( type > 0) {
+			mriOff = pipe1.mriOffY;
+			factor = pipe1.corFactor;
+			offst = pipe1.corOffset;
 		}
 		return factor*inVal + offst - mriOff;
 	}
 
-	int shift2Ct( JFijiPipe pipe1, int pos1) {
-		double scl1;
-		int ret1, cenPet, cenCt;
-		cenPet = petPipe.data1.width / 2;
-		cenCt = pipe1.data1.width / 2;
+	// this can be deleted, as no difference to shift2Ct is detected
+/*	int shift2Ct2( JFijiPipe pipe1, int pos1, int type) {
+		double scl1, cenPet, cenCt;
+		int ret1;
+		cenPet = petPipe.data1.width / 2.0;
+		cenCt = pipe1.data1.width / 2.0;
+		if( type > 0) {
+			cenPet = petPipe.data1.height / 2.0;
+			cenCt = pipe1.data1.height / 2.0;
+		}
 		scl1 = (petPipe.zoomX * cenCt) / (pipe1.zoomX * cenPet);
-		ret1 = (int) (scl1*( pos1 - cenPet));
-		ret1 += cenCt;
+		ret1 = ChoosePetCt.round( scl1*( pos1 - cenPet) + cenCt);
 		return ret1;
-	}
+	}*/
 
 	// this is the relative spacing of the CT compared to the PET
 	double pointSpacing( JFijiPipe pipe1) {
@@ -2281,7 +2304,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		return radius;
 	}
 
-	void draw3CursorsAndSUV(Graphics2D g, boolean fused) {
+	void draw3CursorsAndSUV(Graphics2D g, double scl1, boolean fused) {
 		if(curPosition[0] == null) return;	// don't waste time
 		int i, offY;
 		boolean circleSUV = parent.isCircleSUV();
@@ -2336,7 +2359,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 //		offY = (int) (getScalePet() * petPipe.multYOff * petPipe.data1.width) - 2;
 		if( bfDlg != null) {
 			i = bfDlg.saveRoiIndx + 1;
-			if( i > 0) tmp = "ROI #" + i;
+			if( i > 0) tmp += ", ROI #" + i;
 		}
 		g.drawString(tmp, 0, offY);
 		tmp = "CT = " + CTval;
@@ -2447,7 +2470,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			case JFijiPipe.DSP_CORONAL:
 				orient ="SIRL";
 				if( rotAxial == 90) orient = "SIAP";
-				slice = ChoosePetCt.round(petCoronal) + 1 + "/" + petPipe.data1.width;
+				slice = ChoosePetCt.round(petCoronal) + 1 + "/" + petPipe.data1.height;
 				break;
 
 			case JFijiPipe.DSP_SAGITAL:

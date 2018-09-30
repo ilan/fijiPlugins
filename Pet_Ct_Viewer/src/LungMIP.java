@@ -363,22 +363,24 @@ public class LungMIP extends javax.swing.JDialog {
 			insert.type = poly1.type;
 //			r1 = poly1.poly.getBounds();
 			r1 = new Rectangle(edgeOff,edgeOff,petPipe.data1.width-2*edgeOff,petPipe.data1.height-2*edgeOff);
-			insert.xOff = xOff = parentPet.shift2Ct(pip1, r1.x);
+			insert.xOff = xOff = parentPet.shift2Ct(pip1, r1.x, 0);
 			if( xOff < 0) {	// this can happen with MRI studies
 				cenPet = petPipe.data1.width / 2;
 				cenCt = pip1.data1.width / 2;
 				scl1 = (petPipe.zoomX * cenCt) / (pip1.zoomX * cenPet);
 				edgeOff = (int) (cenPet - cenCt/scl1 + 1);
+				if( edgeOff < 0) edgeOff = 0;
 				r1 = new Rectangle(edgeOff,edgeOff,petPipe.data1.width-2*edgeOff,petPipe.data1.height-2*edgeOff);
-				insert.xOff = xOff = parentPet.shift2Ct(pip1, r1.x);
+				insert.xOff = xOff = parentPet.shift2Ct(pip1, r1.x, 0);
+				if( xOff < 0) insert.xOff = xOff = 0;
 			}
-			val1 = parentPet.shift2Ct(pip1, r1.x + r1.width);
+			val1 = parentPet.shift2Ct(pip1, r1.x + r1.width, 0);
 			insert.width = wid1 = val1 - insert.xOff;
 			if(insert.type == JFijiPipe.DSP_AXIAL) {
-				insert.yOff = parentPet.shift2Ct(pip1, r1.y);
-				val1 = parentPet.shift2Ct(pip1, r1.y + r1.height);
+				insert.yOff = parentPet.shift2Ct(pip1, r1.y, 1);
+				val1 = parentPet.shift2Ct(pip1, r1.y + r1.height, 1);
 				zmax = pip1.getNormalizedNumFrms();
-				sThick = pip1.data1.spacingBetweenSlices;
+				sThick = pip1.data1.sliceThickness;
 			} else {
 				val0 = pip1.findCtPos(0, true);
 				val1 = pip1.findCtPos(petPipe.getNormalizedNumFrms() - 1, true);
@@ -437,6 +439,7 @@ public class LungMIP extends javax.swing.JDialog {
 					}
 					yOff = j*wid1;
 					currLine = pip1.data1.getLineOfData(angle1, depth, sliceNum);
+					if( currLine.pixels == null) continue;
 					for( i=0; i<wid1; i++) {
 						val1 = currLine.pixels[i+xOff];
 						if(insert.pixels[i+yOff]>=val1) continue;

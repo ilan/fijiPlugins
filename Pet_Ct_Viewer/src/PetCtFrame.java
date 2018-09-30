@@ -34,7 +34,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.vecmath.Point2d;
+import org.scijava.vecmath.Point2d;
 
 /*
  * PetCtFrame.java
@@ -334,7 +334,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	void resizeForm() {
 		if( petCtPanel1 == null) return;
-		petCtPanel1.curPosition[0] = null;
+		if( !changeView) petCtPanel1.curPosition[0] = null;
+		changeView = false;	// do once per orientation change
 	}
 
 	String getUserLUT(int type) {
@@ -413,8 +414,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	int checkforROIandAnnotations() {
 		ReadOrthancSub sub1 = new ReadOrthancSub();
 		if( petCtPanel1.anotateDlg == null) {
-			petCtPanel1.anotateDlg = new Annotations(this,false);
 			sub1.look4annotations(petCtPanel1, 0);
+			petCtPanel1.anotateDlg = new Annotations(this,false);
 		}
 		if( petCtPanel1.anotateDlg.m_BMList.isEmpty()) {
 			petCtPanel1.anotateDlg = null;
@@ -514,7 +515,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		petCtPanel1.m_sliceType = type;
 		petCtPanel1.updatePipeInfo();
 		Point pt1 = petCtPanel1.maybePanImage();
-		if(!petCtPanel1.isInitializing) petCtPanel1.setCursor(pt1);
+		if(!petCtPanel1.isInitializing) {
+			petCtPanel1.setCursor(pt1);
+			changeView = true;
+		}
 //		petCtPanel1.setAllZoom(-1000);	// bad, don't reset zoom to 1
 		if(petCtPanel1.bfDlg != null) petCtPanel1.bfDlg.changeOrientation();
 		setTitle(getTitleBar(0));
@@ -563,6 +567,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		if( fusionMixing < 0 || fusionMixing > 1000.) fusionMixing = 500.0;
 		// perhaps it is NOT a good idea to override the default 500?
 		petCtPanel1.petPipe.fuseLevel = fusionMixing;
+		// if the dialog is displayed, we need to take care of log display
+		if(showFlg) useLog(false);
 	}
 
 	String getTitleBar(int type) {
@@ -1032,7 +1038,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		JFijiPipe pip1 = petCtPanel1.getCorrectedOrUncorrectedPipe(false);
 		ctPos = ctPip.getZpos(ctPip.data1.numBlankFrms);
 		petPos = pip1.getZpos(pip1.data1.numBlankFrms);
-		shift = ChoosePetCt.round((petPos - ctPos) / Math.abs(ctPip.data1.spacingBetweenSlices));
+		shift = ChoosePetCt.round((petPos - ctPos) / Math.abs(ctPip.data1.sliceThickness));
 		if( Math.abs( shift) <= view3Slop) return ctPip;
 /*		JOptionPane.showMessageDialog(this,
 			"Cannot show fused data because PET and CT data fail to completely overlap");
@@ -1076,11 +1082,11 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		return jButScroll.isSelected();
 	}
 	
-	// this is only of value in axial display
+/*	// this is only of value in axial display
 	double getSliceThickness() {
 		if(petCtPanel1.m_sliceType != JFijiPipe.DSP_AXIAL) return 0;
-		return Math.abs(petCtPanel1.petPipe.data1.spacingBetweenSlices);
-	}
+		return Math.abs(petCtPanel1.petPipe.data1.sliceThickness);
+	}*/
 	
 	int getSUVtype() {
 		int type = SUVtype;
@@ -1269,7 +1275,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		if( currAno != null) sizeBM = currAno.getBMsize();
 		else sizeBM = currAnoTb.getBMsize();
 		if( sizeBM <= 0) {
-			IJ.log("No anotations have been defined - command ignored.");
+			IJ.log("No annotations have been defined - command ignored.");
 			return;
 		}
 		sz0 = getSize();
@@ -2547,6 +2553,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		myWriteDicom dcm1 = new myWriteDicom(this, null);
 		dcm1.specialType = 2;	// significant image
 		dcm1.writeDicomHeader();
+		dcm1.writeLogMessage();
 	}//GEN-LAST:event_jMenuSaveSignificantActionPerformed
 
 	private void jMenuSyncMriActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuSyncMriActionPerformed
@@ -2843,7 +2850,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
     private PetCtPanel petCtPanel1;
     // End of variables declaration//GEN-END:variables
 	int foundData = 0, SUVmm = 5, SUVmm2 = 5, pgUpDn = 3;
-	boolean autoResize = false, circleSUV = false, altROI = false;
+	boolean autoResize = false, circleSUV = false, altROI = false, changeView = false;
 	boolean circleSUV2 = false, sphereSUV2 = false, useSUL = false;
 	boolean operatorNameFlg = false, sphereSUV = false, invertScroll = false;
 	boolean startROIs = false, startAnnotations = false, qualityRendering = false;
