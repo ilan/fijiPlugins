@@ -4,8 +4,10 @@ import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.io.Opener;
 import ij.measure.Calibration;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import ij.util.DicomTools;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.io.File;
@@ -132,7 +134,9 @@ public class ReadOrthanc {
 					tmp1 = (String) mains.get("StudyDate");
 					tmp0 = (String) mains.get("StudyTime");
 					currStudy.studyDate = ChoosePetCt.getDateTime(tmp1, tmp0);
-					if( currStudy.studyDate.before(startDate)|| currStudy.studyDate.after(stopDate)) continue;
+					if( currStudy.studyDate != null) {
+						if( currStudy.studyDate.before(startDate)|| currStudy.studyDate.after(stopDate)) continue;
+					}
 					tmp1 = (String) mains.get("StudyDescription");
 					if( tmp1 == null) tmp1 = "";
 					currStudy.studyName = tmp1;
@@ -151,6 +155,7 @@ public class ReadOrthanc {
 					row1[ReadBIdatabase.TBL_STUDY] = currStudy.studyName;
 					row1[ReadBIdatabase.TBL_ACCESSION] = tmp1;
 					row1[ReadBIdatabase.TBL_SERIES] = null;
+					row1[ReadBIdatabase.TBL_SER_UID] = null;
 					row1[ReadBIdatabase.TBL_BF] = false;
 					n = series.size();
 					for( k=0; k<n; k++) {	// get brown fat
@@ -267,7 +272,7 @@ public class ReadOrthanc {
 		String path4=null, lastGood=null, modality, tmp1, tmp2, info, serName, dup1;
 		String label1;
 		Opener opener = null;
-		boolean isConference, isExist, isCompressed;
+		boolean isConference, isExist, isCompressed, isScreenCapture;
 		byte[] buf;
 		String[] dupName;
 		BI_dbSaveInfo biSave;
@@ -275,7 +280,7 @@ public class ReadOrthanc {
 		ImageStack stack;
 		ImagePlus img1;
 		JSONArray series, instances;
-		JSONObject ser1, main1, tags, transfer;
+		JSONObject ser1, main1, tags;
 		try {
 			if( (isConference = parent.isToggleMode())) mode = ReadBIdatabase.BOTH_READ_AND_WRITE;
 			serName  = (String) row1[ReadBIdatabase.TBL_SERIES];
@@ -287,7 +292,8 @@ public class ReadOrthanc {
 			path1 = outFile1.getPath();
 			outFile1.delete();
 			SimpleDateFormat df1 = new SimpleDateFormat("yyMMddHHmm");
-			path2 = File.separator + currStudy.studyName + df1.format(currStudy.studyDate);
+			path2 = File.separator + currStudy.studyName;
+			if(currStudy.studyDate != null) path2 += df1.format(currStudy.studyDate);
 			path1 += path2.replaceAll("[: -]", "");
 			series = currStudy.seriesList;
 			dupName = getDuplicates(series);
@@ -319,6 +325,7 @@ public class ReadOrthanc {
 				}
 				stack = null;
 				isCompressed = false;
+				isScreenCapture = false;
 				for( j=0; j<nSlice; j++) {
 					progVal = (j + 1.0)/nSlice;
 					IJ.showProgress(progVal);
@@ -337,13 +344,16 @@ public class ReadOrthanc {
 						uuid2 = (String) instances.get(j);
 						if( j==0) {
 							tags = (JSONObject) orthSub.ReadJson("instances/" + uuid2 + "/header?simplify");
+							if( tags == null) break;
+							tmp1 = (String) tags.get("MediaStorageSOPClassUID");
+							if( tmp1 != null && tmp1.startsWith(ChoosePetCt.SOPCLASS_SC)) isScreenCapture = true;
 							tmp1 = (String) tags.get("TransferSyntaxUID");
 							if( tmp1 != null && tmp1.startsWith("1.2.840.10008.1.2.4.")) {
 								isCompressed = true;
 							}
 						}
 						if( isCompressed) {
-							stack = readCompressed(uuid2, stack, j+1);
+							stack = readCompressed(uuid2, stack, j+1, isScreenCapture);
 							if( stack == null) break;
 						} else {
 							flOut1 = new FileOutputStream(outFile1);
@@ -414,6 +424,8 @@ public class ReadOrthanc {
 					}
 					img1 = new ImagePlus(parent.getTitleInfo(info, null), stack);
 					img1.setFileInfo(fi);
+					double voxelDepth = DicomTools.getVoxelDepth(stack);
+					if (voxelDepth>0.0 && cal!=null) cal.pixelDepth = voxelDepth;
 					img1.setCalibration(cal);
 				}
 				img1.setProperty("bidb", biSave);	// save database info
@@ -424,16 +436,24 @@ public class ReadOrthanc {
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
 	}
 
-	ImageStack readCompressed(String uuid, ImageStack stack, int indx) {
+	ImageStack readCompressed(String uuid, ImageStack stack, int indx, boolean SC) {
 		try {
-			String uri = orthSub.baseURL + "instances/" + uuid + "/image-uint16";
+			ImageProcessor slice;
+			String imgType = "/image-uint16";
+			int bufType = BufferedImage.TYPE_USHORT_GRAY;
+			if(SC) {
+				imgType = "/preview";
+				bufType = BufferedImage.TYPE_3BYTE_BGR;
+			}
+			String uri = orthSub.baseURL + "instances/" + uuid + imgType;
 			BufferedImage bi = ImageIO.read( orthSub.OpenUrl(uri, "image/png"));
-			if( bi.getType() != BufferedImage.TYPE_USHORT_GRAY) {
+			if( bi.getType() != bufType) {
 				IJ.showProgress(1.0);
 				IJ.log("Compressed Dicom files not read");
 				return null;
 			}
-			ImageProcessor slice = new ShortProcessor(bi);
+			if( SC) slice = new ColorProcessor(bi);
+			else slice = new ShortProcessor(bi);
 			if( stack == null) {
 				ColorModel cm = slice.getColorModel();
 				stack = new ImageStack(slice.getWidth(), slice.getHeight(), cm);
@@ -494,11 +514,30 @@ public class ReadOrthanc {
 	}
 
 	orth1Study getCurStudy(Object[] row1) {
-		int i, n = orthStudies.size();
+		int i, j, nSer, n = orthStudies.size();
+		JSONArray series;
+		JSONObject ser1, main1;
+		String serUID, tmp2, uuid1;
 		orth1Study currStudy = null;
+		serUID = (String) row1[ReadBIdatabase.TBL_SER_UID];
 		for( i=0; i<n; i++) {
 			currStudy = orthStudies.get(i);
-			if( isEqual(currStudy.patName, (String)row1[ReadBIdatabase.TBL_PAT_NAME])
+			nSer = 0;
+			series = null;
+			if( serUID != null && !serUID.isEmpty()) {
+				series = currStudy.seriesList;
+				nSer = series.size();
+			}
+			if( nSer == 1 && series != null && serUID != null) {
+				uuid1 = (String) series.get(0);
+				ser1 = (JSONObject) orthSub.ReadJson("series/" + uuid1);
+				// can be null if series was just deleted
+				if( ser1 == null) continue;
+				main1 = (JSONObject) ser1.get("MainDicomTags");
+				tmp2 = ((String) main1.get("SeriesInstanceUID")).trim();
+				if( tmp2.equals(serUID.trim())) return currStudy;
+			}
+			else if( isEqual(currStudy.patName, (String)row1[ReadBIdatabase.TBL_PAT_NAME])
 				&& isEqual(currStudy.patID, (String)row1[ReadBIdatabase.TBL_PAT_ID])
 				&& ChoosePetCt.isSameDate(currStudy.studyDate,(Date)row1[ReadBIdatabase.TBL_DATE])
 				&& isEqual(currStudy.studyName, (String)row1[ReadBIdatabase.TBL_STUDY])) break;
