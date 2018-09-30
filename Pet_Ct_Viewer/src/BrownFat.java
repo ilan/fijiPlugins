@@ -35,6 +35,7 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -45,7 +46,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import javax.vecmath.Point2d;
+import net.imagej.ops.OpService;
+import org.scijava.vecmath.Point2d;
 
 /*
  * BrownFat.java
@@ -83,7 +85,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		elementList.add(jButTrash);
 		elementList.add(jCheckBlue);
 		elementList.add(jSpinRoiNm);
-		setFocusTraversalPolicy(new CustomFocusTraversalPolicy());
+//		setFocusTraversalPolicy(new CustomFocusTraversalPolicy());
 		buttonGroup1 = new javax.swing.ButtonGroup();
 		buttonGroup1.add(jRadioExterior);
 		buttonGroup1.add(jRadioInterior);
@@ -132,11 +134,29 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		jCheckUseSUV.setSelected(prefer.getBoolean("bf use suv", true));
 		jCheckUseCt.setSelected(prefer.getBoolean("bf use ct", true));
 		jCheckOld.setSelected(prefer.getBoolean("old bf", true));
+//		jCheckGrown.setSelected(prefer.getBoolean("grown roi", false));
+		jCheckGrown.setSelected(true);
+		// allow BN Lee to see this - comment out next line
+//		jCheckGrown.setVisible(false);
+		jCheckDefLimits.setSelected(prefer.getBoolean("defined limits", false));
+		jCheckUseTemp.setSelected(prefer.getBoolean("nifti tmp", false));
+		if( getNiftiPrefs(0)) jCheckUseTemp.setSelected(true);
+		changeTmp();
+		jTextParms.setVisible(false);
 		tmpi = prefer.getInt("blue dot size", 0);
 		if( tmpi > 0) {
 			SpinnerNumberModel spin1 = getSpinModel(5);
 			spin1.setValue(tmpi);
 		}
+		jLabNifxmin.setVisible(false);
+		jLabNifxmax.setVisible(false);
+		jLabNiftix.setVisible(false);
+		jLabNifymin.setVisible(false);
+		jLabNifymax.setVisible(false);
+		jLabNify.setVisible(false);
+		jLabNifzmin.setVisible(false);
+		jLabNifzmax.setVisible(false);
+		jLabNifz.setVisible(false);
 		jCheckBlue.setSelected(false);
 		String shape = IJ.getDirectory("imagej") + "lib/petct/shaping_elongL";
 		File testIt = new File(shape);
@@ -157,6 +177,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		valz = (int)(val/pet.zoomX);
 		if( valz > val) valz = val;
 		off1 = (val - valz)/2;
+		lo = prefer.getInt("nifti loy", 10);
+		hi = prefer.getInt("nifti hiy", 90);
 		loVal = (lo * valz / 100) + off1;
 		hiVal = (hi * valz / 100) + off1;
 		jLabNifymin.setText(loVal.toString());
@@ -171,11 +193,14 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		setSpinDiameterState();
 		fillStrings();
 		jButTrash.setEnabled(false);
+		for( val = 2; val <= 6; val++) if( getNiftiPrefs(val)) break;
+		if( val > 6) jPanExNifti.setVisible(false);
 		activateBuildButton();
 		m_timer = new Timer(1500, new RefreshAction());
 		m_timer.setRepeats(false);
 		changeUseSUV(false);
 		changeUseCT(false);
+		initRadio(prefer);
 	}
 
 	@Override
@@ -249,7 +274,28 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		prefer.putBoolean("bf use suv", jCheckUseSUV.isSelected());
 		prefer.putBoolean("bf use ct", jCheckUseCt.isSelected());
 		prefer.putBoolean("old bf", jCheckOld.isSelected());
+		prefer.putBoolean("grown roi", jCheckGrown.isSelected());
+		prefer.putBoolean("defined limits", jCheckDefLimits.isSelected());
+		prefer.putBoolean("nifti tmp", jCheckUseTemp.isSelected());
 		prefer.putInt("blue dot size", getSpinInt(5));
+
+		int i, val;
+		boolean sel1;
+		String tmp1;
+		JCheckBox cbox;
+		tmp1 = getRadioText(0);
+		val = Integer.parseInt(tmp1);
+		if( val < 4 || val > 32) val = 10;
+		prefer.putInt("radio grays", val);
+		prefer.putBoolean("radio 3d", jChRad3D.isSelected());
+		prefer.putBoolean("show SD", jChRadShowSD.isSelected());
+		prefer.putBoolean("radio CT", jChRadCt.isSelected());
+		for( i=0; i<=17; i++) {
+			cbox = getRadioCB(i);
+			tmp1 = "radio " + cbox.getText();
+			sel1 = cbox.isSelected();
+			prefer.putBoolean(tmp1, sel1);
+		}
 	}
 
 	private boolean saveParent( Window w1) {
@@ -273,7 +319,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return true;
 	}
 
-	private class CustomFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy {
+/*	private class CustomFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy {
 
 		@Override
 		public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
@@ -313,7 +359,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		protected boolean accept(Component aComponent) {
 			return true;
 		}
-	}
+	}*/
 	class RefreshAction implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent ae) {
@@ -333,7 +379,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if( x > 20 && y > 20) setSize( x,y);
 	}*/
 
-	private double[] getSUVandCTLimits() {
+	double[] getSUVandCTLimits() {
 		double[] retVal = new double[6];
 		String tmp;
 		tmp = jTextSUVlo.getText();
@@ -432,6 +478,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		txt = val.toString();
 		if(saveRoiPntIndx == 0) jLabNifxmin.setText(txt);
 		else jLabNifxmax.setText(txt);
+		checkLimits( jLabNifxmin,  jLabNifxmax);
 		val = pt1.y;
 		if(saveRoiPntIndx > 0) {
 			JFijiPipe pet = parentPet.petPipe;
@@ -449,11 +496,33 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( orient == JFijiPipe.DSP_AXIAL) jLabNifymax.setText(txt);
 			else jLabNifzmax.setText(txt);
 		}
+		checkLimits( jLabNifymin,  jLabNifymax);
+		checkLimits( jLabNifzmin,  jLabNifzmax);
 		isNiftiDirty = true;
 		parentPet.repaint();
 		return true;
 	}
-	
+
+	void checkLimits(JLabel limLow, JLabel limHi) {
+		Integer valLo, valHi;
+		int slop = 4;
+		String tmp;
+		tmp = limLow.getText();
+		valLo = Integer.parseInt(tmp);
+		tmp = limHi.getText();
+		valHi = Integer.parseInt(tmp);
+		if( valHi >= valLo + slop) return;	// all is well
+		if( saveRoiPntIndx == 0) {
+			valLo = valHi - slop;
+			tmp = valLo.toString();
+			limLow.setText(tmp);
+			return;
+		}
+		valHi = valLo + slop;
+		tmp = valHi.toString();
+		limHi.setText(tmp);
+	}
+
 	void dragSphere(Poly3Save poly1, Point pt1) {
 		if( !poly1.sphericalROI) {	// not a shpere - easy
 			poly1.poly.xpoints[saveRoiPntIndx] = pt1.x;
@@ -719,7 +788,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				if( poly1.sphericalROI) {
 					if( el1 != null) {
 						g.draw(el1);
-						el1 = poly1.shiftEllipse(el1, widthX);
+						el1 = poly1.shiftEllipse(el1, widthX, 0);
 					}
 				}
 				else g.drawPolygon(xp2, yp2, npoints);
@@ -733,7 +802,15 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( rubberX >= 0) rubberX += widthX;
 		}
 	}
-	
+
+/*	int[] shiftYvals( int[] inY, int shftY) {
+		if( shftY == 0) return inY;
+		int i, n = inY.length;
+		int[] outY = new int[n];
+		for( i=0; i<n; i++) outY[i] = inY[i]+shftY;
+		return outY;
+	}*/
+
 	void drawCurrDisp3Roi( Graphics2D g, Poly3Save poly1, Display3Panel d3panel) {
 		int[] xp1, xp2, yp1, yp2;
 		int i, type1, npoints, slice, widthX, width1;
@@ -779,7 +856,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( poly1.sphericalROI) {
 				Ellipse2D el1 = poly1.getEllipseSub(slice, type1, true, d3panel);
 				if( el1 != null) {
-					if( width1 > 0) el1 = poly1.shiftEllipse(el1, width1);
+					if( width1 > 0) el1 = poly1.shiftEllipse(el1, width1,0);
 					g.draw(el1);
 				}
 			} else {
@@ -787,7 +864,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				yp2 = new int[npoints];
 				for( i=0; i<npoints; i++) {
 					pt1 = new Point2d(xp1[i], yp1[i]);
-					pt2 = d3panel.d3Pipe.pos2Scrn(pt1, scl1, type1, true);
+					pt2 = d3panel.d3Pipe.pos2Scrn(pt1, scl1, type1, poly1.type, true);
 					xp2[i] = pt2.x + width1;
 					yp2[i] = pt2.y;
 				}
@@ -832,6 +909,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				break;
 
 			case JFijiPipe.DSP_SAGITAL:
+				if( d3panel.showMip) return;
 				if( typeOrig == JFijiPipe.DSP_CORONAL) swap1 = true;
 				width1 = 2*widthX;
 				sliceDbl = d3panel.d3Sagital;
@@ -872,12 +950,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			pt21 = new Point2d(x0 - deltaX, y0 - deltaY);
 			pt22 = new Point2d(x0 + deltaX, y0 + deltaY);
 			scl1 = d3panel.getScale();
-			pt1a = d3panel.d3Pipe.pos2Scrn(pt21, scl1, type1);
-			pt2 = d3panel.d3Pipe.pos2Scrn(pt22, scl1, type1);
+			pt1a = d3panel.d3Pipe.pos2Scrn(pt21, scl1, type1, other, true);
+			pt2 = d3panel.d3Pipe.pos2Scrn(pt22, scl1, type1, other, true);
 			pt21 = new Point2d(pt1a.x, pt1a.y);
 			pt22 = new Point2d(pt2.x, pt2.y);
 			el1 = new Ellipse2D.Double( pt21.x, pt21.y, pt22.x - pt21.x, pt22.y-pt21.y);
-			if( width1 > 0) el1 = poly1.shiftEllipse(el1, width1);
+			if( width1 > 0) el1 = poly1.shiftEllipse(el1, width1, 0);
 			g.draw(el1);
 			return;
 		}
@@ -1006,6 +1084,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return jCheckDefLimits.isSelected() && j3Dtab.getSelectedIndex() == 4;
 	}
 
+	boolean isCtRadiomics() {
+		return jChRadCt.isSelected();
+	}
+
 	void drawNiftiLimits( Graphics2D g) {
 		int[] xp1, yp1, xp2, yp2, xp4;
 		Point2d pt1;
@@ -1120,6 +1202,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	
 	private void drawFoundSub(Graphics2D g, boolean red, int slice, int type1, int pointDiameter) {
 		int i, j, x1, y1, pointDia2, widthX;
+		JFijiPipe petP = parentPet.petPipe;
 		Point2d pt1;
 		Point pt2;
 		SUVpoints.SavePoint currPnt;
@@ -1139,7 +1222,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			currPnt = suvPnt.getPoint(j);
 			if( currPnt.z1 != slice) continue;
 			pt1 = new Point2d(currPnt.x1, currPnt.y1);
-			pt2 = parentPet.petPipe.pos2Scrn(pt1, scl1, type1);
+			pt2 = petP.pos2Scrn(pt1, scl1, type1);
 			x1 = pt2.x - pointDia2;
 			y1 = pt2.y - pointDia2;
 			g.fillOval(x1, y1, pointDiameter, pointDiameter);
@@ -1199,6 +1282,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					break;
 
 				case 2:	// sagital
+					if( d3panel.showMip) return;
 					dstX = srcY;
 					dstY = srcZ;
 					dstZ = srcX;
@@ -1420,12 +1504,65 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if( indx < nifListSz) {
 			for( i= indx; i<nifListSz-1; i++) nifList[i] = nifList[i+1];
 			nifList[i] = null;
+			isDelete = true;
 			nifListSz--;
+			deleteFromNiftiMask(indx);
 		}
 		else polyVect.remove(indx-getRoiSize(1));
 		killSavedSUV();
 		isDirty = true;
 		changeRoiAndUpdate();
+	}
+
+	void deleteFromNiftiMask(int indx) {
+		String dirName;
+		int i, j, k, headerSz, width, height, numZ, frmSz;
+		byte[] buf;
+		byte valb;
+		for(i=0; i<2; i++) {
+			dirName = getNiftiDir(1) + "/" + generateNiftiName(1);
+			if( i>0) {
+				j = dirName.lastIndexOf('/');
+				dirName = dirName.substring(0, j+1) + "GrowedMaskResult.nii";
+			}
+			try {
+				File mskFl = new File(dirName);
+				if(!mskFl.exists()) continue;
+				File fixFile = new File(getNiftiDir(1) + "/fixed");
+				FileInputStream fl1 = new FileInputStream(mskFl);
+				headerSz = 348+4;
+				buf = new byte[headerSz];
+				fl1.read(buf);	// read header
+				j = readShort(buf, 0);
+				if( j != 348) {
+					fl1.close();
+					return;
+				}
+				width = readShort(buf, 42);
+				height = readShort(buf, 44);
+				numZ = readShort(buf, 46);
+				frmSz = width * height;
+				FileOutputStream out = new FileOutputStream(fixFile);
+				out.write(buf);
+				buf = new byte[frmSz];
+				for( j=0; j<numZ; j++) {
+					fl1.read(buf);
+					for( k=0; k<frmSz; k++) {
+						valb = buf[k];
+						if( valb > indx) {	// indx counts from zero, valb from 1
+							if(valb > indx+1)valb--;
+							else valb = 0;
+							buf[k] = valb;
+						}
+					}
+					out.write(buf);
+				}
+				fl1.close();
+				out.close();
+				mskFl.delete();
+				fixFile.renameTo(mskFl);
+			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
+		}
 	}
 
 	void pressRoiBut() {
@@ -1657,6 +1794,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		isSliceChange = false;
 		if( numRed < 1 || suvPnt == null) return;
 		if( getSpinInt(0) > getRoiSize()) return;
+		int red0 = redPoints[0];
+		if( red0 >= suvPnt.getListSize()) return;
 		parentPet.maybeNewPosition(suvPnt.getPoint(redPoints[0]));
 	}
 	
@@ -1721,7 +1860,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 	void changeOrientation() {
 		if( !jCheckBlue.isSelected()) return;
-		if( nifListSz <= 0) return;
+		if( nifListSz <= 0 && suvPnt != null) return;
 		calculateVol(true);
 	}
 
@@ -1742,6 +1881,166 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if(calVol) calculateVol(true);
 	}
 
+	void initRadio(Preferences prefer) {
+		Integer val;
+		boolean sel1;
+		String tmp1;
+		JCheckBox cbox;
+		val = prefer.getInt("radio grays", 10);
+		jTextGray.setText(val.toString());
+		jChRad3D.setSelected(prefer.getBoolean("radio 3d", true));
+		jChRadShowSD.setSelected(prefer.getBoolean("show SD", true));
+		jChRadCt.setSelected(prefer.getBoolean("radio CT", false));
+//		cbox = getRadioCB(17);
+//		cbox.setVisible(false);
+		for( int i=0; i<=17; i++) {
+			cbox = getRadioCB(i);
+			tmp1 = "radio " + cbox.getText();
+			sel1 = prefer.getBoolean(tmp1, false);
+			cbox.setSelected(sel1);
+		}
+	}
+
+	ArrayList<Integer> getRadioActive(boolean isCt) {
+		JCheckBox cbox;
+		String labCt = "";
+		int i, n=17, type=0;
+		if( isCt) {
+			n=16;
+			labCt = "CT ";
+			type = 1;
+			if(parentPet.MRIflg) {
+				labCt = "MRI ";
+				type = 2;
+			}
+		}
+		ArrayList<Integer> retList = new ArrayList<Integer>();
+		for( i=0; i<=n; i++) {
+			cbox = getRadioCB(i);
+			if( cbox.isSelected()) {
+				SUVpoints.RadioPoint res = suvPnt.newRadioPnt();
+				res.label = labCt + cbox.getText();
+				res.type = type;
+				suvPnt.radioList.add(res);
+				retList.add(i);
+			}
+		}
+		return retList;
+	}
+
+	JCheckBox getRadioCB( int type) {
+		JCheckBox cbox = null;
+		switch(type) {
+			case 0:
+				cbox = jChRadEntropy;
+				break;
+
+			case 1:
+				cbox = jChRadHomogenity;
+				break;
+
+			case 2:
+				cbox = jChRadContrast;
+				break;
+
+			case 3:
+				cbox = jChRadASM;
+				break;
+
+			case 4:
+				cbox = jChRadDiffEntropy;
+				break;
+
+			case 5:
+				cbox = jChRadDiffVariance;
+				break;
+
+			case 6:
+				cbox = jChRadCorrelation;
+				break;
+
+			case 7:
+				cbox = jChRadClusterPromenence;
+				break;
+
+			case 8:
+				cbox = jChRadClusterShade;
+				break;
+
+			case 9:
+				cbox = jChRadCM1;
+				break;
+
+			case 10:
+				cbox = jChRadCM2;
+				break;
+
+			case 11:
+				cbox = jChRadInverseDiffMoment;
+				break;
+
+			case 12:
+				cbox = jChRadMaxProbability;
+				break;
+
+			case 13:
+				cbox = jChRadSumAverage;
+				break;
+
+			case 14:
+				cbox = jChRadSumEntropy;
+				break;
+
+			case 15:
+				cbox = jChRadSumVariance;
+				break;
+
+			case 16:
+				cbox = jChRadVariance;
+				break;
+
+			case 17:
+				cbox = jChRadSphericity;
+				break;
+
+			case 30:	// needed to read 3D
+				cbox = jChRad3D;
+				break;
+		}
+		return cbox;
+	}
+
+	String getRadioText( int type) {
+		String text1 = "";
+		switch(type) {
+			case 0:
+				text1 = jTextGray.getText();
+				break;
+		}
+		return text1;
+	}
+
+	ExcludedROI[] calculateExcludedROIs(int gateInd1) {
+		int i, n = getRoiSize();
+		ExcludedROI[] retVal = new ExcludedROI[n];
+		for( i=0; i<n; i++) {
+			if( !isExcluded(i)) continue;
+			SaveVolROI tempVal = calcSingleRoiVol( i, false, gateInd1);
+			retVal[i] = new ExcludedROI();
+			retVal[i].saveAll(tempVal);
+		}
+		return retVal;
+	}
+
+	boolean isExcluded(int roiNum) {
+		String tmp;
+		int n1 = getRoiSize(1);
+		if(roiNum<n1) return false;
+		Poly3Save polCur = polyVect.get(roiNum-n1);
+		tmp = polCur.ROIlabel;
+		return ( tmp != null && tmp.startsWith("exclude ROI"));
+	}
+
 	SaveVolROI calculateVol(boolean dispFlg) {
 		return calculateVol(dispFlg, -1, -1);
 	}
@@ -1752,8 +2051,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		int gateIndx = parentPet.gateIndx;
 		if( gateInd1 >= 0) gateIndx = gateInd1;
 		if( viewIn > 0) sliceType = viewIn;	// override the default
+/*		Date start, stop;
+		start = new Date();
+		Double diff;*/
 		SaveVolROI volTmp, volRet = new SaveVolROI();
+		ExcludedROI[] excludedROIs;
 		ArrayList<Poly3Save> currSliceRois;
+		ArrayList<SUVpoints.SavePoint> excludedPoints;
 		JFijiPipe.lineEntry currLine;
 		Poly3Save currRoi;
 		int i, angle1=0, j, k, width1, maxSlice, sliceNum, maxDepth, depth;
@@ -1766,7 +2070,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		int [] roiNum = new int[getRoiSize(0)];
 		changeLimits(); // maybe the user has changed the limits?
 		calcSavedSUV(gateInd1);
+		excludedROIs = calculateExcludedROIs(gateInd1);
 		suvPnt = new SUVpoints(sliceType);
+		excludedPoints = suvPnt.buildExcludedList(excludedROIs);
 		width1 = maxSlice = parentPet.petPipe.data1.width;
 		numFrm = parentPet.petPipe.getNormalizedNumFrms();
 		maxDepth = numFrm;
@@ -1778,7 +2084,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		volSliceType = sliceType;
 		if( volSliceType == JFijiPipe.DSP_AXIAL) {
 			maxSlice = numFrm;
-			maxDepth = parentPet.petPipe.data1.width;
+			maxDepth = parentPet.petPipe.data1.height;
 		}
 		maxCalc = maxSlice;
 		maxMip = -1;
@@ -1786,8 +2092,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		for( i=0; i<maxCalc; i++) volRet.SUVList[i] = 0;
 		volRet.type = volSliceType;
 		if( dispFlg && RoiState == 1 && !jCheckShowAll.isSelected()) {
-			i = getSpinInt(0);
-			volTmp = maybeRecalcSingleRoiVol(i - 1, gateInd1);
+			i = getSpinInt(0)-1;
+			if( i<excludedROIs.length && excludedROIs[i] != null) {
+				volTmp = excludedROIs[i].getAll();
+			} else volTmp = maybeRecalcSingleRoiVol(i, gateInd1);
 			if( volTmp != null) {
 				volRet = volTmp;
 				maxCalc = 0;
@@ -1841,6 +2149,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				currRoi = polyVect.get(roi);
 				if( currRoi.type != volSliceType) continue;
 				if( i+1 < currRoi.lowSlice || i+1 > currRoi.hiSlice) continue;
+				if( isExcluded(roi)) continue;
 				currSliceRois.add(currRoi);
 				roiNum[j++] = roi + getRoiSize(1);
 			}
@@ -1938,7 +2247,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 							if( RoiNum4Max != curRoiNum)
 								RoiNum4Max = curRoiNum;
 							if(numRed < 5) {
-								redPoints[numRed++] = suvPnt.getListSize()-1;
+								int red0 = suvPnt.getListSize()-1;
+								redPoints[numRed++] = red0;
+								suvPnt.red0 = red0;
 							}
 						}
 						if( petVal > volRet.SUVList[i]) volRet.SUVList[i] = petVal;
@@ -1946,6 +2257,21 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				}
 			}
 		}
+//		suvPnt1.calcAllRadiomics(this);
+		if( RoiState == 1) {
+			volRet.isExcluded = false;
+			i = getSpinInt(0)-1;
+			if( !jCheckShowAll.isSelected() && i<excludedROIs.length) volRet.isExcluded = (excludedROIs[i] != null);
+			if( !volRet.isExcluded) {
+				double removeVal = suvPnt.removeExcluded(excludedPoints, excludedROIs);
+				if( removeVal > 0) {
+					volRet.SUVtotal -= removeVal;
+					numRed = 1;
+					redPoints[0] = suvPnt.red0;
+				}
+			}
+		}
+
 		SUVmean = volRet.calcAll(false);
 		if(dispFlg) {
 			j = k = 2;
@@ -1968,6 +2294,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if(volRet.type != volSliceType) suvPnt = null;
 			parentPet.repaintAll();
 		}
+/*		stop = new Date();
+		diff = (double)(stop.getTime() - start.getTime());
+		diff /= 1000.;
+		IJ.log( "time = " + diff.toString());*/
 		return volRet;
 	}
 
@@ -2038,12 +2368,18 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		suvPnt = new SUVpoints(parentPet.m_sliceType);
 		CtCenterVal = 0;
 		if( RoiNum >= getRoiSize() || RoiNum < 0) return null;
+		SaveVolROI retVal;
 		int gateIndx = parentPet.gateIndx;
+		JFijiPipe petPipe = parentPet.petPipe;
 		if( gateInd1 >= 0) gateIndx = gateInd1;
 		int n1 = getRoiSize(1);
-		if( RoiNum < n1) return calcSingleNiftiRoiVol( RoiNum, SUVonly);
-		boolean useSUV, useCT, firstSlice, insideFlg;
-		int i, j, k, maxSlice, maxDepth, sliceNum, depth, width1;
+		if( RoiNum < n1) {
+			retVal = calcSingleNiftiRoiVol( RoiNum, SUVonly);
+			suvPnt.calcRadiomics(this, isCalcRadio);
+			return retVal;
+		}
+		boolean useSUV, useCT, firstSlice, insideFlg, isSpect;
+		int i, j, k, sag=0, maxSlice, maxDepth, sliceNum, depth, width1;
 		int loSlice, hiSlice, roiNum0 = RoiNum - n1;
 		int ctSlice, numFrm, gateOffset = 0, angle1=0;
 		double petVal, suvLo, suvHi;
@@ -2052,18 +2388,20 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		suvHi = suvAndCt[1];
 		int wideCT = getCTcalc();
 		JFijiPipe.lineEntry currLine;
-		width1 = maxSlice = parentPet.petPipe.data1.width;
-		numFrm = parentPet.petPipe.getNormalizedNumFrms();
+		width1 = maxSlice = petPipe.data1.width;
+		numFrm = petPipe.getNormalizedNumFrms();
 		maxDepth = numFrm;
-		if( parentPet.petPipe.data1.numTimeSlots>1) {
+		if( petPipe.data1.numTimeSlots>1) {
 			gateOffset = gateIndx * numFrm;
 		}
-		SaveVolROI retVal  = new SaveVolROI();
+		retVal  = new SaveVolROI();
 		Poly3Save currRoi = polyVect.get(roiNum0);
 		retVal.type = currRoi.type;
+		if( retVal.type == JFijiPipe.DSP_SAGITAL)
+			width1 = maxSlice = petPipe.data1.height;
 		if( retVal.type == JFijiPipe.DSP_AXIAL) {
 			maxSlice = numFrm;
-			maxDepth = parentPet.petPipe.data1.width;
+			maxDepth = petPipe.data1.height;
 		}
 		retVal.SUVList = new double[maxSlice];
 		useSUV = jCheckUseSUV.isSelected();
@@ -2072,7 +2410,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		else {
 			if(isPercentOK()) {
 				suvLo = suvLo * savePercentSUV[RoiNum] / 100;
-				suvHi = 10 * suvHi;	// kill upper condition
+				suvHi = 10 * savePercentSUV[RoiNum];	// kill upper condition
 			}
 		}
 		for( i=0; i<maxSlice; i++) retVal.SUVList[i] = 0;
@@ -2106,12 +2444,14 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 					case JFijiPipe.DSP_SAGITAL:
 						angle1 = 270;
+						sag = ChoosePetCt.round(petPipe.mriOffY0);
 						break;
 				}
-				currLine = parentPet.petPipe.data1.getLineOfData(angle1, depth, sliceNum+gateOffset);
+				currLine = petPipe.data1.getLineOfData(angle1, depth, sliceNum+gateOffset);
 				ctSlice = parentPet.ctPipe.findCtPos(sliceNum, false);
 				insideFlg = false;
 				for( k=0; k<width1; k++) {
+					isSpect = currLine.SUVfactor <= 0;
 					if( firstSlice) {	// want to save time on following slices
 						insideFlg = currRoi.contains(k, j);
 						if(insideFlg) {
@@ -2121,12 +2461,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					}
 					if (currLine.pixels != null) petVal = currLine.pixels[k] * currLine.slope;
 					else petVal = currLine.pixFloat[k];
-					if( currLine.SUVfactor > 0) petVal /= currLine.SUVfactor;
+					if( !isSpect) petVal /= currLine.SUVfactor;
 					if( SUVonly) {
 						if( petVal <= retVal.SUVmax) continue;
 						// clamp the maximum permitted value to suvHi
 						// this gives the user some control on the limits
-						if( petVal > suvHi) petVal = suvHi;
+						if( petVal > suvHi && !isSpect) petVal = suvHi;
 					}
 					if( useSUV) {
 						if( petVal < suvLo || petVal > suvHi) continue;
@@ -2149,7 +2489,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 							RoiNum4Max = RoiNum;
 						retVal.SUVmax = petVal;
 						if(numRed < 5) {
-							redPoints[numRed++] = suvPnt.getListSize()-1;
+							int red0 = suvPnt.getListSize()-1;
+							redPoints[numRed++] = red0;
+							suvPnt.red0 = red0;
 						}
 					}
 					if( petVal > retVal.SUVmax) retVal.SUVmax = petVal;
@@ -2158,6 +2500,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			}
 			firstSlice = false;
 		}
+		suvPnt.calcRadiomics(this, isCalcRadio);
 		return retVal;
 	}
 	
@@ -2198,7 +2541,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		else {
 			if(isPercentOK()) {
 				suvLo = suvLo * savePercentSUV[RoiNum] / 100;
-				suvHi = 10 * suvHi;	// kill upper condition
+				suvHi = 10 * savePercentSUV[RoiNum];	// kill upper condition
 			}
 		}
 		CtCenterVal = 0;
@@ -2210,6 +2553,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if( currNif == null) return retVal;
 		coef0 = pip0.data1.getCoefficentAll();
 		SUVfactor = pip0.data1.SUVfactor;
+		if( SUVfactor == 0) SUVfactor = 1.0; // SPECT
 		for( i=0; i< currNif.vectNif.size(); i++) {
 			val3 = currNif.getVal3(i);
 			x1 = val3[0];
@@ -2263,6 +2607,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return retVal;
 	}
 	
+	@SuppressWarnings("unchecked")
 	void fillStrings() {
 //		String tmp = System.getProperty("user.dir");
 		String line;
@@ -2284,12 +2629,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	boolean isCtFat(int sliceNum, int x, int y, double[] limits, int type, int acceptWide) {
 		CtCenterVal = 0;
 		if( sliceNum < 0) return false;
-		int i, j, x0, x1, y0, y1, width1, offst, upLimit, loLimit, coef0;
+		int i, j, x0, x1, y0, y1, x2,y2, width1, offst, upLimit, loLimit, coef0;
 //		int average1;
 		short val1;
 		JFijiPipe ctPipe = parentPet.ctPipe;
-		double rescaleIntercept = ctPipe.data1.shiftIntercept();
+		double slope, rescaleIntercept = ctPipe.data1.shiftIntercept();
 		short[] data1 = ctPipe.data1.pixels.get(sliceNum);
+		slope = ctPipe.data1.getRescaleSlope(sliceNum);
 		width1 = ctPipe.data1.width;
 		upLimit = (int)(limits[3] - rescaleIntercept);
 		loLimit = (int)(limits[2] - rescaleIntercept);
@@ -2300,43 +2646,47 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			x0 = y;
 			y0 = x;
 		}
-		x1 = parentPet.shift2Ct(ctPipe, x0);
-		y1 = parentPet.shift2Ct(ctPipe, y0);
+		x1 = parentPet.shift2Ct(ctPipe, x0, 0);
+		y1 = parentPet.shift2Ct(ctPipe, y0, 1);
+/*		x2 = parentPet.shift2Ct2(ctPipe, x0, 0);
+		y2 = parentPet.shift2Ct2(ctPipe, y0, 1);
+		if( x1 != x2 || y1 != y2)
+			y2--;*/
 		// if the points are on the edge, nudge them to the inside
 		if( x1 < 1) x1 = 1;
 		if( y1 < 1) y1 = 1;
 		if( x1 >= width1-1) x1 = width1-2;
 		if( y1 >= width1-1) y1 = width1-2;
 		offst = y1*width1 + x1;
-		val1 = (short) (data1[offst]+coef0);
+		val1 = (short) ((data1[offst]+coef0)*slope);
 		CtCenterVal = val1;
 		if( acceptWide == 2)	{	// accept if only a single point fits
 			for( i=-1; i<=1; i++) {
-				val1 = (short) (data1[offst+i]+coef0);
+				val1 = (short) ((data1[offst+i]+coef0)*slope);
 				if( val1 >= loLimit && val1 <= upLimit) return true;
 			}
-			val1 = (short) (data1[offst+width1] + coef0);
+			val1 = (short) ((data1[offst+width1] + coef0)*slope);
 			if( val1 >= loLimit && val1 <= upLimit) return true;
-			val1 = (short) (data1[offst-width1] + coef0);
+			val1 = (short) ((data1[offst-width1] + coef0)*slope);
 			return val1 >= loLimit && val1 <= upLimit;
 		}
 		if( acceptWide == 1)	{	// look for maybe bone
 			isFat = isBone = isOther = isHeavy = false;
 			for( i=-1; i<=1; i++) {
-				val1 = (short) (data1[offst+i]+coef0);
+				val1 = (short) ((data1[offst+i]+coef0)*slope);
 				checkCTval( val1, loLimit, upLimit);
 			}
-			val1 = (short) (data1[offst+width1] + coef0);
+			val1 = (short) ((data1[offst+width1] + coef0)*slope);
 			checkCTval( val1, loLimit, upLimit);
-			val1 = (short) (data1[offst-width1] + coef0);
+			val1 = (short) ((data1[offst-width1] + coef0)*slope);
 			checkCTval( val1, loLimit, upLimit);
 			if( !isFat) return false;
 			if( !isBone && !isOther && !isHeavy) return true; // all case
 			if( !isBone) {	// extend the search to another 4 points
 				for( i=-1; i<=1; i+= 2) {
-					val1 = (short) (data1[offst+width1+i] + coef0);
+					val1 = (short) ((data1[offst+width1+i] + coef0)*slope);
 					checkBone(val1);
-					val1 = (short) (data1[offst-width1+i] + coef0);
+					val1 = (short) ((data1[offst-width1+i] + coef0)*slope);
 					checkBone(val1);
 				}
 				return isBone;
@@ -2425,7 +2775,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		SUVpoints.SavePoint currPnt;
 		short val1, shortBuf[];
 		boolean useCt, inRoi, invertImg;
-		double xSpacing, scale, slope, petVal, suvNorm, suvLo, suvNoRoi;
+		double xSpacing, scale, slope, slop1, petVal, suvNorm, suvLo, suvNoRoi;
 		Preferences prefer = parentPet.parent.jPrefer;
 		i = prefer.getInt("inside color", 0);
 		if( i != 0) colIn = new Color(i);
@@ -2472,17 +2822,19 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			// with findCtPos, if it is outside the range, use last good value
 			ctSlice = ctPipe.findCtPos(z1, true);
 			shortBuf = ctPipe.data1.pixels.get(ctSlice);
+			slop1 = ctPipe.data1.getRescaleSlope(ctSlice);
 			for( y=0; y<height; y++) {
-				x0 = parentPet.shift2Ct(ctPipe, 0);
-				y1 = parentPet.shift2Ct(ctPipe, y);
+				y1 = parentPet.shift2Ct(ctPipe, y, 1);
 				offCt = ctWidth*y1;
 				offY = width*y;
 				for( x=0; x<width; x++) {
-					x1 = (int) (x*xSpacing) + x0;
-					val1 = (short) (shortBuf[x1 + offCt] + ctCoef);
-					gray = (int) ((val1 - min1) * scale);
-					if( gray < 0) gray = 0;
-					if( gray > maxCtDsp) gray = maxCtDsp;
+					x1 = parentPet.shift2Ct(ctPipe, x, 0) + offCt;
+					if(x1 >= 0 && x1 < shortBuf.length) {
+						val1 = (short) ((shortBuf[x1] + ctCoef)*slop1);
+						gray = (int) ((val1 - min1) * scale);
+						if( gray < 0) gray = 0;
+						if( gray > maxCtDsp) gray = maxCtDsp;
+					} else gray = 0;
 					pixels[x+offY] = black | gray << 16 | gray << 8 | gray;
 				}
 			}
@@ -2766,7 +3118,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	String generateFileName(int type, boolean spcSwap) {
 		String retVal;
 		if( type == 0) {
-			retVal = parentPet.parent.m_patName.replace('.', ' ').replace(',', '_').trim();
+			retVal = parentPet.parent.m_patName.replace('.', ' ').trim();
+			retVal = retVal.replaceAll("[,/]", "_");
 		} else {
 			retVal = ChoosePetCt.UsaDateFormat(parentPet.parent.getStudyDate());
 			retVal = retVal.replace(", ", "_");
@@ -2778,20 +3131,34 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	@SuppressWarnings("null")
 	void saveResults(String myFileName) {
 		try {
+			isCalcRadio = false;
 			if( myFileName == null && suvPnt == null) return;
+			if( jTogDrawRoi.isSelected()) {
+				IJ.log("You cannot save results while still in the process of drawing a ROI.");
+				return;
+			}
 			Integer x1, y1, z1, n = getRoiSize(), n0 = getRoiSize(0), n1 = getRoiSize(1);
-			int numPnts, val1, numGated;
+			int numPnts, val1, numGated, numRadio;
+			SUVpoints.RadioPoint res;
 			short[] val3;
-			double SUVMean;
+			double[] radioSum, radioVol;
+			double SUVMean, vTotal = 0, vTmp;
 			if( n <= 0) return;
 			// avoid a bug Salim found
 			if( savePercentSUV==null) {
 				getSUVandCTLimits();
 				if( isPercent) calculateVol(false);
 			}
+			// for Nifti check that SUV and grown ROIs are both checked
+			if( n1 > 0 && (!jCheckUseSUV.isSelected() || !jCheckGrown.isSelected())) {
+				int result = JOptionPane.showConfirmDialog(this, "In most cases both SUV values and grown ROIs are used.\n"
+					+ "Are you absolutely sure you want to save the file without them???",
+					"Probable Error", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+				if( result != JOptionPane.YES_OPTION) return;
+			}
 			SaveVolROI tmpVol;
 			int[] xp, yp;
-			int i, j, k, viewType = parentPet.m_sliceType;
+			int i, j, k, i1, viewType = parentPet.m_sliceType;
 			Poly3Save polCur;
 			Nifti3 nifCur;
 			String flPath, defName, out1 = "brown fat path";
@@ -2868,12 +3235,32 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				long diff = (stopTime.getTime() - Roi1StartTime.getTime())/1000;
 				measureTime = (int) diff;
 			}
+			maybeRecalcSingleRoiVol(0, -1);	// to define suvPnt1
+			isCalcRadio = true;
+			numRadio = 0;
+			if( suvPnt.radioList != null) {
+				getRadioActive(false);
+				if(isCtRadiomics()) getRadioActive(true);
+				numRadio = suvPnt.radioList.size();
+			}
+			tmp1 = "";
+			for( i1=0; i1<numRadio; i1++) {
+				res = suvPnt.radioList.get(i1);
+				tmp1 += ", " + res.label;
+			}
+			radioSum = new double[numRadio];
+			radioVol = new double[numRadio];
 			FileWriter fos = new FileWriter(fl1);
 			out1 = "Label, ROI, type, Vol(ml), Vol*mean, SUVMean, SD, SUVPeak, MeanWahl, ";
-			out1 += "SUVqPeak, MeanQpet, SUVMax, MeanMax, HU, SD\n";
+			out1 += "SUVqPeak, MeanQpet, SUVMax, MeanMax, HU" + tmp1 + "\n";
 			fos.write(out1);
+			ExcludedROI[] excludedROIs;
+			ArrayList<SUVpoints.SavePoint> excludedPoints;
 			numGated = parentPet.petPipe.data1.numTimeSlots;
+			boolean showSD = jChRadShowSD.isSelected();
 			for( j=0; j<numGated; j++) {
+				excludedROIs = calculateExcludedROIs(j);
+				excludedPoints = suvPnt.buildExcludedList(excludedROIs);
 				k = -1;
 				if( numGated > 1) {
 					k = j;
@@ -2884,7 +3271,14 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					}
 				}
 				for( i=0; i<=n; i++) {
-					if(i<n) tmpVol = maybeRecalcSingleRoiVol(i, k);
+					if( i<excludedROIs.length && excludedROIs[i] != null) continue;
+					if(i<n) {
+						tmpVol = maybeRecalcSingleRoiVol(i, k);
+						if( tmpVol == null) continue;
+						tmpVol.SUVtotal -= suvPnt.removeExcluded(excludedPoints, excludedROIs);
+//						numRed = 1;
+//						redPoints[0] = suvPnt.red0;
+					}
 					else tmpVol = calculateVol(false, viewType, k);
 					if( tmpVol == null) continue;
 					SUVMean = tmpVol.calcAll(true);
@@ -2906,10 +3300,33 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					out1 += PetCtFrame.roundN(tmpVol.peakWahl, 2) + ", " + PetCtFrame.roundN(tmpVol.meanWahl, 2) + ", ";
 					out1 += PetCtFrame.roundN(tmpVol.peakQpet, 2) + ", " + PetCtFrame.roundN(tmpVol.meanQpet, 2) + ", ";
 					out1 += PetCtFrame.roundN(tmpVol.SUVmax, 2) + ", " + PetCtFrame.roundN(tmpVol.meanMax, 2) + ", ";
-					out1 += PetCtFrame.roundN(tmpVol.CtHU, 2) + ", " + PetCtFrame.roundN(tmpVol.CtSD, 2) + "\n";
+					out1 += PetCtFrame.roundN(tmpVol.CtHU, 2) + " \u00B1 " + PetCtFrame.roundN(tmpVol.CtSD, 2);
+					if(i<n) {
+						int numRd1 = numRadio;
+						if( numRd1 > 0) numRd1 = suvPnt.radioList.size();
+						vTmp= tmpVol.vol1;
+						vTotal += vTmp;
+						for( i1=0; i1<numRd1; i1++) {
+							res = suvPnt.radioList.get(i1);
+							if( res.mean != 0) { // don't count zeros
+								radioSum[i1] += res.mean * vTmp;
+								radioVol[i1] += vTmp;
+							}
+							out1 += ", " + PetCtFrame.roundN(res.mean, 2);
+							if(showSD && res.std > 0) out1 += " \u00B1 " + PetCtFrame.roundN(res.std, 2);
+						}
+					} else {
+						for( i1=0; i1<numRadio; i1++) {
+							vTmp = 0;
+							if( radioVol[i1]>0) vTmp = radioSum[i1]/radioVol[i1];
+							out1 += ", " + PetCtFrame.roundN(vTmp, 2);
+						}
+					}
+					out1 += "\n";
 					fos.write(out1);
 				}
 			}
+			isCalcRadio = false;
 			out1 = patName + ", " + styDate + ", SUL =, ";
 			out1 += PetCtFrame.roundN(parentPet.petPipe.data1.SULfactor, 5);
 			if( measureTime > 0) {
@@ -2917,7 +3334,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			} else {
 				out1 += ",,";
 			}
-			out1 += ",,,,,,, patient ID =," + parentPet.parent.m_patID + "\n";
+			out1 += "," + NiftiLab;
+			out1 += ",,,,,, patient ID =," + parentPet.parent.m_patID + "\n";
 			fos.write(out1);
 			
 			// if there are NIfti ROIs, they are here:
@@ -3052,6 +3470,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			boolean flipOld = jCheckOld.isSelected();
 			polyVect = new ArrayList<Poly3Save>();
 			Roi1StartTime = null;
+			NiftiStartTime = null;
 			measureTime = -1;
 			isDirty = true;
 			vals = new Integer[3];
@@ -3259,6 +3678,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( getRoiSize(0)>0) {
 				jCheckDefLimits.setSelected(false);
 				jCheckDefLimits.setEnabled(false);
+				jButNif.setEnabled(false);
 			}
 			changedRoiChoice(true);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
@@ -3489,30 +3909,49 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return spin1;
 	}
 
+	void changeTmp() {
+		boolean isTmp = jCheckUseTemp.isSelected();
+		jTextNifSrc.setEnabled(!isTmp);
+		jButNifSrc.setEnabled(!isTmp);
+		jButMake3Nifti.setEnabled(!isTmp);
+	}
+
 	String browseNifti(boolean browse1) {
-		String tmp;
+		String tmp = null;
 		File fl1;
 		int i;
-		JTextField textbx = jTextNifSrc;
-		tmp = textbx.getText().trim();
-		if( browse1) {
-			JFileChooser fc;
-			if( tmp.isEmpty()) fc = new JFileChooser();
-			else fc = new JFileChooser(tmp);
-			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			fc.setAcceptAllFileFilterUsed(false);
-			i = fc.showOpenDialog(this);
-			if( i == JFileChooser.APPROVE_OPTION) {
-				fl1 = fc.getSelectedFile();
+		try {
+			if( jCheckUseTemp.isSelected()) {
+				if( parentPet.niftiTmp.contains("nifti")) return parentPet.niftiTmp;
+				fl1 = File.createTempFile("nifti", null);
 				tmp = fl1.getPath();
-				textbx.setText(tmp);
+				fl1.delete();
+				fl1 = new File(tmp);
+				fl1.mkdirs();
+				parentPet.niftiTmp = tmp;
+				return tmp;
 			}
-		}
-		fl1 = new File(tmp);
-		if( !fl1.isDirectory()) {
-			JOptionPane.showMessageDialog(this, "Please put a valid path to the data");
-			return null;
-		}
+			JTextField textbx = jTextNifSrc;
+			tmp = textbx.getText().trim();
+			if( browse1) {
+				JFileChooser fc;
+				if( tmp.isEmpty()) fc = new JFileChooser();
+				else fc = new JFileChooser(tmp);
+				fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				fc.setAcceptAllFileFilterUsed(false);
+				i = fc.showOpenDialog(this);
+				if( i == JFileChooser.APPROVE_OPTION) {
+					fl1 = fc.getSelectedFile();
+					tmp = fl1.getPath();
+					textbx.setText(tmp);
+				}
+			}
+			fl1 = new File(tmp);
+			if( !fl1.isDirectory()) {
+				JOptionPane.showMessageDialog(this, "Please put a valid path to the data");
+				return null;
+			}
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
 		return tmp;
 	}
 
@@ -3527,6 +3966,39 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		File checkIt = new File(path);
 		if( checkIt.exists()) return true;
 		return checkIt.mkdirs();
+	}
+
+	boolean getNiftiPrefs (int type) {
+		Preferences prefer = parentPet.parent.jPrefer;
+		boolean defVal = true;
+		String key;
+		switch(type) {
+			case 2:
+				key = "external float";
+				break;
+
+			case 3:
+				key = "external relative";
+				break;
+
+			case 4:
+				key = "external ct file";
+				break;
+
+			case 5:
+				key = "external mask";
+				break;
+
+			case 6:
+				key = "external ctmask";
+				break;
+
+			default:
+				key = "force tmpFile";
+				defVal = false;
+				break;
+		}
+		return prefer.getBoolean(key, defVal);
 	}
 
 	String generateNiftiName( int type) {
@@ -3550,6 +4022,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			case 5:
 				retVal += "_mask";
 				break;
+
+			case 6:
+				retVal += "_ctmask";
+				break;
 		}
 		retVal = (retVal + ".nii").toLowerCase();
 		return retVal;
@@ -3563,21 +4039,33 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		Preferences prefer = parentPet.parent.jPrefer;
 //		jCheckDefLimits.setSelected(false);
 		boolean isBrowse = false;
-		String src;
+		String src, tmp0, tmp1, tmp2;
+		int i, n;
 		while(true) {
 			src = browseNifti(isBrowse);
 			if( src == null) return;
-			if( src.contains(" ")) {
-				IJ.log("Can't have embedded spaces in the name.\nPlease change the directory.");
+			n = src.indexOf(" ");
+			if( n > 0) {
+				tmp0 = src.substring(0, n);
+				i = tmp0.lastIndexOf(File.separator);
+				tmp1 = src.substring(i);
+				tmp0 = src.substring(0, i);
+				tmp2 = "There are embedded spaces in: " + tmp1;
+				tmp2 += "\nTry: " + tmp0;
+				tmp2 += "\nor any other path without embedded spaces.";
+				tmp2 += "\nAfter pressing Open with a valid path,";
+				tmp2 += "\nbe patient, and let the computer work.";
+				JOptionPane.showMessageDialog(this, tmp2);
 				isBrowse = true;
 			} else break;
 		}
 		NiftiStartTime = new Date();
+		Roi1StartTime = new Date();
 		jCheckUseSUV.setSelected(false);
 		jCheckUseCt.setSelected(false);
 		changeUseSUV(false);
 		changeUseCT(false);
-		prefer.put(getNiftiRegKey(), src);
+		if( !jCheckUseTemp.isSelected()) prefer.put(getNiftiRegKey(), src);
 		saveLimitVals(prefer);
 		jCheckDefLimits.setEnabled(false);
 		jButNif.setEnabled(false);
@@ -3593,9 +4081,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 						long diff = (stopTime.getTime() - NiftiStartTime.getTime())/1000;
 						int min, sec = (int)(diff % 60);
 						min = (int)(diff / 60);
-						String tmp = "Done";
-						if( min > 0 || sec > 0) tmp += " " + min + ":" + String.format("%02d", sec);
-						jButNif.setText(tmp);
+						NiftiLab = "Done";
+						if( min > 0 || sec > 0) NiftiLab += " " + min + ":" + String.format("%02d", sec);
+						NiftiLab += " - " + Integer.toString(nifListSz) + " ROIs";
+						jButNif.setText(NiftiLab);
 						parentPet.repaint();
 						work2 = null;
 					}
@@ -3638,6 +4127,17 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		val = (xy[1]-off1)*100/valz;
 		if( val > 100) val = 100;
 		prefer.putInt("nifti hix", val);
+		valSz = pet.data1.height;
+		valz = (int)(valSz/pet.zoomX);
+		if( valz > valSz) valz = valSz;
+		off1 = (valSz - valz)/2;
+		xy = getNiftiLimits(JFijiPipe.DSP_AXIAL, 1);
+		val = (xy[0]-off1)*100/valz;
+		if( val < 0) val = 0;
+		prefer.putInt("nifti loy", val);
+		val = (xy[1]-off1)*100/valz;
+		if( val > 100) val = 100;
+		prefer.putInt("nifti hiy", val);
 		valSz = pet.getNormalizedNumFrms();
 		xy = getNiftiLimits(JFijiPipe.DSP_CORONAL, 1);
 		val = xy[0]*100/valSz;
@@ -3649,29 +4149,68 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	void doActualRunNifti(int type) {
 		int i, j, width, height, numZ, numZ1, headerSz, frmSz, coef0;
 		int dataType = 2, bitPix = 8;
+		boolean isSpect = false;
 		Integer val;
 		ImageStack msk1Stack = null;
 		float minus1=1.0f;
 		float xEnd=0, yEnd=0, zEnd, spaceX=0, spaceY=0, spaceZ;
-		double slope, SUVfactor, factor1=10.0, pixdbl, gmax;
-		File checkIt;
+		double slope, tst1, SUVfactor, factor1=10.0, pixdbl, gmax;
+		File checkIt, check1;
 		short currShort;
-		String tmp;
+		String tmp, tmp1;
 		byte[] buf;
 		short[] pix1;
 		float[] pixEdge;
 		try {
 			String src = getNiftiDir(0);
+			String mask = getNiftiDir(1);
+			tmp = jButNif.getText();
+			if( type == 0 && tmp.startsWith("Refresh")) {
+				mask += "/" + generateNiftiName(1);
+				readNiftiMask(mask);
+				return;
+			}
 			if( !maybeMakeDir(src)) {
 				IJ.log("Can't create directory.\nMaybe the device is read only?");
 				return;
 			}
-			src += "/" + generateNiftiName(type);
-			String mask = getNiftiDir(1);
 			if( !maybeMakeDir(mask)) return;
+			if( type == 0) {
+				checkIt = new File(mask);
+				ChoosePetCt.deleteFolder(checkIt, false);
+				checkIt = new File(src);
+				File[] list1 = checkIt.listFiles();
+				for( i=0; i<list1.length; i++) {
+					check1 = list1[i];
+					tmp = check1.getName();
+					tmp = tmp.substring(tmp.length()-12);
+					if( tmp.startsWith("relative")) continue;
+					if( tmp.contains("_float")) continue;
+					if( tmp.contains("_mask")) continue;
+					if( tmp.contains("_ct")) continue;
+					check1.delete();
+				}
+			}
+			src += "/" + generateNiftiName(type);
 			mask = mask + "/" + generateNiftiName(1);
 			JFijiPipe pip0 = parentPet.petPipe;
+			SUVfactor = pip0.data1.SUVfactor;
+			if( SUVfactor == 0) {
+				isSpect = true;
+				SUVfactor = 1.0;
+			}
+			gmax = pip0.data1.grandMax;
+			tst1 = 255*SUVfactor/gmax;
 			switch(type) {
+				case 0:
+					if( isSpect) {
+						factor1 = tst1;
+						break;
+					}
+					if(tst1 >= 10) break;
+//					factor1 = tst1;
+					break;
+
 				case 2:
 					dataType = 16;
 					bitPix = 32;
@@ -3679,8 +4218,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					break;
 
 				case 3:
-					gmax = pip0.data1.grandMax;
-					factor1 = 255*pip0.data1.SUVfactor/gmax;
+					factor1 = tst1;
 					break;
 
 				case 4:
@@ -3692,6 +4230,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				case 5:
 					factor1 = 1.0;
 					msk1Stack = saveMaskedData(1);
+					break;
+
+				case 6:
+					factor1 = 1.0;
+					pip0 = parentPet.getMriOrCtPipe();
+					msk1Stack = saveMaskedData(2);
 					break;
 			}
 			if( pip0 == null || pip0.data1.pixels == null) return;
@@ -3710,7 +4254,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				yEnd = pixEdge[1] + height*spaceY;
 			}
 			zEnd = (float) pip0.getZpos(numZ-1);
-			spaceZ = (float) -pip0.avgSliceDiff;
+			spaceZ = (float) Math.abs(pip0.avgSliceDiff);
 			headerSz = 348+4;
 			buf = new byte[headerSz];
 			writeInt2buf(headerSz-4, buf, 0);
@@ -3750,6 +4294,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 //			factor1 = 10.;	// SUV of 25.5 = 255
 			SUVfactor = 1.0;
 			if(type != 4) SUVfactor = pip0.data1.SUVfactor / factor1;
+			if(isSpect) SUVfactor = 1 / factor1;
 			for(i=0; i<numZ1; i++) {
 				if( msk1Stack != null) {
 					buf = (byte[]) msk1Stack.getPixels(i+1);
@@ -3764,8 +4309,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					switch(type) {
 						case 0:
 						case 3:
-							if(pixdbl < 255) currShort = (short) pixdbl;
-							else currShort = 255;
+							if(pixdbl < 250) currShort = (short) pixdbl;
+							else
+								currShort = 255;
 							buf[j] = (byte) currShort;
 							break;
 
@@ -3812,14 +4358,25 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				if (checkIt.exists()) break;
 				mySleep(1000);
 			}
-			if( !polyVect.isEmpty() || nifList != null) return;
+//			if( !polyVect.isEmpty()) return;
+			if( !jCheckGrown.isSelected()) {
+				tmp = "Grown mask is not checked.\nSuggestion: Try checking it and press Refresh button.";
+				tmp += "\nThe first time you need to wait until the calculation finishes.\n";
+				tmp += "Look at the blue dots and see which you prefer.\n";
+				tmp += "You may switch back and forth using the check and Refresh button.\n";
+				tmp += "Leave the check in the state you prefer.";
+				IJ.log(tmp);
+			}
 			readNiftiMask(mask);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
 	}
 
 	void make3Nifti() {
 		NiftiStartTime = new Date();
-		for( int i=2; i<6; i++) doActualRunNifti(i);
+		for( int i=2; i<=6; i++) {
+			if(!getNiftiPrefs(i)) continue;
+			doActualRunNifti(i);
+		}
 	}
 
 	void doActualGrow() {
@@ -3833,7 +4390,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		byte[] buf, roiList, roiMap = null;
 		try {
 			growDir = getNiftiDir(1);
-			if( growDir == null) return;
+			if( growDir == null) {
+				IJ.log("Can't get Nifti directory for output results");
+				return;
+			}
 			mask = growDir + "/" + generateNiftiName(1);
 			fl1 = new File(mask);
 			if( !fl1.exists()) {
@@ -3865,7 +4425,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				IJ.log("Can't find growed roi");
 				return;
 			}
-			jButGrow.setEnabled(false);
 			width = img1.getWidth();
 			height = img1.getHeight();
 			frmSz = width * height;
@@ -3930,6 +4489,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				out.write(buf);
 			}
 			out.close();
+			isDelete = false;
+			IJ.runMacroFile("Macro_CloseWindow.ijm", title);
+			
 		} catch (Exception e) {  ChoosePetCt.stackTrace2Log(e);}
 	}
 
@@ -3955,6 +4517,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	void readNiftiMask(String flName) {
 		int i, val, x, y, z, off1, width, height, numZ, headerSz, frmSz;
 		String flNm1;
+		NiftiUpdate dlg1;
 		boolean isGrown = false;
 		File fl0 = null;
 		byte[] buf;
@@ -3965,16 +4528,23 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				i = flNm1.lastIndexOf('/');
 				flNm1 = flNm1.substring(0, i+1) + "GrowedMaskResult.nii";
 				fl0 = new File(flNm1);
-				isGrown = fl0.exists();
+				dlg1 = new NiftiUpdate(null, true);
+				dlg1.isUpdate(fl0, this);
+				if( !fl0.exists()) growNifti();
+				while( !(isGrown = fl0.exists())) mySleep(1000);
 			}
 			if( !isGrown) fl0 = new File(flName);
-			if( fl0 == null || !fl0.exists()) return;
+			if( fl0 == null || !fl0.exists()) {
+				IJ.log( "Can't find Nifti grown result.");
+				return;
+			}
 			FileInputStream fl1 = new FileInputStream(fl0);
 			headerSz = 348+4;
 			buf = new byte[headerSz];
 			fl1.read(buf);	// read header
 			i = readShort(buf, 0);
 			if( i != 348) {
+				IJ.log("Error in Nifti file");
 				fl1.close();
 				return;
 			}
@@ -4059,6 +4629,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			Double valD;
 			Integer[] valI;
 			short val1;
+			double slope = 1.0;
 			int x0, y0, z0, zprev, x2, y2, width1, offst, coef0;
 			int i, j, n = suvPnt.getListSize();
 			int ctSlice, orient;
@@ -4111,12 +4682,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				if( z0 != zprev) {
 					ctSlice = parentPet.ctPipe.findCtPos(z0, false);
 					data1 = ctPipe.data1.pixels.get(ctSlice);
+					slope = ctPipe.data1.getRescaleSlope(ctSlice);
 					zprev = z0;
 				}
-				x2 = parentPet.shift2Ct(ctPipe, x0);
-				y2 = parentPet.shift2Ct(ctPipe, y0);
+				x2 = parentPet.shift2Ct(ctPipe, x0, 0);
+				y2 = parentPet.shift2Ct(ctPipe, y0, 1);
 				offst = y2*width1 + x2;
-				val1 = (short) (data1[offst] + coef0);
+				val1 = (short) ((data1[offst] + coef0)*slope);
 				valD = PetCtFrame.roundN(currPnt.petVal, 3);
 				valI[0] = (int) val1;
 /*				valI[1] = (int) currPnt.x1;
@@ -4136,15 +4708,16 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 	ImageStack saveMaskedData(int type) {
 		int i, i1, j, z, stkSz, sliceSz, width, height, listSz, offst, coef0 = 0;
-		int sliceType, zmin, zmax;
+		int sliceType, zmin, zmax, width1, heigh1, x, y;
 		ColorModel cm;
 		double min, max;
 		double coef[];
 		String sliceLab;
-		ImagePlus mask1 = null;
+		ImagePlus img1, mask1 = null;
 		ImageStack origStack, msk1Stack;
 		short[] maskOut=null, origIn;
-		byte[] roiOut=null;
+		byte[] roiOut=null, roiIn;
+		byte currByte;
 		JFijiPipe petPipe = parentPet.petPipe;
 		if( petPipe == null) return null;
 		i = petPipe.data1.orientation;
@@ -4158,7 +4731,36 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			JOptionPane.showMessageDialog(this, "No ROIs found. Perhaps you have a different\n orientation from where you defined the ROIs?");
 			return null;
 		}
-		ImagePlus img1 = petPipe.data1.srcImage;
+		if( type == 2) {
+			Radionomic rad1 = new Radionomic();
+			img1 = rad1.buildCtPlus(suvPnt, parentPet, true);
+			if( img1 == null || maskParms == null) return null;
+			origStack = img1.getImageStack();
+			zmax = img1.getStackSize();
+			width1 = origStack.getWidth();
+			heigh1 = origStack.getHeight();
+			width = maskParms[3];
+			height = maskParms[4];
+			stkSz = maskParms[5];
+			sliceSz = width * height;
+			msk1Stack = new ImageStack(width, height, origStack.getColorModel());
+			for( i=0; i<stkSz; i++) {
+				roiOut = new byte[sliceSz];
+				z = i - maskParms[2];
+				if(z>=0 && z < zmax) {
+					roiIn = (byte[])origStack.getPixels(z+1);
+					for( y=0; y<heigh1; y++) {
+						for( x=0; x<width1; x++) {
+							currByte = roiIn[y*width1+x];
+							roiOut[(y+maskParms[1])*width + x+maskParms[0]] = currByte;
+						}
+					}
+				}
+				msk1Stack.addSlice(null, roiOut);
+			}
+			return msk1Stack;
+		}
+		img1 = petPipe.data1.srcImage;
 		if( type == 0) {
 			mask1 = img1.duplicate();
 			mask1.show();
@@ -4402,13 +5004,30 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			return new Ellipse2D.Double( pt21.x, pt21.y, pt22.x - pt21.x, pt22.y-pt21.y);
 		}
 		
-		Ellipse2D shiftEllipse( Ellipse2D in, int widthX) {
+		Ellipse2D shiftEllipse( Ellipse2D in, int widthX, int shiftY) {
 			if( in == null) return null;
 			double x = in.getX();
-			return new Ellipse2D.Double(x+widthX, in.getY(), in.getWidth(), in.getHeight());
+			return new Ellipse2D.Double(x+widthX, in.getY()+shiftY, in.getWidth(), in.getHeight());
 		}
 	}
-	
+
+	class ExcludedROI {
+		SaveVolROI saveVol1 = null;
+		SUVpoints suvPnt1 = null;
+		
+		void saveAll(SaveVolROI volTemp) {
+			saveVol1 = volTemp;
+			suvPnt1 = suvPnt;
+		}
+		
+		SaveVolROI getAll() {
+			suvPnt = suvPnt1;
+			numRed = 1;
+			redPoints[0] = suvPnt.red0;
+			return saveVol1;
+		}
+	}
+
 	class SaveVolROI {
 		Integer type;
 		double SUVmax = 0;
@@ -4419,6 +5038,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		double meanMax = 0;
 		double meanPeak = 0, meanWahl = 0, meanQpet = 0;
 		double SD = 0, CtHU = 0, CtSD = 0;
+		boolean isExcluded = false;
 
 		SaveVolROI() {
 			RoiNum4Max = -1;	// which ROI has SUVmax
@@ -4673,11 +5293,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
         jLabMask3 = new javax.swing.JLabel();
         jLabMask4 = new javax.swing.JLabel();
         jNifti = new javax.swing.JPanel();
-        jLabNif1 = new javax.swing.JLabel();
-        jTextNifSrc = new javax.swing.JTextField();
-        jButNifSrc = new javax.swing.JButton();
         jButNif = new javax.swing.JButton();
-        jButAbout = new javax.swing.JButton();
+        jTextNifSrc = new javax.swing.JTextField();
         jTextParms = new javax.swing.JTextField();
         jLabNiftix = new javax.swing.JLabel();
         jLabNifxmin = new javax.swing.JLabel();
@@ -4691,8 +5308,35 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
         jCheckDefLimits = new javax.swing.JCheckBox();
         jPanExNifti = new javax.swing.JPanel();
         jButMake3Nifti = new javax.swing.JButton();
-        jButGrow = new javax.swing.JButton();
         jCheckGrown = new javax.swing.JCheckBox();
+        jLabNif1 = new javax.swing.JLabel();
+        jLabNif2 = new javax.swing.JLabel();
+        jCheckUseTemp = new javax.swing.JCheckBox();
+        jButNifSrc = new javax.swing.JButton();
+        jRadio = new javax.swing.JPanel();
+        jLabGray = new javax.swing.JLabel();
+        jTextGray = new javax.swing.JTextField();
+        jChRadEntropy = new javax.swing.JCheckBox();
+        jChRadHomogenity = new javax.swing.JCheckBox();
+        jChRadContrast = new javax.swing.JCheckBox();
+        jChRadASM = new javax.swing.JCheckBox();
+        jChRadDiffEntropy = new javax.swing.JCheckBox();
+        jChRadCorrelation = new javax.swing.JCheckBox();
+        jChRadClusterPromenence = new javax.swing.JCheckBox();
+        jChRadClusterShade = new javax.swing.JCheckBox();
+        jChRadInverseDiffMoment = new javax.swing.JCheckBox();
+        jChRadMaxProbability = new javax.swing.JCheckBox();
+        jChRadSumAverage = new javax.swing.JCheckBox();
+        jChRadSumEntropy = new javax.swing.JCheckBox();
+        jChRadSumVariance = new javax.swing.JCheckBox();
+        jChRadVariance = new javax.swing.JCheckBox();
+        jChRadCM1 = new javax.swing.JCheckBox();
+        jChRadCM2 = new javax.swing.JCheckBox();
+        jChRadDiffVariance = new javax.swing.JCheckBox();
+        jChRad3D = new javax.swing.JCheckBox();
+        jChRadShowSD = new javax.swing.JCheckBox();
+        jChRadCt = new javax.swing.JCheckBox();
+        jChRadSphericity = new javax.swing.JCheckBox();
         jOther = new javax.swing.JPanel();
         jButRoiPointList = new javax.swing.JButton();
         jButReport = new javax.swing.JButton();
@@ -5179,7 +5823,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addComponent(jSpinShiftRoiNm, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabShiftMaxRoi)))
-                .addContainerGap(270, Short.MAX_VALUE))
+                .addContainerGap(279, Short.MAX_VALUE))
         );
         jShiftTabLayout.setVerticalGroup(
             jShiftTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -5197,7 +5841,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                     .addComponent(jSpinShiftY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabShiftZ)
                     .addComponent(jSpinShiftZ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(230, Short.MAX_VALUE))
+                .addContainerGap(233, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("follow up", jShiftTab);
@@ -5312,7 +5956,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jCheckInvert)
                     .addComponent(jButBuild))
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(85, Short.MAX_VALUE))
         );
         j3dTabLayout.setVerticalGroup(
             j3dTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -5344,7 +5988,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButBuild))
                     .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(72, Short.MAX_VALUE))
+                .addContainerGap(75, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("3D", j3dTab);
@@ -5376,7 +6020,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                     .addComponent(jButMask)
                     .addComponent(jLabMask3)
                     .addComponent(jLabMask4))
-                .addContainerGap(115, Short.MAX_VALUE))
+                .addContainerGap(124, Short.MAX_VALUE))
         );
         jMaskLayout.setVerticalGroup(
             jMaskLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -5391,31 +6035,15 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addComponent(jLabMask4)
                 .addGap(16, 16, 16)
                 .addComponent(jButMask)
-                .addContainerGap(167, Short.MAX_VALUE))
+                .addContainerGap(170, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("mask", jMask);
-
-        jLabNif1.setText("Please define where the NIfTI data will be stored.");
-
-        jButNifSrc.setText("Browse");
-        jButNifSrc.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButNifSrcActionPerformed(evt);
-            }
-        });
 
         jButNif.setText("Press to run, and be patient");
         jButNif.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButNifActionPerformed(evt);
-            }
-        });
-
-        jButAbout.setText("About");
-        jButAbout.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButAboutActionPerformed(evt);
             }
         });
 
@@ -5449,7 +6077,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
         jPanExNifti.setBorder(javax.swing.BorderFactory.createTitledBorder("use Nifti in external programs"));
 
-        jButMake3Nifti.setText("make 4 Nifti files");
+        jButMake3Nifti.setText("make Nifti files");
         jButMake3Nifti.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButMake3NiftiActionPerformed(evt);
@@ -5470,17 +6098,28 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
             .addComponent(jButMake3Nifti)
         );
 
-        jButGrow.setText("Experimental grow");
-        jButGrow.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButGrowActionPerformed(evt);
-            }
-        });
-
         jCheckGrown.setText("use grown mask");
         jCheckGrown.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jCheckGrownActionPerformed(evt);
+            }
+        });
+
+        jLabNif1.setText("Autosegmentation is performed using NifTI files (automatically constructed)");
+
+        jLabNif2.setText("Please define where the NIfTI data will be stored.");
+
+        jCheckUseTemp.setText("use tmp file, if not use:");
+        jCheckUseTemp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckUseTempActionPerformed(evt);
+            }
+        });
+
+        jButNifSrc.setText("Browse");
+        jButNifSrc.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButNifSrcActionPerformed(evt);
             }
         });
 
@@ -5491,48 +6130,43 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
             .addGroup(jNiftiLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jNiftiLayout.createSequentialGroup()
-                        .addComponent(jLabNif1)
-                        .addContainerGap(183, Short.MAX_VALUE))
-                    .addGroup(jNiftiLayout.createSequentialGroup()
-                        .addComponent(jButNif)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jNiftiLayout.createSequentialGroup()
+                        .addComponent(jPanExNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButAbout)
-                        .addGap(75, 75, 75))
-                    .addComponent(jTextParms)
-                    .addGroup(jNiftiLayout.createSequentialGroup()
-                        .addComponent(jTextNifSrc)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButNifSrc))
+                        .addComponent(jCheckGrown)
+                        .addGap(98, 98, 98))
                     .addGroup(jNiftiLayout.createSequentialGroup()
                         .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jNiftiLayout.createSequentialGroup()
+                                .addComponent(jCheckUseTemp)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jTextNifSrc, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButNifSrc))
                             .addComponent(jCheckDefLimits)
                             .addGroup(jNiftiLayout.createSequentialGroup()
-                                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jNiftiLayout.createSequentialGroup()
-                                        .addComponent(jLabNiftix)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabNifxmin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(jLabNifxmax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jLabNify)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabNifymin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabNifymax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jLabNifz))
-                                    .addComponent(jPanExNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jLabNiftix)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jButGrow)
-                                    .addGroup(jNiftiLayout.createSequentialGroup()
-                                        .addComponent(jLabNifzmin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabNifzmax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(jCheckGrown))))
-                        .addGap(0, 66, Short.MAX_VALUE))))
+                                .addComponent(jLabNifxmin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabNifxmax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabNify)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabNifymin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabNifymax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabNifz)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabNifzmin, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabNifzmax, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jButNif)
+                            .addComponent(jTextParms, javax.swing.GroupLayout.PREFERRED_SIZE, 511, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabNif1)
+                            .addComponent(jLabNif2))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jNiftiLayout.setVerticalGroup(
             jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -5540,43 +6174,178 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addContainerGap()
                 .addComponent(jLabNif1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabNif2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckUseTemp)
                     .addComponent(jTextNifSrc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButNifSrc))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextParms, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28)
-                .addComponent(jCheckDefLimits)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabNifymin)
-                    .addComponent(jLabNifzmin)
-                    .addComponent(jLabNifzmax)
-                    .addComponent(jLabNifxmax)
-                    .addComponent(jLabNifxmin)
-                    .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabNiftix)
-                        .addComponent(jLabNify)
-                        .addComponent(jLabNifz))
-                    .addComponent(jLabNifymax))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButNif)
-                    .addComponent(jButAbout))
-                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(8, 8, 8)
+                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jNiftiLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanExNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(45, 45, 45))
-                    .addGroup(jNiftiLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButGrow)
+                        .addComponent(jTextParms, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckGrown)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(jCheckDefLimits)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabNiftix)
+                                .addComponent(jLabNifxmax, javax.swing.GroupLayout.Alignment.TRAILING))
+                            .addComponent(jLabNify)
+                            .addComponent(jLabNifymin)
+                            .addComponent(jLabNifymax)
+                            .addComponent(jLabNifz)
+                            .addComponent(jLabNifzmin)))
+                    .addComponent(jLabNifzmax)
+                    .addComponent(jLabNifxmin))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButNif)
+                .addGap(34, 34, 34)
+                .addGroup(jNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanExNifti, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jCheckGrown))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("nifti", jNifti);
+
+        jLabGray.setText("Number of gray levels");
+
+        jTextGray.setToolTipText("between 4 and 32");
+
+        jChRadEntropy.setText("entropy");
+
+        jChRadHomogenity.setText("homogeneity");
+
+        jChRadContrast.setText("contrast");
+
+        jChRadASM.setText("ASM");
+
+        jChRadDiffEntropy.setText("difference entropy");
+
+        jChRadCorrelation.setText("correlation");
+
+        jChRadClusterPromenence.setText("cluster prominence");
+
+        jChRadClusterShade.setText("cluster shade");
+
+        jChRadInverseDiffMoment.setText("inverse difference moment");
+
+        jChRadMaxProbability.setText("maximum probability");
+
+        jChRadSumAverage.setText("sum average");
+
+        jChRadSumEntropy.setText("sum entropy");
+
+        jChRadSumVariance.setText("sum variance");
+
+        jChRadVariance.setText("variance");
+
+        jChRadCM1.setText("measure of correlation 1");
+
+        jChRadCM2.setText("measure of correlation 2");
+
+        jChRadDiffVariance.setText("difference variance");
+
+        jChRad3D.setText("3D");
+
+        jChRadShowSD.setText("show SD");
+
+        jChRadCt.setText("calc CT");
+
+        jChRadSphericity.setText("sphericity");
+
+        javax.swing.GroupLayout jRadioLayout = new javax.swing.GroupLayout(jRadio);
+        jRadio.setLayout(jRadioLayout);
+        jRadioLayout.setHorizontalGroup(
+            jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jRadioLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jRadioLayout.createSequentialGroup()
+                        .addComponent(jLabGray)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextGray, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jChRad3D)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jChRadShowSD)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jChRadCt))
+                    .addGroup(jRadioLayout.createSequentialGroup()
+                        .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jChRadEntropy)
+                            .addComponent(jChRadHomogenity)
+                            .addComponent(jChRadContrast)
+                            .addComponent(jChRadASM)
+                            .addComponent(jChRadDiffEntropy)
+                            .addComponent(jChRadCorrelation)
+                            .addComponent(jChRadClusterPromenence)
+                            .addComponent(jChRadDiffVariance)
+                            .addComponent(jChRadClusterShade))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jChRadSphericity)
+                            .addComponent(jChRadSumEntropy)
+                            .addComponent(jChRadSumVariance)
+                            .addComponent(jChRadVariance)
+                            .addComponent(jChRadMaxProbability)
+                            .addComponent(jChRadSumAverage)
+                            .addComponent(jChRadInverseDiffMoment)
+                            .addComponent(jChRadCM2)
+                            .addComponent(jChRadCM1))))
+                .addContainerGap(75, Short.MAX_VALUE))
+        );
+        jRadioLayout.setVerticalGroup(
+            jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jRadioLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabGray)
+                    .addComponent(jTextGray, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jChRad3D)
+                    .addComponent(jChRadShowSD)
+                    .addComponent(jChRadCt))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadEntropy)
+                    .addComponent(jChRadCM1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jChRadCM2)
+                    .addComponent(jChRadHomogenity))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadContrast)
+                    .addComponent(jChRadInverseDiffMoment))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadASM)
+                    .addComponent(jChRadMaxProbability))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadDiffEntropy)
+                    .addComponent(jChRadSumAverage))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadSumEntropy)
+                    .addComponent(jChRadDiffVariance))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadSumVariance)
+                    .addComponent(jChRadCorrelation))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadVariance)
+                    .addComponent(jChRadClusterPromenence))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jChRadClusterShade)
+                    .addComponent(jChRadSphericity))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        j3Dtab.addTab("radiomics", jRadio);
 
         jButRoiPointList.setText("Save ROI, point list");
         jButRoiPointList.addActionListener(new java.awt.event.ActionListener() {
@@ -5601,7 +6370,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addGroup(jOtherLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jButRoiPointList)
                     .addComponent(jButReport))
-                .addContainerGap(387, Short.MAX_VALUE))
+                .addContainerGap(396, Short.MAX_VALUE))
         );
         jOtherLayout.setVerticalGroup(
             jOtherLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -5610,7 +6379,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addComponent(jButRoiPointList)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButReport)
-                .addContainerGap(234, Short.MAX_VALUE))
+                .addContainerGap(237, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("other", jOther);
@@ -5619,11 +6388,11 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 543, Short.MAX_VALUE)
+            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 552, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 350, Short.MAX_VALUE)
         );
 
         pack();
@@ -5756,11 +6525,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		saveMaskedData(0);
     }//GEN-LAST:event_jButMaskActionPerformed
 
-    private void jButAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButAboutActionPerformed
-        NiftiAbout dlg = new NiftiAbout(parentPet.parent, true);
-        dlg.setVisible(true);
-    }//GEN-LAST:event_jButAboutActionPerformed
-
     private void jButNifActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButNifActionPerformed
         runNifti();
     }//GEN-LAST:event_jButNifActionPerformed
@@ -5797,10 +6561,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		make3Nifti();
     }//GEN-LAST:event_jButMake3NiftiActionPerformed
 
-    private void jButGrowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButGrowActionPerformed
-		growNifti();
-    }//GEN-LAST:event_jButGrowActionPerformed
-
     private void jCheckGrownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckGrownActionPerformed
 		grownChanged();
     }//GEN-LAST:event_jCheckGrownActionPerformed
@@ -5813,18 +6573,20 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		followCheck();
     }//GEN-LAST:event_jCheckFollowActionPerformed
 
+    private void jCheckUseTempActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckUseTempActionPerformed
+		changeTmp();
+    }//GEN-LAST:event_jCheckUseTempActionPerformed
+
  
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
     private javax.swing.JTabbedPane j3Dtab;
     private javax.swing.JPanel j3dTab;
-    private javax.swing.JButton jButAbout;
     private javax.swing.JButton jButBuild;
     private javax.swing.JButton jButColorIn;
     private javax.swing.JButton jButColorOut;
     private javax.swing.JButton jButFill;
-    private javax.swing.JButton jButGrow;
     private javax.swing.JButton jButHelp;
     private javax.swing.JButton jButLoad;
     private javax.swing.JButton jButMake3Nifti;
@@ -5836,6 +6598,27 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
     private javax.swing.JButton jButRoiPointList;
     private javax.swing.JButton jButSave;
     private javax.swing.JButton jButTrash;
+    private javax.swing.JCheckBox jChRad3D;
+    private javax.swing.JCheckBox jChRadASM;
+    private javax.swing.JCheckBox jChRadCM1;
+    private javax.swing.JCheckBox jChRadCM2;
+    private javax.swing.JCheckBox jChRadClusterPromenence;
+    private javax.swing.JCheckBox jChRadClusterShade;
+    private javax.swing.JCheckBox jChRadContrast;
+    private javax.swing.JCheckBox jChRadCorrelation;
+    private javax.swing.JCheckBox jChRadCt;
+    private javax.swing.JCheckBox jChRadDiffEntropy;
+    private javax.swing.JCheckBox jChRadDiffVariance;
+    private javax.swing.JCheckBox jChRadEntropy;
+    private javax.swing.JCheckBox jChRadHomogenity;
+    private javax.swing.JCheckBox jChRadInverseDiffMoment;
+    private javax.swing.JCheckBox jChRadMaxProbability;
+    private javax.swing.JCheckBox jChRadShowSD;
+    private javax.swing.JCheckBox jChRadSphericity;
+    private javax.swing.JCheckBox jChRadSumAverage;
+    private javax.swing.JCheckBox jChRadSumEntropy;
+    private javax.swing.JCheckBox jChRadSumVariance;
+    private javax.swing.JCheckBox jChRadVariance;
     private javax.swing.JCheckBox jCheckBlue;
     private javax.swing.JCheckBox jCheckDate;
     private javax.swing.JCheckBox jCheckDefLimits;
@@ -5850,7 +6633,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
     private javax.swing.JCheckBox jCheckSphere;
     private javax.swing.JCheckBox jCheckUseCt;
     private javax.swing.JCheckBox jCheckUseSUV;
+    private javax.swing.JCheckBox jCheckUseTemp;
     private javax.swing.JComboBox jComboROIlabel;
+    private javax.swing.JLabel jLabGray;
     private javax.swing.JLabel jLabHiLim;
     private javax.swing.JLabel jLabLoLim;
     private javax.swing.JLabel jLabMask1;
@@ -5860,6 +6645,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
     private javax.swing.JLabel jLabMax;
     private javax.swing.JLabel jLabMean;
     private javax.swing.JLabel jLabNif1;
+    private javax.swing.JLabel jLabNif2;
     private javax.swing.JLabel jLabNiftix;
     private javax.swing.JLabel jLabNifxmax;
     private javax.swing.JLabel jLabNifxmin;
@@ -5889,6 +6675,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanelROI;
     private javax.swing.JPanel jPanelResults;
+    private javax.swing.JPanel jRadio;
     private javax.swing.JRadioButton jRadioAll;
     private javax.swing.JRadioButton jRadioAny;
     private javax.swing.JRadioButton jRadioAverage;
@@ -5906,6 +6693,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
     private javax.swing.JTextField jTextCThi;
     private javax.swing.JTextField jTextCTlo;
     private javax.swing.JTextField jTextCtStrength;
+    private javax.swing.JTextField jTextGray;
     private javax.swing.JTextField jTextName;
     private javax.swing.JTextField jTextNifSrc;
     private javax.swing.JTextField jTextParms;
@@ -5932,18 +6720,21 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	boolean killMe = false, drawingRoi = false, isPercent = false, isPer1, isDirty = true;
 	boolean isFat, isBone, isOther, isHeavy, OkShiftROI, isInit = false, allowDelete;
 	boolean isSliceLimits = true, isNiftiDirty = false, isSliceChange = false;
-	boolean nextWarn = false, allowSliceChange = true;
+	boolean nextWarn = false, allowSliceChange = true, isCalcRadio = false, isDelete = false;
 	int RoiState = 1, lastPeakType;
+	OpService ops = null;
 	ArrayList<Poly3Save> polyVect = new ArrayList<Poly3Save>();
 	Object [] nifList;
 	SUVpoints suvPnt = null;
 	Poly3Save currPoly = null;
 	Point currMousePos = new Point(-1,0);
 	Date Roi1StartTime = null, NiftiStartTime = null;
+	String NiftiLab = "";
 	int measureTime = -1;	// the total time taken to draw all ROIs
 	int numRed = 0, shiftRoiNm = 0, RoiNum4Max = -1;
 	int [] redPoints = new int[5];
 	int [] prevSpinValue = new int[4];
+	int [] maskParms = null;
 	int black, saveRoiPntIndx, saveRoiIndx, volSliceType = -1;
 	int minMip, maxMip, nifListSz, CtCenterVal;
 	ArrayList<Component> elementList = new ArrayList<Component>();
