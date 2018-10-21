@@ -24,8 +24,8 @@ import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /**
  *
@@ -755,7 +755,7 @@ public class Annotations extends javax.swing.JDialog {
 			getParentInfo();
 			JFijiPipe pet1 = parPanel.petPipe;
 			pixelSize = pet1.data1.pixelSpacing[0];
-			pixSizeZ = pet1.data1.spacingBetweenSlices;
+			pixSizeZ = pet1.data1.sliceThickness;
 			x1 = pixelSize / MEASURE_SCALE;
 			z1 = pixSizeZ / MEASURE_SCALE;
 			if( sliceType == JFijiPipe.DSP_AXIAL) z1 = x1;
@@ -1008,6 +1008,7 @@ public class Annotations extends javax.swing.JDialog {
 		text1.addPoint(pt1, scale);
 	}
 
+	@SuppressWarnings("unchecked")
 	void fillStrings() {
 		String line;
 		int num = 0;
@@ -1898,7 +1899,7 @@ public class Annotations extends javax.swing.JDialog {
 		void draw(Graphics2D g, double scl1, JFijiPipe pip1, int colorMod, double axialPos) {
 			switch(primaryPlane) {
 				case JFijiPipe.DSP_CORONAL:
-					pip1.prepareCoronalSagitalSub(parPanel.petCoronal, -1, colorMod, 0, secondaryPlane);
+					pip1.prepareCoronalSagitalSub(parPanel.petCoronal, -1, colorMod, 0, secondaryPlane, 0);
 					pip1.drawCorSagImages(g, scl1, parPanel, true);
 					break;
 					
@@ -1911,7 +1912,7 @@ public class Annotations extends javax.swing.JDialog {
 					break;
 
 				case JFijiPipe.DSP_SAGITAL:
-					pip1.prepareCoronalSagitalSub(-1, parPanel.petSagital, colorMod, 0, secondaryPlane);
+					pip1.prepareCoronalSagitalSub(-1, parPanel.petSagital, colorMod, 0, secondaryPlane, 0);
 					pip1.drawCorSagImages(g, scl1, parPanel, false);
 					break;
 			}

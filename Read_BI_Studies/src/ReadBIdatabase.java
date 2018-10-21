@@ -11,6 +11,7 @@ import ij.measure.Calibration;
 import ij.plugin.BrowserLauncher;
 import ij.plugin.MontageMaker;
 import ij.process.ImageProcessor;
+import ij.util.DicomTools;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -26,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -83,18 +85,20 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			super.getTableCellRendererComponent(table, value, hasFocus, hasFocus, row, row);
 
 			try {
+				if( table == null) return this;
 				if( numDays <= 0) return this;
 //				if( isSelected) return this;
 				SimpleDateFormat df1 = new SimpleDateFormat("d MMM yyyy", Locale.US);
 				Date dt0, dt1;
 				dt0 = new Date();
 				dt1 = (Date) value;
-				setText(df1.format(dt1));
+				if( dt1!=null) setText(df1.format(dt1));
 				DefaultTableModel tm = (DefaultTableModel) table.getModel();
 				int i = table.convertRowIndexToModel(row);
 				Boolean bf = (Boolean) tm.getValueAt(i, TBL_BF);
 				Color color1 = Color.red;
-				long diff = (dt0.getTime() - dt1.getTime())/(1000l*60*60*24);
+				long diff = numDays + 1;
+				if(dt1!=null) diff = (dt0.getTime() - dt1.getTime())/(1000l*60*60*24);
 				if( diff > numDays) {
 					if( bf) color1 = Color.magenta;
 				}
@@ -722,6 +726,8 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 //					fi.description = "spect";
 				}
 				imp2.setFileInfo(fi);
+				double voxelDepth = DicomTools.getVoxelDepth(stack);
+				if (voxelDepth>0.0 && cal!=null) cal.pixelDepth = voxelDepth;
 				imp2.setCalibration(cal);
 				if( frameText != null) for( i=0; i < frameText.length; i++) {
 					label1 = frameText[i];
@@ -737,7 +743,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 						stack.setSliceLabel(label1, i1);
 					}
 				}
-				myMakeMontage(imp2, info, frameText != null);
+				imp2 = myMakeMontage(imp2, info, frameText != null);
 				imgList.add(imp2);	// keep track of images loaded
 			}
 			IJ.showProgress(1.0);
@@ -1318,7 +1324,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		return retVal;
 	}
 
-	void myMakeMontage(ImagePlus imp, String info, boolean label) {
+	ImagePlus myMakeMontage(ImagePlus imp, String info, boolean label) {
 		int nSlices = imp.getStackSize();
 		ImagePlus impMon;
 		FileInfo fi;
@@ -1329,7 +1335,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		int maxSlices = jPrefer.getInt("montage slices", 20);
 		if( nSlices < 2 || nSlices > maxSlices) {
 			imp.show();	// show a normal stack
-			return;
+			return imp;
 		}
 		GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 		scrWidth = devices[0].getDisplayMode().getWidth();
@@ -1362,7 +1368,9 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			fi = imp.getOriginalFileInfo();
 			impMon.setFileInfo(fi);
 			impMon.show();
+			return impMon;
 		}
+		return imp;
 	}
 
 	BI_dbSaveInfo[] queryRow4NM( Object [] row1, int cols) {
@@ -2906,9 +2914,11 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 
 	Date getDate(int indx) {
 		Date dt1;
+		int hour = 0;
 		switch(indx) {
 			case 1:
 				dt1 = dateTo.getDate();
+				hour = 23;
 				break;
 
 			case 2:
@@ -2917,6 +2927,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 
 			case 3:
 				dt1 = dateTo1.getDate();
+				hour = 23;
 				break;
 
 			default:
@@ -2928,6 +2939,10 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			if( indx == 1 || indx == 3) dt1 = new Date();
 			else dt1 = new Date(0);
 		}
+		GregorianCalendar cal = new GregorianCalendar();
+		cal.setTime(dt1);
+		cal.set(Calendar.HOUR_OF_DAY, hour);
+		dt1 = cal.getTime();
 		return dt1;
 	}
 
@@ -3025,7 +3040,8 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		isAccessDb = true;
 		if( i > 0) isAccessDb = false;
 		setDataPath();
-		jButWeb.setVisible(i==5 && m_dataPath != null && m_dataPath.startsWith("http"));
+		jButWeb.setVisible(false);
+//		jButWeb.setVisible(i==5 && m_dataPath != null && m_dataPath.startsWith("http"));
 	}
 
 	// Options tab
@@ -3228,7 +3244,8 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			x = petct.getWidth();
 			y = petct.getHeight();
 			tmp = x.toString() + "*" + y.toString() + "   ";
-			if( pipe1.data1.seriesType == ChoosePetCt.SERIES_SPECT) tmp += "SPECT=";
+			int i = pipe1.data1.seriesType;
+			if( i == ChoosePetCt.SERIES_SPECT || i == ChoosePetCt.SERIES_SIEMENS_SPECT) tmp += "SPECT=";
 			else tmp += "PET=";
 			z = ChoosePetCt.round(petPanel.petAxial);
 			x = z + 1;
@@ -4743,7 +4760,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             }
         });
 
-        jLabAbout.setText("version: 2.21");
+        jLabAbout.setText("version: 2.29");
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);

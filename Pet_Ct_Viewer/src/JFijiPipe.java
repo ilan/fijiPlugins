@@ -17,11 +17,12 @@ import java.beans.PropertyChangeListener;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /**
  *
@@ -60,6 +61,7 @@ public class JFijiPipe {
 	ArrayList<byte []> rawBytPix = null;
 	ArrayList<lungInsert> lungData = null;
 	mipXYentry[] mipXYdata = null;
+	int[] CoronalDisplay = null;
 	short[] LogConv = null;
 	int coronalSlice = -1, sagitalSlice = -1;
 	int logOff; // = 1000;
@@ -78,10 +80,10 @@ public class JFijiPipe {
 	boolean dirtyFlg = true, useShiftXY = true, hasGauss = false, useGauss = false;
 	int colorMode = -1, numDisp = 1, startFrm = 0, sliceType = 0, zoomIndx = 0;
 	int offscrMode = 0, fusedMode = -1, corSagShift = 0, offscrH1 = 0, offscrY1 = 0;
-	int mriOffX = 0, mriOffY = 0, mriOffY0 = 0, oldCorSlice = -1, oldSagSlice = -1;
+	int mriOffX = 0, mriOffY = 0, oldCorSlice = -1, oldSagSlice = -1;
 	int mriOffSag = 0;
 	double winWidth=900, winLevel=450, winSlope = 1.0, multYOff = 0, mriScl = 1.0;
-	double corFactor = 1.0, corOffset = 0, obliqueFactor = 0, aspect = 1.0;
+	double corFactor = 1.0, corOffset = 0, obliqueFactor = 0, aspect = 1.0, mriOffY0 = 0;
 	double sagFactor = 1.0, sagOffset = 0, avgSliceDiff = 1.0, sigmaGauss = 2.0;
 	double oldWidth, oldLevel, oldCorWidth, oldCorLevel, zoom1 = 1.0, zoomX = 1.0, zoomY = 1.0;
 	double logFactor, valMin, valMax;
@@ -235,17 +237,19 @@ public class JFijiPipe {
 		int origWidth;
 		origWidth = data1.width;
 		double offY = multYOff * origWidth * scale;
+		double offY0 = scale * mriOffY0;
 		double xshft = 0, yshft = 0;
 		double scalX = scale;
 		double scalY = scale * data1.y2XMri;
 		if( sliceType == DSP_SAGITAL) scalX = scalY;
+		if( sliceType != DSP_AXIAL) offY0 = 0;
 		if( useShiftXY) {
 			xshft = shiftXY[0];
 			yshft = shiftXY[1];
 		}
 		if( type == 4) offY = 0;
 		out1.x = scrn1.x/scalX + xshft;
-		out1.y = (scrn1.y - offY)/scalY + yshft;
+		out1.y = (scrn1.y - offY - offY0)/scalY + yshft;
 		if( zoom1*zoomX*data1.y2xFactor != 1.0) {
 			double sclX = scalX * getZoom(0);
 			double sclY = scalY * getZoom(type);
@@ -253,10 +257,10 @@ public class JFijiPipe {
 			out1.x = (scrn1.x/sclX) + pan1.x + xshft;
 			if( out1.x < 0) out1.x = 0;
 			if( out1.x >= origWidth-1) out1.x = origWidth - 1;
-			out1.y = ((scrn1.y - offY)/sclY) + pan1.y + yshft;
-			if( out1.y < 0) out1.y = 0;
+			out1.y = ((scrn1.y - offY - offY0)/sclY) + pan1.y + yshft;
 //			if( out1.y >= origHeight) out1.y = origHeight - 1;
 		}
+		if( out1.y < 0) out1.y = 0;
 		return out1;
 	}
 	
@@ -289,18 +293,20 @@ public class JFijiPipe {
 		saveRaw = new Point2d();
 		int origWidth, outMaxX;
 		origWidth = data1.width;
+		double xshft = 0, yshft = 0;
 		double scalX = scale;
 		double scalY = scale * data1.y2XMri;
 		if( sliceType == DSP_SAGITAL) scalX = scalY;
 		double offY = multYOff * origWidth * scalY;
-		double xshft = 0, yshft = 0;
+		double offY0 = mriOffY0 * scale;
+		if( sliceType != DSP_AXIAL) offY0 = 0;
 		if( useShiftXY) {
 			xshft = shiftXY[0];
 			yshft = shiftXY[1];
 		}
 		if( type == 4) offY = 0;	// don't use for coronal, sagital in display3
 		out1.x = ChoosePetCt.round((pos1.x - xshft)*scalX);
-		out1.y = ChoosePetCt.round((pos1.y - yshft)*scalY + offY);
+		out1.y = ChoosePetCt.round((pos1.y - yshft)*scalY + offY + offY0);
 		if( zoom1*zoomX*data1.y2xFactor != 1.0) {
 			double sclX = scalX * getZoom(0);
 			double sclY = scalY * getZoom(type);
@@ -309,7 +315,7 @@ public class JFijiPipe {
 			outMaxX = ChoosePetCt.round(origWidth*scalX);
 			if( out1.x < 0) out1.x = 0;
 			if( out1.x >= outMaxX) out1.x = outMaxX-1;
-			saveRaw.y = out1.y = ChoosePetCt.round((pos1.y - yshft - pan1.y)*sclY+ offY);
+			saveRaw.y = out1.y = ChoosePetCt.round((pos1.y - yshft - pan1.y)*sclY+ offY + offY0);
 			if( out1.y < 0) out1.y = 0;
 		}
 		return out1;
@@ -326,6 +332,13 @@ public class JFijiPipe {
 		Point out1 = pos2Scrn( pos1, scale, type, intMode);
 		sliceType = saveVal;	// restore it
 		return out1;
+	}
+
+	int getCTcursorShift( double inShift, double scale) {
+		if( Math.abs(inShift) < 0.01) return 0;
+		double scalY = scale * data1.y2XMri;
+		if( zoom1*zoomX*data1.y2xFactor != 1.0) scalY *= getZoom(0);
+		return ChoosePetCt.round(inShift*scalY);
 	}
 
 	Point2d getPan(int type) {
@@ -417,7 +430,7 @@ public class JFijiPipe {
 		}
 
 		setGraphics(g, scale);
-		fillSource(cineIndx, 1, 0);
+		fillSource(cineIndx, 1, 0, 0);
 		Image img = jDraw.createImage(source[cineIndx]);
 		int w1, h1;
 		w1 = ChoosePetCt.round(scale * data1.width);
@@ -519,8 +532,41 @@ public class JFijiPipe {
 	void setAvgSliceDiff() {
 		int n = getNormalizedNumFrms();
 		double diff = getStackDepth()/(n-1);
-		if( diff == 0) diff = data1.spacingBetweenSlices;
+		if( diff == 0) diff = data1.sliceThickness;
 		avgSliceDiff = diff;
+	}
+
+	void maybeSetCoronalDisplay() {
+		// Gas,lo Jan has this problem
+		int type = 0;
+		double ratio = Math.abs(avgSliceDiff/data1.sliceThickness);
+		if( ratio < 0.55) type = 1;
+		if( data1.zratio < 0.5) type = 2;	// more serious, fix it
+		if( type == 0) return;
+		String tmp1 = "If the fused coronal/sagital images look wrong, please send a copy of this data to ilan.tal@gmail.com.";
+		if( type == 1) tmp1 = "Average slice thickness / Dicom slice thickness = " + PetCtFrame.roundN(ratio, 2) + " (maybe fusion incorrect?)";
+		IJ.log(tmp1);
+		if( type < 2) return;
+		int i, j, n = getNormalizedNumFrms();
+		double prevZ, thisZ, wantZ;
+		CoronalDisplay = new int[n];
+		thisZ = wantZ = prevZ = data1.zpos.get(0);
+		CoronalDisplay[0] = 0;
+		for( i=j=1; i<n; i++) {
+			wantZ += avgSliceDiff;
+			while( j < n-1) {
+				thisZ = data1.zpos.get(j);
+				if( avgSliceDiff > 0) {
+					if( wantZ <= thisZ) break;
+				} else {
+					if( wantZ >= thisZ) break;
+				}
+				prevZ = thisZ;
+				j++;
+			}
+			if( Math.abs(wantZ-prevZ) <= Math.abs(wantZ-thisZ)) CoronalDisplay[i] = j-1;
+			else CoronalDisplay[i] = j;
+		}
 	}
 
 	protected void drawCorSagImages(Graphics2D g, double scale, JPanel jDraw, boolean corFlg) {
@@ -533,6 +579,7 @@ public class JFijiPipe {
 		int i, w1, w2, h1, x1, y1, yOff, xOff;
 		w1 = data1.width;
 		yOff = ChoosePetCt.round(scale* corSagShift * zoom1 * zoomX * data1.y2xFactor * data1.y2XMri);
+//		if( yOff < 0) yOff = 0;
 		w1 = w2 = ChoosePetCt.round(scale * w1);
 		h1 = ChoosePetCt.round(scale * data1.numFrms * zoom1 * zoomX * data1.y2xFactor * data1.y2XMri / data1.numTimeSlots);	// not height
 		i = 0;
@@ -569,12 +616,10 @@ public class JFijiPipe {
 
 	protected void drawFusedImage(Graphics2D g, double scale, JFijiPipe other1, Point pos1, JPanel jDraw) {
 		if( offscr == null) return;
-		int h1=0, h2, yOff1, yOff2, w1, w2, w = data1.width;
+		int h1, h2, yOff1, yOff2, w1, w2, w = data1.width;
 		yOff1 = yOff2 = ChoosePetCt.round( scale*multYOff*w);
 		w2 = w1 = ChoosePetCt.round(scale * w);
-		if( aspect != 1.0 || other1.aspect != 1.0)
-			h1++;
-		h1 = ChoosePetCt.round(scale * data1.height * other1.aspect * zoomY);
+		h1 = ChoosePetCt.round(scale * data1.height * zoomY * other1.aspect / aspect);
 		h2 = ChoosePetCt.round(scale * data1.height * zoomY);
 		float factor;
 		if( sliceType != DSP_AXIAL) {
@@ -604,7 +649,7 @@ public class JFijiPipe {
 		int ipetPos = ChoosePetCt.round(petPos);
 		if( ipetPos < 0 || ipetPos >= data1.zpos.size()) return data1.zpos.get(0);
 		double offst = (petPos - ipetPos)*avgSliceDiff;
-		return data1.zpos.get(ipetPos) + offst + data1.mriOffZ * data1.spacingBetweenSlices;
+		return data1.zpos.get(ipetPos) + offst + data1.mriOffZ * data1.sliceThickness;
 	}
         
 	int getCtSliceNum(int ctInNum) {
@@ -731,18 +776,18 @@ public class JFijiPipe {
 		makeDspImage( color1, type);
 	}
 
-	void prepareCoronalSagitalSub( double corSlice, double sagSlice, int colorMod1, int gateOffset, int type2) {
+	double prepareCoronalSagitalSub( double corSlice, double sagSlice, int colorMod1, int gateOffset, int type2, double petSag) {
 		UpdateCoronalSagital( corSlice, sagSlice, gateOffset, type2);
-		makeCorDspImage(colorMod1, false);
+		return makeCorDspImage(colorMod1, false, petSag);
 	}
 
-	void prepareCoronalSagital( double corSlice, double sagSlice, int colorMod1, int gateOffset) {
-		prepareCoronalSagitalSub(corSlice, sagSlice, colorMod1, gateOffset, JFijiPipe.DSP_AXIAL);
+	double prepareCoronalSagital( double corSlice, double sagSlice, int colorMod1, int gateOffset, double petSag) {
+		return prepareCoronalSagitalSub(corSlice, sagSlice, colorMod1, gateOffset, JFijiPipe.DSP_AXIAL, petSag);
 	}
 	
 	void prepareAxialOblique( double axSlice, int secondaryType, int colorMod1) {
 		UpdateAxialOblique(axSlice, secondaryType);
-		makeCorDspImage(colorMod1, true);
+		makeCorDspImage(colorMod1, true, 0);
 	}
 
 	public void makeDspImage(int colorMod1, int type) {
@@ -789,11 +834,12 @@ public class JFijiPipe {
 		}
 		indx = startFrm;
 		for (int j = 0; j < numDisp; j++) {
-			fillSource(j+indx, type, 0);
+			fillSource(j+indx, type, 0, 0);
 		}
 	}
 
-	void makeCorDspImage(int colorMod1, boolean axialDisplay) {
+	double makeCorDspImage(int colorMod1, boolean axialDisplay, double petSag) {
+		double sagShift = 0;
 		if( colorMod1 != colorMode) {
 			colorMode = colorMod1;
 			cm = makeColorModel(colorMode);
@@ -807,8 +853,9 @@ public class JFijiPipe {
 		}
 		int type2 = 2;
 		if( axialDisplay) type2 = 5;
-		if( coronalSlice >= 0) fillSource(0, type2, 1);
-		if( sagitalSlice >= 0) fillSource(1, type2, 2);
+		if( coronalSlice >= 0) fillSource(0, type2, 1, 0);
+		if( sagitalSlice >= 0) sagShift = fillSource(1, type2, 2, petSag);
+		return sagShift;
 	}
 	
 	int getObliqueSliceType() {
@@ -827,16 +874,16 @@ public class JFijiPipe {
 	// type1 = 2 for coronal sagital display (axial source)
 	// type1 = 3 for axial under zoom (use all y direction space)
 	// type1 = 5 for oblique display with primary axial display
-	private void fillSource(int indx1, int type1, int offInx) {
-		if( indx1 >= data1.numFrms) return;
+	private double fillSource(int indx1, int type1, int offInx, double petSag) {
+		if( indx1 >= data1.numFrms) return 0;
 		MemoryImageSource[] currSource	= source;
 		if( type1 == 2 || type1 == 5) currSource = corSrc;
-		if( currSource == null) return;
-		if( currSource[indx1] != null && cm2==null) return;	// already calculated
+		if( currSource == null) return 0;
+		if( currSource[indx1] != null && cm2==null) return 0;	// already calculated - fix
 
 		int i, insertType, insertIdx, j, j1, k, i1, curr1, max255, sizeX, sizeX1, sizeY;
-		int off1, w1, w1a, origWidth, zfact, origHeight, sagShift = 0;
-		double scale, slope, xpan, ypan, xshft=0, yshft=0, sagMRI = 1.0;
+		int off1, w1, w1a, origWidth, zfact, origHeight;
+		double scale, slope, xpan, ypan, xshft=0, yshft=0, sagMRI = 1.0, sagShift = 0;
 		short currShort;
 		int min1;
 		boolean badY, goodLungY;
@@ -889,10 +936,14 @@ public class JFijiPipe {
 		sizeX = sizeX1 = getZoomSize(w1, 0);
 		if(w1 != w1a) {
 			sizeX1 = getZoomSize(w1a, 0);
-			sagShift += ChoosePetCt.round(mriOffY0/(zoomX*zoom1*sagMRI));
+			sagShift = -mriOffY0/(zoomX*zoom1*sagMRI);
+			xshft += sagShift;
+			sagShift += (w1a - w1)/2.0;	// with no zoom
 		}
 		sizeY = getZoomSize(origHeight, type1);
-		pan1.x = ChoosePetCt.round(xpan*sizeX + (w1a - sizeX1)/2.0 - sagShift + xshft);
+		xshft += (w1a - sizeX1)/2.0;	// with zoom
+	//	if( sagShift != 0) IJ.log(sagShift);
+		pan1.x = ChoosePetCt.round(xpan*sizeX + xshft - petSag*w1);
 		pan1.y = ChoosePetCt.round(ypan*sizeY + (origHeight - sizeY)/2.0 + yshft);
 		if(getDispWidthHeight(2) == 2) {
 			pan1.x++;
@@ -984,6 +1035,7 @@ public class JFijiPipe {
 		currSource[indx1] = new MemoryImageSource(sizeX, sizeY, cm, buff, 0, sizeX);
 		// if there is an offscreen memory, calculate it. It is the same as the above with different colors
 		if( cm2 != null ) offSrc[offInx] = new MemoryImageSource(sizeX, sizeY, cm2, buff, 0, sizeX);
+		return sagShift/w1;
 	}
 
 	int getDispWidthHeight(int type) {
@@ -1392,7 +1444,7 @@ public class JFijiPipe {
 				off1 = slic1*wid1;
 				off2 = z1*wid1;
 				i1 = 0;
-				zg1 = z1 + gateOffset;
+				zg1 = getCoronalDisplay(z1) + gateOffset;
 				scale = data1.getRescaleSlope(zg1/zfact)/data1.getMaxRescaleSlope();
 				switch( data1.depth) {
 					case 32:
@@ -1478,7 +1530,7 @@ public class JFijiPipe {
 				off1 = slic1;	// maybe add mriOffY0?
 				off2 = z1*wid2;
 				i1 = 0;
-				zg1 = z1+gateOffset;
+				zg1 = getCoronalDisplay(z1)+gateOffset;
 				scale = data1.getRescaleSlope(zg1/zfact)/data1.getMaxRescaleSlope();
 				switch( data1.depth) {
 					case 32:
@@ -1530,11 +1582,17 @@ public class JFijiPipe {
 		}
 	}
 
+	int getCoronalDisplay(int z1) {
+		if( CoronalDisplay == null) return z1;	// usual case
+		return CoronalDisplay[z1];
+	}
+
 	double getStackDepth() {
 		double ret = 0;
 		int n = getNormalizedNumFrms();
 		if( data1.zpos != null) {
 			ret = data1.zpos.get(n-1) - data1.zpos.get(0);
+			if( data1.isFeetFirst) ret = -ret;
 		}
 		return ret;
 	}
@@ -1671,7 +1729,7 @@ public class JFijiPipe {
 	 */
 	protected class JData {
 		int seriesType, axialRotation=0, numFrms=0, width, height, depth, maxPixel;
-		int orientation, mriOffZ = 0;	// for matching frames to CT
+		int origSerType, orientation, mriOffZ = 0;	// for matching frames to CT
 		int srcHeight, numTimeSlots=0, frameTime, numBlankFrms=0;
 		int SOPclass, fileFormat = FileInfo.UNKNOWN, MIPtype = 0;
 		ArrayList<short []> pixels = null;
@@ -1688,12 +1746,12 @@ public class JFijiPipe {
 		float pixelSpacing[] = null;
 		double pixelCenter[] = null;
 		Date serTime, injectionTime, acquisitionTime;
-		double maxVal, minVal, grandMax, spacingBetweenSlices, maxFactor;
+		double maxVal, minVal, grandMax, sliceThickness, maxFactor, zratio;
 		double halflife, patWeight, patHeight, totalDose, rescaleIntercept = 0, SUVfactor = 0.0;
 		double sliderSUVMax = 1000., MIPslope = 1.0, philipsSUV = 0, SULfactor = 1.0;
 		double expFac[] = null, y2xFactor = 1.0, y2XMip = 1.0, y2XMri = 1.0;
 		double coef[] = null, panZCt2Pet = 1.0;
-		boolean decayCorrect, isDynamic = false, isHalfPix = false;
+		boolean decayCorrect, isDynamic = false, isHalfPix = false, isFeetFirst = false;
 		double spectSlope = 1.0;	// used for extended PET, all slices assumed to be the same
 		int philipsCoef = 0, pixRep = 1;
 		String seriesName = null, metaData = null;
@@ -1730,7 +1788,7 @@ public class JFijiPipe {
 				patPos = ChoosePetCt.parseMultFloat(ChoosePetCt.getLastDicomValue(meta, "0020,0032"));
 				if( patPos!=null) zposN = patPos[2];
 				x = zposN - zpos1;
-				spacingBetweenSlices = x / (numFrms-1);
+				avgSliceDiff = sliceThickness = x / (numFrms-1);
 				x = ChoosePetCt.parseDouble(ChoosePetCt.getFirstDicomValue(meta, "0028,1053"));
 				if( x<=0) x= 1.0;
 				spectSlope = x;
@@ -1775,7 +1833,7 @@ public class JFijiPipe {
 					if( patPos!=null) zpos1 = patPos[2];
 				}
 				zpos.add(zpos1);
-				zpos1 += spacingBetweenSlices;
+				zpos1 += sliceThickness;
 				imgNum = ChoosePetCt.parseInt(ChoosePetCt.getLastDicomValue(meta, "0020,0013"));
 				imageNumber.add(imgNum);
 //				localAcqTime = ChoosePetCt.getStudyDateTime(meta, 2);
@@ -1791,13 +1849,14 @@ public class JFijiPipe {
 			if( width > 256 || (seriesType != ChoosePetCt.SERIES_BQML_PET &&
 				seriesType != ChoosePetCt.SERIES_GE_PRIVATE_PET &&
 				seriesType != ChoosePetCt.SERIES_GML_PET && seriesType != ChoosePetCt.SERIES_PHILIPS_PET &&
-				seriesType != ChoosePetCt.SERIES_SPECT && seriesType != ChoosePetCt.SER_FORCE_CPET)) return;
+				seriesType != ChoosePetCt.SERIES_SPECT && seriesType != ChoosePetCt.SERIES_SIEMENS_SPECT &&
+				seriesType != ChoosePetCt.SER_FORCE_CPET)) return;
 			if( pixelSpacing != null && 2*pixelSpacing[0] < triThick) return;
 			if( pixels == null) return;
 			pixel2 = new ArrayList<short []>();	// 16 bits
 			valMin = 0;
 			valMax = 10000.;
-			if( qualityRendering && numTimeSlots == 1 && Math.abs(spacingBetweenSlices) > triThick ) {
+			if( qualityRendering && numTimeSlots == 1 && Math.abs(sliceThickness) > triThick ) {
 				tricubicInterpolate();
 				return;
 			}
@@ -2244,6 +2303,7 @@ public class JFijiPipe {
 			rescaleSlope = null;
 			if( !getMetaData(srcData.metaData,0)) return;
 			seriesType = srcData.seriesType;	// in case it was forced
+			origSerType = srcData.origSerType;
 			srcImage = srcData.srcImage;
 			if( srcData.pixel2 != null) pixel2 = new ArrayList<short[]>();
 			if( srcData.rescaleSlope != null) rescaleSlope = new ArrayList<Double>();
@@ -2295,12 +2355,42 @@ public class JFijiPipe {
 			setSUVfactor(srcPipe.data1.SUVfactor);
 		}
 
+		void setStudyTime(int type, int time1) {
+			Date changed = null;
+			switch(type) {
+				case 1:	// series time
+					changed = serTime;
+					break;
+
+				case 2:	// acquisition time
+					changed = acquisitionTime;
+					break;
+
+				case 3:	// injection time
+					changed = injectionTime;
+					break;
+			}
+			if( changed == null) return;
+			GregorianCalendar dat1 = new GregorianCalendar();
+			dat1.setTime(changed);
+			int day, month, year, hour, min, sec;
+			day = dat1.get(GregorianCalendar.DAY_OF_MONTH);
+			month = dat1.get(GregorianCalendar.MONTH);
+			year = dat1.get(GregorianCalendar.YEAR);
+			hour = time1/(60*60);
+			min = (time1-(hour*60*60))/60;
+			sec = time1 - hour*60*60 - min*60;
+			dat1.set(year, month, day, hour, min, sec);
+			changed.setTime(dat1.getTimeInMillis());
+		}
+
 		boolean getMetaData(String meta, int forceSer) {
 			if( meta == null) return false;
 			float[] pixEdge;
+			String[] vals;
 			String tmp;
 			metaData = meta;
-			seriesType = ChoosePetCt.getImageType(meta);
+			origSerType = seriesType = ChoosePetCt.getImageType(meta);
 			if( seriesType == ChoosePetCt.SERIES_UNKNOWN) return false;
 			switch(forceSer) {
 				case FORCE_CT:
@@ -2322,7 +2412,6 @@ public class JFijiPipe {
 			pixEdge = ChoosePetCt.parseMultFloat(ChoosePetCt.getDicomValue(meta, "0020,0032"));
 			if(pixEdge != null && pixelSpacing != null) {
 				int stepX = 1, stepY = 1;
-				double halfPix = (pixelSpacing[0]+pixelSpacing[1])/4;	// hopefully the same value
 				pixelCenter = new double[2];
 				if( (orientation & 64) != 0) stepY = -1;
 				if( (orientation & 32) != 0) stepX = -1;
@@ -2331,12 +2420,7 @@ public class JFijiPipe {
 				}
 				pixelCenter[0] = pixEdge[0] + stepX*pixelSpacing[0]*width/2.0;
 				pixelCenter[1] = pixEdge[1] + stepY*pixelSpacing[1]*height/2.0;
-				if( Math.abs(pixelCenter[0]-halfPix) < halfPix/10 ||
-					Math.abs(pixelCenter[0]-halfPix) < halfPix/10) {
-					pixelCenter[0] -= halfPix;
-					pixelCenter[1] -= halfPix;
-					isHalfPix = true;	// document the shift
-				}
+				maybeFixShift();
 			}
 			SOPclass = ChoosePetCt.getSOPClass(ChoosePetCt.getDicomValue( meta, "0008,0016"));
 			serTime = ChoosePetCt.getStudyDateTime( meta, 1);
@@ -2346,6 +2430,13 @@ public class JFijiPipe {
 			seriesName = ChoosePetCt.getDicomValue( meta, "0008,103E");
 			if( seriesName == null || seriesName.isEmpty()) seriesName = ChoosePetCt.getDicomValue( meta, "0054,0400");
 			if( seriesName != null) seriesName = seriesName.toLowerCase();
+			if( origSerType == ChoosePetCt.SERIES_SPECT || origSerType == ChoosePetCt.SERIES_SIEMENS_SPECT) {
+				vals = new String[] {"F-10480","G-5191"};
+				tmp = ChoosePetCt.findDicomValue(meta,"0008,0100", vals);
+				if( tmp != null) isFeetFirst = true;
+				double x = ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,0088"));
+				if( x<0) isFeetFirst = false;	// this counts from the top
+			}
 			injectionTime = ChoosePetCt.getStudyDateTime( meta, 3);
 			totalDose = ChoosePetCt.parseDouble(ChoosePetCt.getLastDicomValue(meta, "0018,1074"));
 			halflife = ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,1075"));
@@ -2372,9 +2463,8 @@ public class JFijiPipe {
 			zpos = new ArrayList<Float>();
 			rescaleIntercept = ChoosePetCt.parseDouble(ChoosePetCt.getFirstDicomValue(meta, "0028,1052"));
 			imageNumber = new ArrayList<Integer>();
-			spacingBetweenSlices = ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,0088"));
-			if( spacingBetweenSlices == 0)
-				spacingBetweenSlices = -ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,0050"));
+			sliceThickness = -ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,0050"));
+			if( isFeetFirst) sliceThickness = -sliceThickness;
 			switch( depth) {
 				case 32:
 					pixFloat = new ArrayList<float []>();
@@ -2392,16 +2482,18 @@ public class JFijiPipe {
 
 		double maybeFixShift() {
 			if( isHalfPix) return 0;
-			double halfPix = (pixelSpacing[0]+pixelSpacing[1])/4;
-			double slop = halfPix; // 1/2 pixel slop
+			double halfPixX, halfPixY;
+			halfPixX = pixelSpacing[0]/2;
+			halfPixY = pixelSpacing[1]/2;
 			// if the center is already close to zero, leave it
-			if( Math.abs(pixelCenter[0]) < slop ||
-				Math.abs(pixelCenter[0]) < slop) return 0;
-
-			pixelCenter[0] -= halfPix;
-			pixelCenter[1] -= halfPix;
-			isHalfPix = true;	// document the shift
-			return -halfPix;
+			if( Math.abs(pixelCenter[0]-halfPixX) < halfPixX/10 ||
+				Math.abs(pixelCenter[1]-halfPixY) < halfPixY/10) {
+				pixelCenter[0] -= halfPixX;
+				pixelCenter[1] -= halfPixY;
+				isHalfPix = true;	// document the shift
+				return -halfPixX;
+			}
+			return 0;
 		}
 
 		int getAxialRotation(String meta) {
@@ -2414,6 +2506,14 @@ public class JFijiPipe {
 			return rotation;
 		}
 
+		int[] getSiemensSpect() {
+			if(seriesType != ChoosePetCt.SERIES_SIEMENS_SPECT) return null;
+			int[] retVals = new int[numFrms];
+			for (int i=0; i<numFrms; i++) {
+				retVals[i] = (int) SUVDialog.readSiemensPhilipsCrap(srcImage, 1, i);
+			}
+			return retVals;
+		}
 		/**
 		 *  The routine which set the variable max and sorts the data.
 		 * It is called for corrected and uncorrected PET and CT but NOT for MIP data.
@@ -2426,14 +2526,14 @@ public class JFijiPipe {
 			float[] pixFlt1;
 			short[] pix1;
 			byte[] pixByt1;
-			boolean dirty = false, timeShift;
+			boolean dirty = false, timeShift, isSiemens = false;
 			double slope1, currDiff, minDiff;
 			int i, j, numZsame, imgNum, localMaxPos, j0, j1, n = zpos.size();
 			float[] zpos1;
 			int[] trigTime1;
 			int time0, time1;
 			double[] maxSliceVals;
-			float ztmp, zval;
+			float ztmp, zval, siemensZval=0;
 			gaussSort = null;
 			ArrayList<float []> oldPixFloat = pixFloat;
 			ArrayList<short []> oldPixels = pixels;
@@ -2451,6 +2551,14 @@ public class JFijiPipe {
 					zpos1[i] = zpos.get(i);
 					if( trigTime != null) trigTime1[i] = trigTime.get(i);
 				}
+				int[] siemensSpect = getSiemensSpect();
+				if( siemensSpect != null && siemensSpect.length == numFrms) {
+					isSiemens = true;
+					IJ.log("Siemens SPECT. Please verify that it is correct.");
+					siemensZval = zpos1[0];
+					for(i=0; i<numFrms; i++) zpos1[i] = numFrms + 1 - siemensSpect[i];
+				}
+//				String tmp = ChoosePetCt.getDicomValue(metaData, "0019,9999");
 				// be careful, Audrey Recupero is incorrectly listed as 4D
 				if( trigTime != null) {
 					for( i=numZsame=0; i<numFrms; i++) {
@@ -2511,6 +2619,7 @@ public class JFijiPipe {
 					for( i=0; i<numFrms; i++) {
 						j0 = sortVect[i];
 						zval = oldZpos.get(j0);
+						if( isSiemens) zval = (float)((numFrms-1-i)*sliceThickness + siemensZval);
 						zpos.add(zval);
 						imgNum = oldImgNum.get(j0);
 						imageNumber.add(imgNum);
@@ -2535,14 +2644,11 @@ public class JFijiPipe {
 						}
 					}
 				}
-				int numfr1 = numFrms/numTimeSlots;
 				if( pixelSpacing != null) {
-					zval = Math.abs(zpos.get(numfr1-1) - zpos.get(0));
 					y2XMri = pixelSpacing[0]/pixelSpacing[1];
 					if(y2XMri > 0.99 && y2XMri < 1.01) y2XMri = 1.0;
-					if( zval > 0 && numfr1>1) y2xFactor = zval / (pixelSpacing[0]*(numfr1-1));
-					if(y2xFactor > 0.99 && y2xFactor < 1.01) y2xFactor = 1.0;
 				}
+				y2xFactor = gety2xFac(getStackDepth());
 			}
 
 			// kill rescaleSlope if n==1
@@ -2550,6 +2656,7 @@ public class JFijiPipe {
 
 			// now the data is sorted, so find its maximum value
 			double tmpd, currSlice, mean, currDbl1, maxDbl;
+			float zdif, zmin=0, zmax=0;
 			int currVal1, n1, maxi, coefAll;
 			short currShort;
 			coefAll = getCoefficentAll();
@@ -2625,6 +2732,16 @@ public class JFijiPipe {
 			maxVal = minVal = 0;
 			localMaxPos = -1;
 			for( i=0; i<numFrms; i++) {
+				if( i<numFrms-1) {
+					zdif = zpos.get(i) - zpos.get(i+1);
+					if( zdif != 0) {
+						if( zmin == 0) zmin = zmax = zdif;
+						else {
+								if( zdif < zmin) zmin = zdif;
+								if( zdif > zmax) zmax = zdif;
+							}
+					}
+				}
 				currSlice = maxSliceVals[i];
 				mean += currSlice;
 				if( currSlice > maxVal) {
@@ -2632,6 +2749,12 @@ public class JFijiPipe {
 					localMaxPos = i;
 				}
 			}
+			if( zmax < 0) {
+				zdif = zmin;	// temp
+				zmin = -zmax;
+				zmax = -zdif;
+			}
+			zratio = zmin/zmax;
 			mean /= numFrms;
 			maxFactor = 1.0; // for the shit problem below
 
@@ -2669,6 +2792,17 @@ public class JFijiPipe {
 			if( pixels != null) tmp = "short data";
 			if( pixFloat != null) tmp = "float data";
 			JOptionPane.showMessageDialog(null, tmp);*/
+		}
+
+		double gety2xFac( double stackDepth) {
+			double zval, y2x = 1.0;
+			int numfr1 = numFrms/numTimeSlots;
+			if( pixelSpacing != null) {
+				zval = Math.abs(stackDepth);
+				if( zval > 0 && numfr1>1) y2x = zval / (pixelSpacing[0]*(numfr1-1));
+				if(y2x > 0.99 && y2x < 1.01) y2x = 1.0;
+			}
+			return y2x;
 		}
 
 		int getCoefficentAll() {
@@ -3107,7 +3241,7 @@ public class JFijiPipe {
 		public int getMipLocation(int x1, int z1, Point2d retLoc, short pixOut[], int offst, double[] coss) {
 			double xin, yin, scale1, scale2=1, currValDbl;
 			boolean fltFlg = false;
-			int zlo, y1, xnew, ynew, currVal, off1, retVal, coef0;
+			int zlo, y1, xnew, ynew, currVal, off1, retVal, coef0, heigh2;
 			short currShort;
 			short [] currSlice;
 			float [] fltSlice;
@@ -3126,18 +3260,19 @@ public class JFijiPipe {
 			MIPslope = srcPet.data1.getMaxRescaleSlope();
 			// if MIP is read in certain parameters may not have been initialized
 			if( srcHeight <= 0) srcHeight = srcPet.data1.height;
+			heigh2 = srcHeight/2;
 			if( srcPet.data1.depth == 32) {
 				fltFlg = true;
 				MIPslope = srcPet.data1.maxVal / 32767;
 				scale2 = 1 / MIPslope;
 			}
 			coef0 = srcPet.data1.getCoefficent0();
-			for( yin = -width2 + 0.5; yin < width2; yin += 1.0) {
+			for( yin = -heigh2 + 0.5; yin < heigh2; yin += 1.0) {
 				xnew = (int)( xin*coss[0] + yin*coss[1] + width2);
-				ynew = (int)(-xin*coss[1] + yin*coss[0] + width2);
+				ynew = (int)(-xin*coss[1] + yin*coss[0] + heigh2);
 				if( xnew < 0 || xnew >= width) continue;
 				if( ynew < 0 || ynew >= srcHeight) continue;
-				y1 = (int) (yin + width2);
+				y1 = (int) (yin + heigh2);
 				scale1 = expFac[y1];
 				if( z1 < 0) for( zlo = 0; zlo < height; zlo++) {
 					off1 = zlo*width + offst;

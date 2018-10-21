@@ -30,12 +30,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="j3Dtab" alignment="0" pref="543" max="32767" attributes="0"/>
+          <Component id="j3Dtab" alignment="0" pref="552" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="j3Dtab" min="-2" max="-2" attributes="0"/>
+          <Component id="j3Dtab" pref="350" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -659,7 +659,7 @@
                               <Component id="jLabShiftMaxRoi" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="270" max="32767" attributes="0"/>
+                      <EmptySpace pref="279" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -681,7 +681,7 @@
                           <Component id="jLabShiftZ" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jSpinShiftZ" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="230" max="32767" attributes="0"/>
+                      <EmptySpace pref="233" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -789,7 +789,7 @@
                           <Component id="jCheckInvert" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jButBuild" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="76" max="32767" attributes="0"/>
+                      <EmptySpace pref="85" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -830,7 +830,7 @@
                           </Group>
                           <Component id="jPanel2" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="72" max="32767" attributes="0"/>
+                      <EmptySpace pref="75" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -983,7 +983,7 @@
                           <Component id="jLabMask3" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabMask4" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="115" max="32767" attributes="0"/>
+                      <EmptySpace pref="124" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1000,7 +1000,7 @@
                       <Component id="jLabMask4" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                       <Component id="jButMask" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="167" max="32767" attributes="0"/>
+                      <EmptySpace pref="170" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1051,57 +1051,47 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="jLabNif1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="183" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jButNif" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="jPanExNifti" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
-                              <Component id="jButAbout" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="75" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jTextParms" alignment="0" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jTextNifSrc" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jButNifSrc" min="-2" max="-2" attributes="0"/>
+                              <Component id="jCheckGrown" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="98" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jCheckUseTemp" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jTextNifSrc" min="-2" pref="253" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jButNifSrc" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Component id="jCheckDefLimits" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="jLabNiftix" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jLabNifxmin" min="-2" pref="50" max="-2" attributes="0"/>
-                                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                              <Component id="jLabNifxmax" min="-2" pref="50" max="-2" attributes="0"/>
-                                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                                              <Component id="jLabNify" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jLabNifymin" min="-2" pref="50" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jLabNifymax" min="-2" pref="50" max="-2" attributes="0"/>
-                                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                                              <Component id="jLabNifz" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Component id="jPanExNifti" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="jLabNiftix" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jButGrow" min="-2" max="-2" attributes="0"/>
-                                          <Group type="102" attributes="0">
-                                              <Component id="jLabNifzmin" min="-2" pref="50" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jLabNifzmax" min="-2" pref="50" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Component id="jCheckGrown" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="jLabNifxmin" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabNifxmax" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="jLabNify" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabNifymin" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabNifymax" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="jLabNifz" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabNifzmin" min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabNifzmax" min="-2" pref="50" max="-2" attributes="0"/>
                                   </Group>
+                                  <Component id="jButNif" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jTextParms" min="-2" pref="511" max="-2" attributes="0"/>
+                                  <Component id="jLabNif1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabNif2" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="66" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -1113,67 +1103,48 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabNif1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jLabNif2" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jCheckUseTemp" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jTextNifSrc" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jButNifSrc" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jTextParms" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
-                      <Component id="jCheckDefLimits" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabNifymin" alignment="0" max="-2" attributes="0"/>
-                          <Component id="jLabNifzmin" alignment="0" max="-2" attributes="0"/>
-                          <Component id="jLabNifzmax" alignment="0" max="-2" attributes="0"/>
-                          <Component id="jLabNifxmax" alignment="0" max="-2" attributes="0"/>
-                          <Component id="jLabNifxmin" alignment="0" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabNiftix" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabNify" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabNifz" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jLabNifymax" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jButNif" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jButAbout" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="103" groupAlignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
                           <Group type="102" attributes="0">
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="jPanExNifti" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="jButGrow" min="-2" max="-2" attributes="0"/>
+                              <Component id="jTextParms" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jCheckGrown" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="jCheckDefLimits" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="1" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="jLabNiftix" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabNifxmax" alignment="1" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="jLabNify" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabNifymin" max="-2" attributes="0"/>
+                                  <Component id="jLabNifymax" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabNifz" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabNifzmin" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
+                          <Component id="jLabNifzmax" max="-2" attributes="0"/>
+                          <Component id="jLabNifxmin" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jButNif" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="34" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jPanExNifti" min="-2" max="-2" attributes="0"/>
+                          <Component id="jCheckGrown" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="17" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="jLabNif1">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Please define where the NIfTI data will be stored."/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JTextField" name="jTextNifSrc">
-            </Component>
-            <Component class="javax.swing.JButton" name="jButNifSrc">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Browse"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButNifSrcActionPerformed"/>
-              </Events>
-            </Component>
             <Component class="javax.swing.JButton" name="jButNif">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Press to run, and be patient"/>
@@ -1182,13 +1153,7 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButNifActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="jButAbout">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="About"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButAboutActionPerformed"/>
-              </Events>
+            <Component class="javax.swing.JTextField" name="jTextNifSrc">
             </Component>
             <Component class="javax.swing.JTextField" name="jTextParms">
               <Properties>
@@ -1301,7 +1266,7 @@
               <SubComponents>
                 <Component class="javax.swing.JButton" name="jButMake3Nifti">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="make 4 Nifti files"/>
+                    <Property name="text" type="java.lang.String" value="make Nifti files"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButMake3NiftiActionPerformed"/>
@@ -1309,14 +1274,6 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JButton" name="jButGrow">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Experimental grow"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButGrowActionPerformed"/>
-              </Events>
-            </Component>
             <Component class="javax.swing.JCheckBox" name="jCheckGrown">
               <Properties>
                 <Property name="text" type="java.lang.String" value="use grown mask"/>
@@ -1324,6 +1281,267 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckGrownActionPerformed"/>
               </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabNif1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Autosegmentation is performed using NifTI files (automatically constructed)"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabNif2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Please define where the NIfTI data will be stored."/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jCheckUseTemp">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="use tmp file, if not use:"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckUseTempActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="jButNifSrc">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Browse"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButNifSrcActionPerformed"/>
+              </Events>
+            </Component>
+          </SubComponents>
+        </Container>
+        <Container class="javax.swing.JPanel" name="jRadio">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="radiomics">
+                <Property name="tabTitle" type="java.lang.String" value="radiomics"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+
+          <Layout>
+            <DimensionLayout dim="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="jLabGray" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jTextGray" min="-2" pref="45" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jChRad3D" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="jChRadShowSD" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="jChRadCt" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jChRadEntropy" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadHomogenity" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadContrast" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadASM" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadDiffEntropy" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadCorrelation" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadClusterPromenence" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadDiffVariance" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadClusterShade" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jChRadSphericity" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadSumEntropy" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadSumVariance" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadVariance" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadMaxProbability" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadSumAverage" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadInverseDiffMoment" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadCM2" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jChRadCM1" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                      <EmptySpace pref="75" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabGray" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jTextGray" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRad3D" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadShowSD" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadCt" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadEntropy" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadCM1" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jChRadCM2" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadHomogenity" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadContrast" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadInverseDiffMoment" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadASM" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadMaxProbability" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadDiffEntropy" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadSumAverage" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadSumEntropy" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadDiffVariance" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadSumVariance" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadCorrelation" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadVariance" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadClusterPromenence" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jChRadClusterShade" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jChRadSphericity" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Component class="javax.swing.JLabel" name="jLabGray">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Number of gray levels"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="jTextGray">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="between 4 and 32"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadEntropy">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="entropy"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadHomogenity">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="homogeneity"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadContrast">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="contrast"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadASM">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="ASM"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadDiffEntropy">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="difference entropy"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadCorrelation">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="correlation"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadClusterPromenence">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="cluster prominence"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadClusterShade">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="cluster shade"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadInverseDiffMoment">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="inverse difference moment"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadMaxProbability">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="maximum probability"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadSumAverage">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="sum average"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadSumEntropy">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="sum entropy"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadSumVariance">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="sum variance"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadVariance">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="variance"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadCM1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="measure of correlation 1"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadCM2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="measure of correlation 2"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadDiffVariance">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="difference variance"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRad3D">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="3D"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadShowSD">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="show SD"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadCt">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="calc CT"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jChRadSphericity">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="sphericity"/>
+              </Properties>
             </Component>
           </SubComponents>
         </Container>
@@ -1345,7 +1563,7 @@
                           <Component id="jButRoiPointList" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jButReport" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="387" max="32767" attributes="0"/>
+                      <EmptySpace pref="396" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1356,7 +1574,7 @@
                       <Component id="jButRoiPointList" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jButReport" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="234" max="32767" attributes="0"/>
+                      <EmptySpace pref="237" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

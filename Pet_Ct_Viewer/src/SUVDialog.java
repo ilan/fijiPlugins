@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -55,13 +56,13 @@ public class SUVDialog extends javax.swing.JDialog {
 		seriesType = petPipe.data1.seriesType;
 		secSeries = getTimeInSec(petPipe.data1.serTime);
 		secAcquisition = getTimeInSec(petPipe.data1.acquisitionTime);
-		if( seriesType == ChoosePetCt.SERIES_BQML_PET && secAcquisition+60 < secSeries) {
+		if( seriesType == ChoosePetCt.SERIES_BQML_PET && secAcquisition > 0 && secAcquisition+60 < secSeries) {
 			secSeries = secAcquisition;
 			IJ.log("Acquisition time before Series time");
 		}
 		secInject = getTimeInSec(petPipe.data1.injectionTime);
 		privatePhilipsSUV = petPipe.data1.seriesType == ChoosePetCt.SERIES_PHILIPS_PET;
-		if( showFlg || (!isLegal() || secInject <= 0 || secSeries < secInject || showHeight)) {
+		if( showFlg || (!isLegal(true) || secInject <= 0 || secSeries < secInject || showHeight)) {
 			setFields();
 			jHalfLife.setText(halfLifeMin.toString());
 			jSeriesTime.setText(setTimeSec(secSeries));
@@ -73,6 +74,9 @@ public class SUVDialog extends javax.swing.JDialog {
 				petPipe.data1.patWeight = patWeight;
 				petPipe.data1.patHeight = patHeight;
 				petPipe.data1.totalDose = totalDose;
+				petPipe.data1.setStudyTime(1, secSeries);
+				petPipe.data1.setStudyTime(2, secSeries);
+				petPipe.data1.setStudyTime(3, secInject);
 			}
 		}
 
@@ -85,14 +89,14 @@ public class SUVDialog extends javax.swing.JDialog {
 //			maxSlope = petPipe.data1.getMaxRescaleSlope();
 			maxSlope = petPipe.data1.getRescaleSlope(0);
 			if( tmpDbl > 0) return maxSlope / tmpDbl;
-			tmpDbl = readPhilipsCrap(petPipe);
+			tmpDbl = readSiemensPhilipsCrap(petPipe.data1.srcImage, 0, 0);
 			if( tmpDbl > 0) {
 				petPipe.data1.philipsSUV = tmpDbl;
 				return maxSlope / tmpDbl;
 			}
 			IJ.log("Can't find Philips private SUV");
 			IJ.log("Number of cores: " + Runtime.getRuntime().availableProcessors());
-			return 0.0;
+			return 512.;	// 512*maxSlope?
 		}
 		if(petPipe.data1.seriesType != ChoosePetCt.SERIES_BQML_PET &&
 			petPipe.data1.seriesType != ChoosePetCt.SERIES_GE_PRIVATE_PET)
@@ -111,26 +115,38 @@ public class SUVDialog extends javax.swing.JDialog {
 		return totalDose * 1000. * decay / patWeight;
 	}
 	
-	double readPhilipsCrap(JFijiPipe petPipe) {	//"7053,1000"
+	static double readSiemensPhilipsCrap(ImagePlus srcImage, int type, int indx) {	//"7053,1000"
 		byte[] byt1 = new byte[4096];
 		ByteBuffer byt2;
 		RandomAccessFile fis;
 		String tmp1, path;
+		BI_dbSaveInfo curDb;
 		double retVal = 0;
-		ImagePlus srcImage = petPipe.data1.srcImage;
 		FileInfo info = srcImage.getOriginalFileInfo();
 		if( info == null) return retVal;
 		path = info.directory;
 		File fl1 = new File(path);
 		File [] results = fl1.listFiles();
-		int i, j, n = results.length;
+		int i, j, lim = 2, n = results.length;
 		int currInt, off1;
-		short curWord;
+		short curWord, group = 0x7053, entry = 0x1000;
+		if( type == 1) {
+			group = 0x19;
+			entry = (short) 0x9999;
+			lim = 1;
+			curDb = (BI_dbSaveInfo) srcImage.getProperty("bidb");
+			if( curDb != null && curDb.basUrl != null) { // Orthanc
+				ArrayList<String> names = new ArrayList<String>();
+				for( i=0; i<results.length; i++) names.add(results[i].toString());
+				java.util.Collections.sort(names);
+				for( i=0; i<results.length; i++) results[i] = new File(names.get(i));
+			}
+		}
 		long flLen;
 		try {
-			for( i=0; i<n; i++) {
-				if( i>2) return 0;
-				fl1 = results[i];
+			for( i=0; i<lim; i++) {
+				if(i+indx >= n) return 0;
+				fl1 = results[i+indx];
 				fis = new RandomAccessFile(fl1, "r");
 				flLen = fis.read(byt1);
 				if( flLen < 4096) {
@@ -150,14 +166,19 @@ public class SUVDialog extends javax.swing.JDialog {
 				if( curWord == 0x800) byt2 = byt2.order(ByteOrder.BIG_ENDIAN);
 				while( true) {
 					curWord = byt2.getShort();
-					if( curWord == 0x7053) {
+					if( curWord == group) {
 						curWord = byt2.getShort();
-						if( curWord == 0x1000) {
+						if( curWord == entry) {
 							byt2.getInt();	// UN tag
-							j = byt2.getInt();
-							tmp1 = getDcmString(byt2, j);
+							if( type==0) {
+								j = byt2.getInt();
+								tmp1 = getDcmString(byt2, j);
+								retVal = Double.parseDouble(tmp1);
+							} else {
+								curWord = byt2.getShort();
+								retVal = curWord;
+							}
 							fis.close();
-							retVal = Double.parseDouble(tmp1);
 							return retVal;
 						}
 					}
@@ -177,7 +198,7 @@ public class SUVDialog extends javax.swing.JDialog {
 		return retVal;
 	}
 
-	private String getDcmString(ByteBuffer byt2, int leng) {
+	static private String getDcmString(ByteBuffer byt2, int leng) {
 		String ret1;
 		int pos1;
 		byte[] tmp1 = new byte[leng];
@@ -217,7 +238,7 @@ public class SUVDialog extends javax.swing.JDialog {
 		secSeries = getTimeSec(jSeriesTime);
 		secInject = getTimeSec(jInjectionTime);
 		halfLife = Double.valueOf(jHalfLife.getText()) * 60.0;
-		if(!isLegal()) {
+		if(!isLegal(false)) {
 			JOptionPane.showMessageDialog(this, "Please use valid entries for all fields");
 			return 0;
 		}
@@ -249,8 +270,10 @@ public class SUVDialog extends javax.swing.JDialog {
 		jTotalDose.setText(dose.toString());
 	}
 
-	boolean isLegal() {
-		if( patWeight <= 5 || halfLife <= 0) return false;
+	boolean isLegal(boolean firstTime) {
+		double weight = 5;
+		if( !firstTime) weight = 0.5;
+		if( patWeight <= weight || halfLife <= 0) return false;
 		if( privatePhilipsSUV) return true;
 //			int day0 = getDayOfYear(petPipe.data1.injectionTime);
 //			int day1 = getDayOfYear(petPipe.data1.serTime);
@@ -363,11 +386,7 @@ public class SUVDialog extends javax.swing.JDialog {
 
         jLabel5.setText("Injection time");
 
-        jInjectionTime.setEditable(false);
-
         jLabel6.setText("PET Series time");
-
-        jSeriesTime.setEditable(false);
 
         jAmerican.setText("American");
         jAmerican.addActionListener(new java.awt.event.ActionListener() {

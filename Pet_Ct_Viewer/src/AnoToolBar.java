@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /**
  *
@@ -684,7 +684,7 @@ public class AnoToolBar {
 			getParentInfo();
 			JFijiPipe pet1 = parPanel.petPipe;
 			pixelSize = pet1.data1.pixelSpacing[0];
-			pixSizeZ = pet1.data1.spacingBetweenSlices;
+			pixSizeZ = pet1.data1.sliceThickness;
 			x1 = pixelSize / Annotations.MEASURE_SCALE;
 			z1 = pixSizeZ / Annotations.MEASURE_SCALE;
 			if( sliceType == JFijiPipe.DSP_AXIAL) z1 = x1;
@@ -833,6 +833,7 @@ public class AnoToolBar {
 		text1.addPoint(pt1, scale);
 	}
 
+	@SuppressWarnings("unchecked")
 	void fillStrings() {
 		String line;
 		int num = 0;
