@@ -2242,7 +2242,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	double[] sumLine(JFijiPipe.lineEntry currLine, int n1, int center, int yin, int yindx, int zin, int zindx) {
 		double[] ret1 = new double[2];	// sum, numPts
 		double scale = currLine.slope;
-		int i, j, size1, ypos, zpos, rn = -1;
+		int i, j, size1, ypos, zpos, rn = -1, li = -1;
 		double currVal;
 		boolean fltFlg = false;
 		if( currLine.pixFloat != null) fltFlg = true;
@@ -2260,7 +2260,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			ypos = yin + zindx;
 			zpos = zin + yindx;
 		}
-		ret1[0] = calcPoints( currVal * scale, center, ypos, zpos, rn);
+		ret1[0] = calcPoints( currVal * scale, center, ypos, zpos, rn, li);
 		ret1[1] = 1;	// 1 point so far
 		for( i=1; i<=n1; i++) {
 			j = center+i;
@@ -2268,7 +2268,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 				ret1[1]++;
 				if( fltFlg) currVal = currLine.pixFloat[j];
 				else currVal = currLine.pixels[j];
-				currVal = calcPoints( currVal * scale, j, ypos, zpos, rn);
+				currVal = calcPoints( currVal * scale, j, ypos, zpos, rn, li);
 				ret1[0] += currVal;
 			}
 			j = center-i;
@@ -2276,19 +2276,19 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 				ret1[1]++;
 				if( fltFlg) currVal = currLine.pixFloat[j];
 				else currVal = currLine.pixels[j];
-				currVal = calcPoints( currVal * scale, j, ypos, zpos, rn);
+				currVal = calcPoints( currVal * scale, j, ypos, zpos, rn, li);
 				ret1[0] += currVal;
 			}
 		}
 		return ret1;
 	}
 	
-	private double calcPoints(double inVal, int x, int y, int z, int rn) {
+	private double calcPoints(double inVal, int x, int y, int z, int rn, int li) {
 		double retVal = inVal;
 		if( y < 0) return retVal;	// CT has no effect on curMax
 		if( retVal > curMax) curMax = retVal;
 		if( retVal > curMax / 8) {
-			suvPnt.addRearrangePoint(retVal, 0, x, y, z, rn);
+			suvPnt.addRearrangePoint(retVal, 0, x, y, z, rn, li);
 		}
 		return retVal;
 	}

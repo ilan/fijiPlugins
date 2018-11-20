@@ -47,6 +47,9 @@ public class DicomFormat {
 	public static final short SQ = 0x5351;
 	public static final short QS = 0x5153;
 	public static final short OB = 0x424f;
+	public static final short BO = 0x4f42;
+	public static final short OW = 0x574f;
+	public static final short WO = 0x4f57;
 	public static final short UN = 0x554e;
 	public static final short NU = 0x4e55;
 	public static final short TU = 0x5455;
@@ -419,7 +422,7 @@ public class DicomFormat {
 						case 0x1140:
 						case 0x114a:
 						case 0x1199:
-						case 0x1250:
+						case 0x1250:	// referenced study, series UID
 						case 0x2112:
 						case 0x2218:
 						case (short) 0x9121:
@@ -437,6 +440,7 @@ public class DicomFormat {
 									len = 12;
 								}
 							}
+							if(element == 0x1250 && len <= 12) inSequence = true;
 					}
 				}
 				// watch out, Philips has some really long 8 groups
@@ -467,8 +471,8 @@ public class DicomFormat {
 				// these are sequences which we want to dump
 				if ((group == 9 || group == 0x11 || group == 0x13 || group == 0x19 || group == 0x28 || group == 0x29 || group == 0x31 || group == 0x32 || group == 0x33 || group == 0x40 || group == 0x43 ||
 						group == 0x55 || group == 0x57 || group == 0x59 || group == 0x70 || group == 0x88 || group == 0xe1 || group == 0x1f1 || group == 0x1f3 || group == 0x1f7 || group == 0x400 ||
-						group == 0x7a1 || group == 0x7a3 || group == 0x2001 || group == 0x2005 || group == 0x5200 || group == 0x6000 || group == 0x6021 || group == 0x7053 || group == 0x7fdf) &&
-						((type1 > 0 && (part1 == SQ || part1 == QS || part1 == 0x4f42 || part1 == 0x424f || part1 == 0x4f57 || part1 == 0x574f || part1 == UN || part1 == NU || part1 == UT || part1 == TU)) // SQ OB OW UN UT
+						group == 0x7a1 || group == 0x7a3 || group == 0x2001 || group == 0x2005 || group == 0x5200 || group == 0x6000 || group == 0x6002 || group == 0x6021 || group == 0x7053 || group == 0x7fdf) &&
+						((type1 > 0 && (part1 == SQ || part1 == QS || part1 == BO || part1 == OB || part1 == WO || part1 == OW || part1 == UN || part1 == NU || part1 == UT || part1 == TU)) // SQ OB OW UN UT
 						|| (type1 == 0 && (len1 >= 2048 || len1 < 0) && element != 0))) {
 					// get rid of Siemens shit, use len1 instead of len
 					if (len1 < 0) {
@@ -583,13 +587,14 @@ public class DicomFormat {
 					switch (element) {
 						case 0xd:
 							// Philips has a dummy zero len UID
-							// can't find a case where inSequence is true
+							// there is a case where inSequence is true
 							// use the first valid studyInstanceUID
 							if( len < 24 || inSequence || m_currStudyInstanceUID != null) break;
 							m_currStudyInstanceUID = getDcmString(byt2, len);
 							break;
 
 						case 0xe:
+							if( inSequence) break;
 							m_currSeriesInstanceUID = getDcmString(byt2, len);
 							break;
 							
@@ -1279,7 +1284,12 @@ public class DicomFormat {
 		double ret1 = 0.;
 		String tmp1;
 		tmp1 = getDcmString(byt2, leng);
-		if( !tmp1.isEmpty()) ret1 = Double.valueOf(tmp1);
+		if( !tmp1.isEmpty()) {
+			// there are cases where patient height = "annonimize"
+			try {
+				ret1 = Double.valueOf(tmp1);
+			} catch (Exception e) {}
+		}
 		return ret1;
 	}
 

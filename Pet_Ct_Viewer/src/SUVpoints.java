@@ -16,7 +16,6 @@ public class SUVpoints {
 	ImageJ ij;
 	private ArrayList<SavePoint> modified;		
 	private short[][] summary;
-	private short[] roiNums;
 	
 	SUVpoints(int slcType) {
 		sliceType = slcType;
@@ -33,6 +32,7 @@ public class SUVpoints {
 		short	rn1;	// ROI number
 		double	petVal;
 		int		ctVal;
+		int		labelIndx;
 	}
 
 	class RadioPoint {
@@ -52,7 +52,7 @@ public class SUVpoints {
 		return new RadioPoint();
 	}
 
-	SavePoint newPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0) {
+	SavePoint newPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0, int li) {
 		SavePoint ret1 = new SavePoint();
 		ret1.petVal = pet1;
 		ret1.ctVal = ct1;
@@ -60,6 +60,7 @@ public class SUVpoints {
 		ret1.y1 = (short) y0;
 		ret1.z1 = (short) z0;
 		ret1.rn1 = (short) rn0;
+		ret1.labelIndx = li;
 		return ret1;
 	}
 	
@@ -80,16 +81,16 @@ public class SUVpoints {
 		return ret1.petVal;
 	}
 	
-	void addPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0) {
-		SavePoint curPnt = newPoint( pet1, ct1, x0, y0, z0, rn0);
+	void addPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0, int li) {
+		SavePoint curPnt = newPoint( pet1, ct1, x0, y0, z0, rn0, li);
 		volPointList.add(curPnt);
 	}
 
 	boolean maybeAddPoint( SavePoint curPnt) {
-		return maybeAddPoint( curPnt.petVal, curPnt.ctVal, curPnt.x1, curPnt.y1, curPnt.z1, curPnt.rn1);
+		return maybeAddPoint( curPnt.petVal, curPnt.ctVal, curPnt.x1, curPnt.y1, curPnt.z1, curPnt.rn1, curPnt.labelIndx);
 	}
 
-	boolean maybeAddPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0) {
+	boolean maybeAddPoint( double pet1, int ct1, int x0, int y0, int z0, int rn0, int li) {
 		int i, n=ptListSz;	// check only nifti points
 		if( n<=0) ptListSz = n = volPointList.size();
 		SavePoint test1;
@@ -98,12 +99,12 @@ public class SUVpoints {
 			if( test1.x1 == x0 && test1.y1 == y0 && test1.z1 == z0)
 				return false;
 		}
-		addPoint( pet1, ct1, x0, y0, z0, rn0);
+		addPoint( pet1, ct1, x0, y0, z0, rn0, li);
 		return true;
 	}
 
 	// we want the z direction to be the "slice number"
-	void addRearrangePoint( double pet1, int ct1, int x0, int y0, int z0, int rn0) {
+	void addRearrangePoint( double pet1, int ct1, int x0, int y0, int z0, int rn0, int li) {
 		int y1, z1;
 		y1 = y0;
 		z1 = z0;
@@ -111,7 +112,7 @@ public class SUVpoints {
 			z1 = y0;
 			y1 = z0;
 		}
-		SavePoint curPnt = newPoint( pet1, ct1, x0, y1, z1, rn0);
+		SavePoint curPnt = newPoint( pet1, ct1, x0, y1, z1, rn0, li);
 		volPointList.add(curPnt);
 	}
 	

@@ -3191,7 +3191,7 @@ public class JFijiPipe {
 		 */
 
 		public double[] setCosSin(int indx) {
-			int numMip = NUM_MIP;
+			int expSz, numMip = NUM_MIP;
 			double off1 = 0.;
 			switch(MIPtype) {
 				case 1:
@@ -3207,12 +3207,14 @@ public class JFijiPipe {
 			ret1[0] = Math.cos(angl1);
 			ret1[1] = Math.sin(angl1);
 			if( expFac == null) {
-				expFac = new double[width];
+				expSz = width;
+				if( data1.srcHeight > width) expSz = data1.srcHeight;
+				expFac = new double[expSz];
 				double scale = 2.0*Math.log(2);
 				double scal2 = 0.7;
-				int i, wid2 = width/2;
-				for( i=0; i<width; i++)
-					expFac[i] = scal2*Math.exp(scale*(wid2-i)/width);
+				int i, wid2 = expSz/2;
+				for( i=0; i<expSz; i++)
+					expFac[i] = scal2*Math.exp(scale*(wid2-i)/expSz);
 			}
 			return ret1;
 		}
@@ -3241,12 +3243,13 @@ public class JFijiPipe {
 		public int getMipLocation(int x1, int z1, Point2d retLoc, short pixOut[], int offst, double[] coss) {
 			double xin, yin, scale1, scale2=1, currValDbl;
 			boolean fltFlg = false;
-			int zlo, y1, xnew, ynew, currVal, off1, retVal, coef0, heigh2;
+			int zlo, y1, xnew, ynew, currVal, off1, maxIndex=0, retVal, coef0, heigh2;
 			short currShort;
 			short [] currSlice;
 			float [] fltSlice;
 			int width2 = width/2;
 			xin = x1 - width2 + 0.5;
+			if( pixOut!= null) maxIndex = pixOut.length;
 			retVal = 0;
 			if( z1 < 0) {
 				for( zlo = 0; zlo < height; zlo++) pixOut[zlo*width+offst] = 0;
@@ -3276,6 +3279,7 @@ public class JFijiPipe {
 				scale1 = expFac[y1];
 				if( z1 < 0) for( zlo = 0; zlo < height; zlo++) {
 					off1 = zlo*width + offst;
+					if(off1 >= maxIndex) continue;
 					// if we get a measurable delay, in c++ it helped to move the next line
 					if( fltFlg) {
 						fltSlice = srcPet.data1.pixFloat.get(zlo);
