@@ -109,7 +109,7 @@ public class RenalPanel extends javax.swing.JPanel implements MouseListener,
 		ChartRenderingInfo chartrenderinginfo = chart0Panel.getChartRenderingInfo();
 		java.awt.geom.Rectangle2D rectangle2d = chartrenderinginfo.getPlotInfo().getDataArea();
 		ValueAxis valueaxis1 = xyplot.getRangeAxis();
-		org.jfree.ui.RectangleEdge rectangleedge1 = xyplot.getRangeAxisEdge();
+		org.jfree.chart.ui.RectangleEdge rectangleedge1 = xyplot.getRangeAxisEdge();
 		chartMouseY = valueaxis1.java2DToValue(posY, rectangle2d, rectangleedge1);
 	}
 
