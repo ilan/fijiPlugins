@@ -117,6 +117,7 @@ public class Radionomic {
 				prevPetZ = curpnt.z1;
 				ctSlice = ctPipe.findCtPos(prevPetZ, false);
 			}
+			if( ctSlice < 0) continue;
 			getCtVal(par2, curpnt, ctSlice);
 			if( curpnt.x1 < minx) minx = curpnt.x1;
 			if( curpnt.x1 > maxx) maxx = curpnt.x1;
@@ -187,14 +188,13 @@ public class Radionomic {
 						off0 = (y1+y)*widthCt + x1+x;
 						off1 = (y1+y - miny1)*width + x1+x - minx1;
 						for( zin=0; zin<numZ; zin++) {
-							ctVal = (short)((data1[zin][off0]+coef0)*slope[zin]);
-							// set the values to 1 -> COOCCURENCE_HI
-							j =  ChoosePetCt.round((ctVal - minVal) * scl1) + 1;
 							if( isMask) {
-								if( j<1  || j>11) continue;
 								pixels[zin][off1] = (byte)(curpnt.rn1 + 1);
 								continue;
 							}
+							ctVal = (short)((data1[zin][off0]+coef0)*slope[zin]);
+							// set the values to 1 -> COOCCURENCE_HI
+							j =  ChoosePetCt.round((ctVal - minVal) * scl1) + 1;
 							pixels[zin][off1] = (byte)j;
 							if( j<1  || j>cooccurenceHi+1)pixels[zin][off1] = 0;
 							// allow slop of 1 since not all CT values were sampled

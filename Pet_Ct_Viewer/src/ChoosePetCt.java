@@ -547,7 +547,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	}
 
 	static Date getStudyDateTime(String meta, int type) {
-		String key1 = null, key2 = null, time1 = null, tmp1;
+		String key1 = null, key2 = null, time1 = null, time2, tmp1;
 		String key0 = "0008,0021";	// series date
 		switch( type) {
 			case 0:
@@ -580,8 +580,9 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		if( key1 != null) {
 			time1 = getDicomValue( meta, key1);
 		}
-		if( key2 != null && time1 == null) {
-			time1 = getDicomValue( meta, key2);
+		if( key2 != null && (type == 3 || time1 == null)) {
+			time2 = getDicomValue( meta, key2);
+			if( time2 != null) time1 = time2;	// prefer key2
 			if( time1 != null && time1.length() >= 14) return getDateTime(time1, null);
 		}
 		// use study date since the injection may be 24 or 48 hours earlier
@@ -640,6 +641,9 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 					tmp = getDicomValue(meta, "0054,0202");	// last chance
 					if( tmp == null) return SERIES_UNKNOWN;
 					if( tmp.startsWith("STEP")) {
+						int numFrm = parseInt(getDicomValue( meta, "0028,0008"));
+						// the SERIES_SIEMENS_SPECT is only for the new Siemens format
+						if( numFrm > 1) return SERIES_SPECT;
 						tmp = getDicomValue(meta, "0008,0070");
 						if(tmp != null && tmp.startsWith("SIEMENS")) return SERIES_SIEMENS_SPECT;
 						return SERIES_SPECT;

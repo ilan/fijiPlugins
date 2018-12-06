@@ -687,7 +687,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel12">
               <Properties>
-                <Property name="text" type="java.lang.String" value="version: 2.08"/>
+                <Property name="text" type="java.lang.String" value="version: 2.11"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabJava">

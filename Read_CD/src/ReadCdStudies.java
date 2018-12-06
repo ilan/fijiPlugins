@@ -1216,7 +1216,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 //			if( failed > NUM_FAILS) return;
 			n = dcm.checkDicomValid(flPath.getParent(), flPath.getName());
 			if( n<=0) {
-				failed++;
+				if(!flPath.getName().endsWith(".zip")) failed++;
 				if( failed > NUM_FAILS) return;
 				continue;
 			}
@@ -1711,7 +1711,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.08");
+        jLabel12.setText("version: 2.11");
 
         jLabJava.setText("jLabel13");
 
