@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.scijava.vecmath.Point2d;
+import org.scijava.vecmath.Point3d;
 
 /*
  * PetCtFrame.java
@@ -425,15 +426,22 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 				petCtPanel1.anotateDlg.showBookmarksTab();
 			}
 		}
-		if( !startROIs || BrownFat.instance != null) return 0;
+		if( !startROIs ) return 0;
 		String flName = BrownFat.getSpreadSheetName(petCtPanel1.petPipe);
 		if( flName == null) {	// look maybe Orthanc
 			sub1.look4annotations(petCtPanel1, 1);
 			flName = BrownFat.getSpreadSheetName(petCtPanel1.petPipe);
 		}
+		int numFrm = petCtPanel1.petPipe.getNormalizedNumFrms();
+		if( BrownFat.instance != null) {
+			if( flName == null) return 0;
+			BrownFat.instance.saveParentExt(this);
+			BrownFat.instance.loadStoredROIs(flName, numFrm);
+			BrownFat.instance.calculateVol(true);
+			return 0;
+		}
 		if( flName != null) {
 			BrownFat dlg = new BrownFat(this, false);
-			int numFrm = petCtPanel1.petPipe.getNormalizedNumFrms();
 			dlg.loadStoredROIs(flName,numFrm);
 //			dlg.setSavedSize();
 			dlg.setVisible(true);
@@ -898,9 +906,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		jCheckMri.setEnabled(petCtPanel1.mriPipe != null && petCtPanel1.ctPipe != null);
 		jCheckMri.setSelected(petCtPanel1.MRIflg);
 		jCheck3Ct.setSelected(ct3 != null);
-		if( petCtPanel1.ctPipe == null) return;
+		JFijiPipe currPipe = petCtPanel1.getMriOrCtPipe();
+		if( currPipe == null) return;
 		for( i=0; i<5; i++) {
-			if( (int)petCtPanel1.ctPipe.winLevel == ctLevel[i] && (int)petCtPanel1.ctPipe.winWidth == ctWidth[i]) {
+			if( (int)currPipe.winLevel == ctLevel[i] && (int)currPipe.winWidth == ctWidth[i]) {
 				indx = i;
 				break;
 			}
@@ -929,19 +938,20 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	void update3Display() {
 		JFijiPipe pip1;
+		Point3d obliqueShift = petCtPanel1.getObliqueShift();
 		if( pet3 != null) {
 			pip1 = petCtPanel1.getCorrectedOrUncorrectedPipe(false);
-			if( pet3.updateCenterPoint(pip1) < 0)
+			if( pet3.updateCenterPoint(pip1, obliqueShift) < 0)
 				updatePetCheckmarks(-1);
 		}
 		if( ct3 != null) {
 			pip1 = petCtPanel1.getMriOrCtPipe();
-			if( ct3.updateCenterPoint(pip1) < 0)
+			if( ct3.updateCenterPoint(pip1, obliqueShift) < 0)
 				updateCtCheckmarks();
 		}
 		if( fuse3 != null) {
 			pip1 = petCtPanel1.getCorrectedOrUncorrectedPipe(false);
-			if( fuse3.updateCenterPoint(pip1) < 0)
+			if( fuse3.updateCenterPoint(pip1, obliqueShift) < 0)
 				updateMipCheckmarks(-1);
 		}
 	}
@@ -1339,6 +1349,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		setExternalSpinners(false);
 		if(petCtPanel1 != null) {
 			maybeClearSource();
+			petCtPanel1.removeBFdata();
 			petCtPanel1.ctPipe = petCtPanel1.mipPipe = petCtPanel1.mriPipe = null;
 			petCtPanel1.petPipe = petCtPanel1.upetPipe = petCtPanel1.reproPipe = null;
 		}
@@ -2530,7 +2541,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	}//GEN-LAST:event_jMenuShowTextActionPerformed
 
 	private void jMenuBrownFatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuBrownFatActionPerformed
-		if(BrownFat.instance != null) return;
+		if(BrownFat.instance != null) {
+			BrownFat.instance.saveParentExt(this);
+			return;
+		}
 		BrownFat dlg = new BrownFat(this, false);
 		dlg.setVisible(true);
 	}//GEN-LAST:event_jMenuBrownFatActionPerformed

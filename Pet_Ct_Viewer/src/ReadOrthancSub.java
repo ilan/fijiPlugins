@@ -93,7 +93,7 @@ public class ReadOrthancSub {
 		if( annot == null) return false;
 		if( annot instanceof Annotations) parPan = ((Annotations) annot).parPanel;
 		else if( annot instanceof AnoToolBar) parPan = ((AnoToolBar) annot).parPanel;
-		else if( annot instanceof BrownFat) parPan = ((BrownFat) annot).parentPet;
+		else if( annot instanceof BrownFat) parPan = ((BrownFat) annot).getParentPet();
 		if( parPan == null) return false;
 		switch(indx) {
 			default:

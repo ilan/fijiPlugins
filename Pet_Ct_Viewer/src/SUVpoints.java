@@ -23,7 +23,24 @@ public class SUVpoints {
 		ptListSz = -1;
 		ij = null;
 	}
-	
+
+	SUVpoints(SUVpoints old) {
+		copyMe(old);
+	}
+
+	private void copyMe(SUVpoints old) {
+		sliceType = old.sliceType;
+		volPointList = new ArrayList<SavePoint>();
+		for( int i=0; i < old.getListSize(); i++ ) {
+			SavePoint s = old.getPoint(i);
+			addPoint(s.petVal, s.ctVal, s.x1, s.y1, s.z1, s.rn1, s.labelIndx);
+		}
+		ptListSz = getListSize();
+		zmin = old.zmin;
+		zmax = old.zmax;
+		SUVtype = old.SUVtype;
+		ij = null;
+	}
 
 	class SavePoint {
 		short	x1;
@@ -411,11 +428,11 @@ public class SUVpoints {
 			img2.computeFunction(17, this, res, bf);
 			if(res.label != null) radioList.add(res);
 			if( isCt) {
-				imp2 = img2.buildCtPlus(this, bf.parentPet, false);
+				imp2 = img2.buildCtPlus(this, bf.getParentPet(), false);
 				// imp2 can be null if no point falls inside the CT limits
 				if( imp2 == null) return;
 				type = 1;
-				if( bf.parentPet.MRIflg) type = 2;
+				if( bf.getParentPet().MRIflg) type = 2;
 				glcm = new ArrayList<CooccurencePoint>();
 				img2.calcGlcm(this, imp2);
 				for( i=0; i<=16; i++) {

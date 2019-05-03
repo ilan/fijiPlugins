@@ -38,7 +38,6 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	String SUVresults = "";
 	bkgdLoadData work2 = null;
 	Display3Frame parent;
-	BrownFat bfDlg;
 	Annotations anotateDlg = null;
 	int d3Color = JFijiPipe.COLOR_INVERSE, CTval, styType = -1;
 	int d3FusedColor = JFijiPipe.COLOR_GRAY;
@@ -293,7 +292,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			gateIndx--;
 			if( gateIndx<0) gateIndx = d3Pipe.data1.numTimeSlots - 1;
 		}
-		dirtyCorSag();
+		dirtyCorSag(true);
 		calculateSUVandCT();
 		repaint();
 	}
@@ -1065,8 +1064,9 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		return dm2;
 	}
 
-	void dirtyCorSag() {
-		if( d3Pipe != null && d3Pipe.data1.numTimeSlots > 1) d3Pipe.dirtyCorSag();
+	void dirtyCorSag(boolean isNumTime) {
+		if( d3Pipe.data1.numTimeSlots <= 1 && isNumTime) return;
+		if( d3Pipe != null) d3Pipe.dirtyCorSag();
 	}
 	
 	void drawMarkers(Graphics2D g, int indx, double xIn, double yIn, double scale) {
@@ -1165,13 +1165,19 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	}
 
 	void drawBrownFat(Graphics2D g) {
-		if( bfDlg == null) return;
-		if( !(bfDlg instanceof BrownFat)) {
-			bfDlg = null;
+		PetCtFrame petFrm = parent.srcFrame;
+		if( petFrm == null) return;	// when 3 view is called alone
+		PetCtPanel origCaller = petFrm.getPetCtPanel1();
+		BrownFat bfDlg = origCaller.bfDlg;
+		if( bfDlg == null) {
+			BrownFat bf1 = BrownFat.instance;
+			if( bf1 == null) return;
+			bf1.drawOther3Data(g, this, origCaller);
 			return;
 		}
+		if( !(bfDlg instanceof BrownFat)) return;
 		if( styType == CT_STUDY || styType == MRI_STUDY) return;
-		bfDlg.drawDisplay3Data(g, this);
+		bfDlg.drawDisplay3Data(g, this, origCaller);
 	}
 	
 	void drawAnnotations(Graphics2D g) {
@@ -1194,7 +1200,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		double multYOff = 0, zoomY = 1.0, mult1;
 		int width = d3Pipe.data1.width;
 		int height = ChoosePetCt.round(d3Pipe.data1.width * d3Pipe.zoom1);
-		int num = ChoosePetCt.round(d3Pipe.data1.numFrms * d3Pipe.zoomX * d3Pipe.data1.y2xFactor * d3Pipe.data1.y2XMri / d3Pipe.data1.numTimeSlots);
+		int num = ChoosePetCt.round(d3Pipe.data1.numFrms * d3Pipe.zoomX * d3Pipe.data1.y2xFactor / d3Pipe.data1.numTimeSlots);
 		Dimension sz1 = getSize();
 		saveHeight = sz1.height;
 		if( num > width) {

@@ -410,6 +410,10 @@ public class DicomFormat {
 							m_modelName = getDcmString(byt2, len);
 							break;
 
+						case 0x2111:
+							inSequence = false;
+							break;
+
 						case 0x51:
 						case 0x1032:
 						case 0x1052:
@@ -471,7 +475,7 @@ public class DicomFormat {
 				// these are sequences which we want to dump
 				if ((group == 9 || group == 0x11 || group == 0x13 || group == 0x19 || group == 0x28 || group == 0x29 || group == 0x31 || group == 0x32 || group == 0x33 || group == 0x40 || group == 0x43 ||
 						group == 0x55 || group == 0x57 || group == 0x59 || group == 0x70 || group == 0x88 || group == 0xe1 || group == 0x1f1 || group == 0x1f3 || group == 0x1f7 || group == 0x400 ||
-						group == 0x7a1 || group == 0x7a3 || group == 0x2001 || group == 0x2005 || group == 0x5200 || group == 0x6000 || group == 0x6002 || group == 0x6021 || group == 0x7053 || group == 0x7fdf) &&
+						group == 0x7a1 || group == 0x7a3 || group == 0x2001 || group == 0x2005 || group == 0x4ffe || group == 0x5200 || group == 0x6000 || group == 0x6002 || group == 0x6021 || group == 0x7053 || group == 0x7fdf) &&
 						((type1 > 0 && (part1 == SQ || part1 == QS || part1 == BO || part1 == OB || part1 == WO || part1 == OW || part1 == UN || part1 == NU || part1 == UT || part1 == TU)) // SQ OB OW UN UT
 						|| (type1 == 0 && (len1 >= 2048 || len1 < 0) && element != 0))) {
 					// get rid of Siemens shit, use len1 instead of len
@@ -517,6 +521,8 @@ public class DicomFormat {
 							break;
 							
 						case 0x1002:	// sequence
+						case 0x2293:
+						case 0x2294:
 							group = 0x18; // take care below
 							element = 0x26;
 							break;
@@ -547,15 +553,23 @@ public class DicomFormat {
 				if (group == 0x18) {
 					switch (element) {
 						case 0x26:
+						case (short) 0x9301:
 						case (short) 0x9304:
+						case (short) 0x9308:
+						case (short) 0x9312:
 						case (short) 0x9314:
 						case (short) 0x9321:
 						case (short) 0x9325:
+						case (short) 0x9326:
 						case (short) 0x9329:
 						case (short) 0x9346:
 						case (short) 0x9477:
+						case (short) 0x9732:
+						case (short) 0x9734:
+						case (short) 0x9735:
 						case (short) 0x9736:
 						case (short) 0x9737:
+						case (short) 0x9749:
 						case (short) 0x9751:
 						case (short) 0xa001:
 							if (len1 < 0) {

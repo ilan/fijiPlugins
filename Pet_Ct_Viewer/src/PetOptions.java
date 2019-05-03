@@ -31,11 +31,11 @@ public class PetOptions extends javax.swing.JDialog {
         super(parent, modal);
 		this.parent = (PetCtFrame) parent;
         initComponents();
-		setLocationRelativeTo(getOwner());
 		init();
     }
 
 	private void init() {
+		setLocationRelativeTo(getOwner());
 		Preferences prefer1 = parent.jPrefer;
 		jCheckHotIron.setSelected(ChoosePetCt.isOptionSelected(prefer1, ChoosePetCt.HOT_IRON_FUSE));
 		jCheckBlackBackground.setSelected(ChoosePetCt.isOptionSelected(prefer1, ChoosePetCt.BLACK_BKGD));
@@ -730,7 +730,7 @@ public class PetOptions extends javax.swing.JDialog {
 
         jCheckExCt.setText("CT");
 
-        jCheckExMask.setText("mask");
+        jCheckExMask.setText("PET mask");
 
         jCheckExCtMask.setText("CT mask");
 
@@ -798,7 +798,7 @@ public class PetOptions extends javax.swing.JDialog {
             .addGroup(jPanelExtendedLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jButSave1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(392, Short.MAX_VALUE))
         );
         jPanelExtendedLayout.setVerticalGroup(
             jPanelExtendedLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

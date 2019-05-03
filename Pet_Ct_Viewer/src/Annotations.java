@@ -7,6 +7,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -21,6 +22,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
+import javax.swing.JColorChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
@@ -46,12 +48,12 @@ public class Annotations extends javax.swing.JDialog {
 	public Annotations(java.awt.Frame parent, boolean modal) {
 		super(parent, modal);
 		initComponents();
-		setLocationRelativeTo(parent);
 		init(parent);
 	}
 	
 	private void init(java.awt.Frame parent) {
 		parentFrm = (PetCtFrame) parent;
+		setLocationRelativeTo(parent);
 		m_lastView = -2;	// illegal value
 		m_numTemp = 0;
 		m_tempPnt = new Point[3];
@@ -82,6 +84,7 @@ public class Annotations extends javax.swing.JDialog {
 	boolean takeAction( boolean useMouse) {
 		if( !useMouse) return true;
 		if( !isVisible()) return false;
+		if( parPanel.mouse1.whichButton == MouseEvent.BUTTON3) return false;
 		if( parPanel.m_sliceType == JFijiPipe.DSP_OBLIQUE) return false;
 		if( jSave.isShowing()) return false;
 		return !jBookmarks.isShowing();
@@ -865,7 +868,7 @@ public class Annotations extends javax.swing.JDialog {
 		parPanel.m_oblique = null;
 		if( m_obliqueFlg) {
 			parPanel.m_oblique = new myOblique();
-			m_obliqueFlg = parPanel.m_oblique.update(meas1);	// see if is OK
+			m_obliqueFlg = parPanel.m_oblique.init(meas1);	// see if is OK
 			if( m_obliqueFlg) tmp = "Oblique";
 			else parPanel.m_oblique = null;
 		}
@@ -1055,6 +1058,23 @@ public class Annotations extends javax.swing.JDialog {
 			cnt++;
 		}
 		return cnt;
+	}
+
+	void setTextColor() {
+		Color color1 = JColorChooser.showDialog(this, "Choose the annotations color", Color.red);
+		if( color1 == null) return;
+		Preferences prefer = parentFrm.jPrefer;
+		int rgb = color1.getRGB();
+		prefer.putInt("annotation color", rgb);
+		parPanel.repaintAll();
+	}
+
+	Color getTextColor() {
+		Color col1 = Color.red;
+		Preferences prefer = parentFrm.jPrefer;
+		int i = prefer.getInt("annotation color", 0);
+		if( i!=0) col1 = new Color(i);
+		return col1;
 	}
 	
 	class myCaller {
@@ -1261,7 +1281,7 @@ public class Annotations extends javax.swing.JDialog {
 				xdsp[i] = pt2.x + offX;
 				ydsp[i] = pt2.y;
 			}
-			g.setColor(Color.red);
+			g.setColor(getTextColor());
 			g.drawPolyline(xdsp, ydsp, npts);
 			if( (type & 3) == 0) {
 				if( offX2 <= 0) return;	// no need to draw on fused
@@ -1385,7 +1405,7 @@ public class Annotations extends javax.swing.JDialog {
 			if( indx == 2) offX = widthX;
 			if(isFusedShowing()) offX2 = 2*widthX;
 			double scl1 = parPanel.getScalePet();
-			g.setColor(Color.red);
+			g.setColor(getTextColor());
 			FontMetrics fmet = g.getFontMetrics();
 			offY = fmet.getHeight() / 2;
 			while( (j = tmp.indexOf('\n')) > 0) {
@@ -1407,7 +1427,7 @@ public class Annotations extends javax.swing.JDialog {
 			int j, offX, offY, dspType;
 			String tmp1, tmp = m_floatingText[indx];
 			double scl1;
-			g.setColor(Color.red);
+			g.setColor(getTextColor());
 			FontMetrics fmet = g.getFontMetrics();
 			offY = fmet.getHeight() / 2;
 			while( (j = tmp.indexOf('\n')) > 0) {
@@ -1788,9 +1808,9 @@ public class Annotations extends javax.swing.JDialog {
 	class myOblique {
 		int primaryPlane, secondaryPlane, intersection;
 		int xScale, zScale;
-		double angle, obliqueFactor;
+		double angle, obliqueFactor, pety2z, cty2z, ctFix = 1.0;
 		
-		boolean update(myMeasure meas1) {
+		boolean init(myMeasure meas1) {
 			boolean angle90, retVal = false;
 			double deltaX, deltaY;
 			int cx, cy, offst;
@@ -1865,37 +1885,77 @@ public class Annotations extends javax.swing.JDialog {
 					retVal = true;
 					break;
 			}
+			pip0.primaryOblique = primaryPlane;
 			return retVal;
 		}
 		
 		void startOblique() {
+			double y2xFix;
 			JFijiPipe pip0 = getPipe(0);	// pet pipe
 			pip0.obliqueFactor = obliqueFactor;
+			pety2z = pip0.data1.y2xFactor;
 			int ctZ, petZ = pip0.data1.numFrms;
 			pip0 = getPipe(2);	// ct pipe
 			ctZ = pip0.data1.numFrms;
+			cty2z = pip0.data1.y2xFactor;
+			y2xFix = petZ/(ctZ*1.0);
+			ctFix = cty2z / pety2z;
 			switch(primaryPlane) {
 				case JFijiPipe.DSP_CORONAL:
-					pip0.obliqueFactor = obliqueFactor*petZ/ctZ;
+					pip0.obliqueFactor = obliqueFactor*y2xFix;
 					if(secondaryPlane != JFijiPipe.DSP_AXIAL)
 						pip0.obliqueFactor = obliqueFactor;	// not corrected for num slices
 					parPanel.petCoronal = intersection;
 					break;
 					
 				case JFijiPipe.DSP_AXIAL:
-					pip0.obliqueFactor = obliqueFactor*ctZ/petZ;
+					pip0.obliqueFactor = obliqueFactor/y2xFix;
 					parPanel.petAxial = intersection;
 					break;
 					
 				case JFijiPipe.DSP_SAGITAL:
-					pip0.obliqueFactor = obliqueFactor*petZ/ctZ;
+					pip0.obliqueFactor = obliqueFactor*y2xFix;
 					if(secondaryPlane != JFijiPipe.DSP_AXIAL)
 						pip0.obliqueFactor = obliqueFactor;	// not corrected for num slices
 					parPanel.petSagital = intersection;
 					break;
 			}
 		}
-		
+
+		Point3d getObliqueShift() {
+			Point3d ret1 = new Point3d();
+			double offst, centerz = zScale/2.0, centerx = xScale/2.0;
+			switch(primaryPlane) {
+				case JFijiPipe.DSP_AXIAL:
+					if( secondaryPlane == JFijiPipe.DSP_CORONAL) {
+						offst = parPanel.petCoronal - centerx;
+					} else {
+						offst = parPanel.petSagital - centerx;
+					}
+					ret1.z = offst * obliqueFactor;
+					break;
+
+				case JFijiPipe.DSP_CORONAL:
+					if( secondaryPlane == JFijiPipe.DSP_AXIAL) {
+						offst = parPanel.petAxial - centerz;
+					} else {
+						offst = parPanel.petSagital - centerx;
+					}
+					ret1.y = offst * obliqueFactor;
+					break;
+
+				case JFijiPipe.DSP_SAGITAL:
+					if( secondaryPlane == JFijiPipe.DSP_AXIAL) {
+						offst = parPanel.petAxial - centerz;
+					} else {
+						offst = parPanel.petCoronal - centerx;
+					}
+					ret1.x = offst * obliqueFactor;
+					break;
+			}
+			return ret1;
+		}
+
 		void draw(Graphics2D g, double scl1, JFijiPipe pip1, int colorMod, double axialPos) {
 			switch(primaryPlane) {
 				case JFijiPipe.DSP_CORONAL:
@@ -1904,11 +1964,8 @@ public class Annotations extends javax.swing.JDialog {
 					break;
 					
 				case JFijiPipe.DSP_AXIAL:
-					boolean corPlane = true;
-					if( secondaryPlane == JFijiPipe.DSP_SAGITAL) corPlane = false;
 					pip1.prepareAxialOblique(axialPos, secondaryPlane, colorMod);
-					pip1.drawCorSagImages(g, scl1, parPanel, corPlane);
-//					pip1.drawImages(g, scl1, parPanel, true);
+					pip1.drawImages(g, scl1, parPanel, true);
 					break;
 
 				case JFijiPipe.DSP_SAGITAL:
@@ -1953,6 +2010,7 @@ public class Annotations extends javax.swing.JDialog {
         jRadMeasDist = new javax.swing.JRadioButton();
         jRadMeasAngle = new javax.swing.JRadioButton();
         jLabMeas = new javax.swing.JLabel();
+        jButSetColor = new javax.swing.JButton();
         jArrows = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jButRightArrow = new javax.swing.JToggleButton();
@@ -2100,6 +2158,13 @@ public class Annotations extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
+        jButSetColor.setText("Set Color");
+        jButSetColor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButSetColorActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jMeasureLayout = new javax.swing.GroupLayout(jMeasure);
         jMeasure.setLayout(jMeasureLayout);
         jMeasureLayout.setHorizontalGroup(
@@ -2120,6 +2185,10 @@ public class Annotations extends javax.swing.JDialog {
                             .addComponent(jButMeasOK, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabMeasCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addGap(46, 46, 46))
+            .addGroup(jMeasureLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButSetColor)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jMeasureLayout.setVerticalGroup(
             jMeasureLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2139,7 +2208,9 @@ public class Annotations extends javax.swing.JDialog {
                 .addGroup(jMeasureLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jCheckMeasHide)
                     .addComponent(jButOblique))
-                .addContainerGap(57, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButSetColor)
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Measure", jMeasure);
@@ -2659,6 +2730,10 @@ public class Annotations extends javax.swing.JDialog {
         radButAction(3);
     }//GEN-LAST:event_jRadLineSUVActionPerformed
 
+    private void jButSetColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButSetColorActionPerformed
+		setTextColor();
+    }//GEN-LAST:event_jButSetColorActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup butGroupMeas;
     private javax.swing.ButtonGroup butGroupSave;
@@ -2679,6 +2754,7 @@ public class Annotations extends javax.swing.JDialog {
     private javax.swing.JButton jButOblique;
     private javax.swing.JToggleButton jButRightArrow;
     private javax.swing.JButton jButSaveOK;
+    private javax.swing.JButton jButSetColor;
     private javax.swing.JButton jButTextClearAll;
     private javax.swing.JButton jButTextClearLast;
     private javax.swing.JButton jButTextOK;

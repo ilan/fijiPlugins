@@ -24,6 +24,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.scijava.vecmath.Point3d;
 
 /*
  * Display3Frame.java
@@ -226,9 +227,10 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 //		currKeyTime = 0;
 	}
 
-	public int updateCenterPoint( JFijiPipe petCtPipe) {
+	public int updateCenterPoint( JFijiPipe petCtPipe, Point3d obliqueShift) {
 		int retVal = 0;
 		srcPipe = petCtPipe;
+		m_obliqueShift = obliqueShift;
 		boolean change = isChange( petCtPipe);
 		if( change) {
 			retVal = 1;
@@ -244,29 +246,30 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		boolean change = false;
 		PetCtFrame par1 = srcFrame;
 		if( par1 == null) return change;
-		double inVal, outVal;
+		double inVal, outVal, ctFix = 1.0;
 		int sliceIn;
 		inVal = par1.getPetCtPanel1().petAxial;
 		outVal = petCtPipe.findCtPos(inVal, true);
+		if( m_type == 1) ctFix = par1.getPetCtPanel1().getObliqueCtFix();
 		if( isChangeSub(display3Panel1.d3Axial, outVal)) change = true;
-		display3Panel1.d3Axial = outVal;
+		display3Panel1.d3Axial = outVal + m_obliqueShift.z;
 
 		inVal = par1.getPetCtPanel1().petCoronal;
 		outVal = petCtPipe.corFactor * inVal + petCtPipe.corOffset - petCtPipe.mriOffY;
 		if( isChangeSub(display3Panel1.d3Coronal, outVal)) change = true;
-		display3Panel1.d3Coronal = outVal;
+		display3Panel1.d3Coronal = outVal + ctFix * m_obliqueShift.y;
 
 		inVal = par1.getPetCtPanel1().petSagital;
 		outVal = petCtPipe.sagFactor * inVal + petCtPipe.sagOffset - petCtPipe.mriOffX;
 		if(  isChangeSub(display3Panel1.d3Sagital, outVal)) change = true;
-		display3Panel1.d3Sagital = outVal;
+		display3Panel1.d3Sagital = outVal + ctFix * m_obliqueShift.x;
 
 		sliceIn = par1.getPetCtPanel1().gateIndx;
 		if( sliceIn != display3Panel1.gateIndx) change = true;
 		display3Panel1.gateIndx = sliceIn;
 		display3Panel1.invertScroll = par1.invertScroll;
 		// need to update brown fat dialog
-		display3Panel1.bfDlg = par1.getPetCtPanel1().bfDlg;
+//		display3Panel1.bfDlg = par1.getPetCtPanel1().bfDlg;
 		display3Panel1.anotateDlg = par1.getPetCtPanel1().anotateDlg;
 		return change;
 	}
@@ -298,9 +301,9 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 			petPipe = petPanel.petPipe;
 			if(petPipe != null) d3Axial = display3Panel1.d3Pipe.findPetPos(d3Axial, petPipe, true);
 		}
-		petPanel.petAxial = d3Axial;
-		petPanel.petCoronal = d3Coronal;
-		petPanel.petSagital = d3Sagital;
+		petPanel.petAxial = d3Axial - m_obliqueShift.z;
+		petPanel.petCoronal = d3Coronal - m_obliqueShift.y;
+		petPanel.petSagital = d3Sagital - m_obliqueShift.x;
 		petPanel.updateFakeValues();
 		srcFrame.changeLayout(page);
 	}
@@ -315,8 +318,9 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 	void initFinish() {
 		int styType;
 		boolean fusedFlg;
-		int ser = display3Panel1.d3Pipe.data1.seriesType;
-		if( ser == ChoosePetCt.SERIES_CT || 	ser == ChoosePetCt.SERIES_CT_VARICAM
+		JFijiPipe d3Pipe = display3Panel1.d3Pipe;
+		int ser = d3Pipe.data1.seriesType;
+		if( ser == ChoosePetCt.SERIES_CT || ser == ChoosePetCt.SERIES_CT_VARICAM
 				|| ser == ChoosePetCt.SER_FORCE_CT) {
 			display3Panel1.d3Color = JFijiPipe.COLOR_GRAY;
 			jMenuAuto.setVisible(false);
@@ -338,9 +342,10 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 				jCheckBrain.setVisible(false);
 				jCheckMriLut.setVisible(false);
 			}
+			if(d3Pipe.data1.isCt()) display3Panel1.d3Color = JFijiPipe.COLOR_GRAY;
 			styType = Display3Panel.SUV_STUDY;
 			if( fusedFlg) styType = Display3Panel.FUSED_SUV;
-			if( display3Panel1.d3Pipe.data1.SUVfactor <= 0) {
+			if( d3Pipe.data1.SUVfactor <= 0) {
 				jMenuBrain.setVisible(false);
 				styType = Display3Panel.CNT_STUDY;
 				if( ser == ChoosePetCt.SERIES_MRI || ser == ChoosePetCt.SER_FORCE_MRI)
@@ -547,6 +552,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 	private void changePetColor( int indx) {
 		display3Panel1.d3Color = indx;
 		hideAllPopupMenus();
+		display3Panel1.dirtyCorSag(false);	// check this
 		display3Panel1.repaint();
 	}
 	
@@ -1324,6 +1330,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
     // End of variables declaration//GEN-END:variables
 	int openMode = 0, SUVmm = 5, SUVtype, pgUpDn = 3, m_type = -1;
 	JFijiPipe srcPipe = null, srcCtPipe = null;
+	Point3d m_obliqueShift = new Point3d();
 	PetCtFrame srcFrame = null;
 	boolean isInitialized;
 	Preferences jPrefer = null;

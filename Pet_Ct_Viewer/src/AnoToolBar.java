@@ -8,6 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -60,6 +61,7 @@ public class AnoToolBar {
 
 	boolean takeAction( boolean useMouse) {
 		if( !useMouse) return true;
+		if( parPanel.mouse1.whichButton == MouseEvent.BUTTON3) return false;
 		return currRB != RB_BM;
 	}
 	

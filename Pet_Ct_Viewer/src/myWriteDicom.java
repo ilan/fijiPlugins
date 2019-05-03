@@ -255,12 +255,15 @@ public class myWriteDicom {
 		int pos1, pos2, group, element, i, numFrms, coef0 = 0;
 		int offst, depth, dataSz, sz1, j, k, tmpi1, group2 = 0;
 		int coefAll;
+		float tmpfl;
+		double rescaleSlope;
 		short type1;
 		Object pix1;
 		byte [] pixByte;
 		short [] pixels;
 		double coef[];
 		int [] pixInt;
+		float [] pixFloat;
 		boolean isModify = newSeriesName != null || newSeriesNum >= 0 || updated != null;
 		boolean isOdd = false;
 		String[] parms;
@@ -269,8 +272,11 @@ public class myWriteDicom {
 		try {
 			doDcmCheck();
 			int rescaleIntercept = (int) ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0028,1052"));
+			rescaleSlope = ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0028,1053"));
+			if( rescaleSlope <= 0) rescaleSlope = 1.0;
 			coef = img1.getCalibration().getCoefficients();
 			if( coef != null) coef0 = (int) coef[0];
+			depth = img1.getBitDepth();
 			coefAll = coef0 - rescaleIntercept;
 			outBuf = new byte[32768];
 			out1 = ByteBuffer.wrap(outBuf);
@@ -347,9 +353,9 @@ public class myWriteDicom {
 				numFrms = 1;
 				offst = sliceNum - 1;
 			}
-			depth = img1.getBitDepth();
 			sz1 = img1.getHeight() * img1.getWidth();
 			dataSz = sz1 * depth / 8;
+			if( depth == 32) dataSz /= 2;	// float data is illegal for PET
 
 			// group 0x7fe0 - pixel data
 			out1.position(0);
@@ -371,6 +377,20 @@ public class myWriteDicom {
 			for( j=1; j<=numFrms; j++) {
 				pix1 = img1.getStack().getPixels(j+offst);
 				switch( depth) {
+					
+					case 32:	// change to 16 bits
+						pixFloat = (float []) pix1;
+						for( i=0; i<sz1; i++) {
+							k = i*2;
+							tmpfl = pixFloat[i] + coefAll;
+							tmpi1 = (int) (tmpfl/rescaleSlope);
+							outBuf[k] =(byte) tmpi1;
+							tmpi1 = tmpi1 >> 8;
+							outBuf[k+1] =(byte) tmpi1;
+						}
+						flOut1.write(outBuf, 0, dataSz);
+						break;
+
 					case 24:
 						pixInt = (int []) pix1;
 						for( i=0; i<sz1; i++) {
