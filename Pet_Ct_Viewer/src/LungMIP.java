@@ -349,11 +349,11 @@ public class LungMIP extends javax.swing.JDialog {
 
 		boolean buildInsert(Poly3Save poly1) {
 			boolean isInsert = (insert != null);
-			int val0, val1, i, j, z, zmax, wid1, xOff, yOff, angle1=0;
+			int val0, val1, i, j, z, zmax, wid1, wid2, xOff, yOff, angle1=0;
 			int depth, depth1, sliceNum, cenPet, cenCt, edgeOff = 0;
 			Rectangle r1;
 			double sThick, zoomPet, scl1;
-			int nSlices, xyChoice = 1;
+			int l1, nSlices, xyChoice = 1;
 			JFijiPipe.lineEntry currLine;
 			JFijiPipe petPipe = parentPet.petPipe;
 			zoomPet = petPipe.zoomX;
@@ -416,9 +416,12 @@ public class LungMIP extends javax.swing.JDialog {
 					depth = depth1;
 				}
 				yOff = j*wid1;
+				wid2 = wid1;
 				currLine = pip1.data1.getLineOfData(angle1, depth, sliceNum);
 				if( currLine.pixels == null) continue;
-				for( i=0; i<wid1; i++) {
+				l1 = currLine.pixels.length - xOff;
+				if( wid2 >= l1) wid2 = l1 -1;
+				for( i=0; i<wid2; i++) {
 					insert.pixels[i+yOff] = currLine.pixels[i+xOff];
 				}
 			}
@@ -438,9 +441,12 @@ public class LungMIP extends javax.swing.JDialog {
 						depth = depth1;
 					}
 					yOff = j*wid1;
+					wid2 = wid1;
 					currLine = pip1.data1.getLineOfData(angle1, depth, sliceNum);
 					if( currLine.pixels == null) continue;
-					for( i=0; i<wid1; i++) {
+					l1 = currLine.pixels.length - xOff;
+					if( wid2 >= l1) wid2 = l1 -1;
+					for( i=0; i<wid2; i++) {
 						val1 = currLine.pixels[i+xOff];
 						if(insert.pixels[i+yOff]>=val1) continue;
 						insert.pixels[i+yOff] = (short) val1;
