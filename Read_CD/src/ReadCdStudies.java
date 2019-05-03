@@ -402,12 +402,16 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			ImageJ ij = IJ.getInstance();
 			if( ij != null) ij.toFront();
 		}
+		boolean showWarn = true;
+		out1:
 		for( i=0; i<n; i++) {
 			Point pnt1 = getPosAndLen(selected[i], mod1);
 			for( j=0; j < pnt1.y; j++) {
 				currRow = tableList.get(pnt1.x + j);
-				if( readWriteDelFlg == 2) deleteFiles(currRow);
-				else {
+				if( readWriteDelFlg == 2) {
+					if( !deleteFiles(currRow, showWarn)) break out1;
+					showWarn = false;
+				} else {
 					if(!readFiles(currRow)) {
 						unselectAllTableEntries();
 						Container c = getContentPane();
@@ -518,7 +522,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		work2.execute();
 	}
 
-	boolean deleteFiles( CD_dirInfo currRow) {
+	boolean deleteFiles( CD_dirInfo currRow, boolean showWarn) {
 		int j, n0;
 		File fdel;
 		String parName = currRow.flName.getParent();
@@ -529,6 +533,12 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			currRow.flList.toArray(results);
 		}
 		if( results == null) return true;
+		if( showWarn) {
+			String tmp1 = "These series will be permanently deleted.";
+			tmp1 += "\nAre you sure you want to delete them?";
+			int i = JOptionPane.showConfirmDialog(this, tmp1, "Delete series", JOptionPane.YES_NO_OPTION);
+			if( i != JOptionPane.YES_OPTION) return false;
+		}
 		n0 = results.length;
 		for( j=0; j<n0; j++) {
 			fdel = new File(results[j].getPath());
@@ -1083,6 +1093,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		String name0, name1, tname;
 		String[] sUIDs = new String[n];
 		String sUID0, sUID1, tUID;
+		Date dateTst;
 		long[] styDate = new long[n];
 		long date0, date1, tdate;
 		CD_dirInfo tableEntry;
@@ -1093,7 +1104,12 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			tname = tableEntry.patName;
 			if( tname == null) return;
 			names[i] = tname.toLowerCase();
-			styDate[i] = tableEntry.styDate.getTime()/1000;
+			dateTst = tableEntry.styDate;
+			if(dateTst == null) {
+				sortUID = false;
+				continue;
+			}
+			styDate[i] = dateTst.getTime()/1000;
 			tUID = tableEntry.studyUID;
 			if( tUID == null || tUID.isEmpty()) sortUID = false;
 			sUIDs[i] = tUID;
