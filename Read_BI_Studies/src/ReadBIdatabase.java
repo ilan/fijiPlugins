@@ -153,6 +153,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		jTable1.removeColumn(tc);
 		tc = jTable1.getColumnModel().getColumn(TBL_BF);
 		jTable1.removeColumn(tc);
+		teachingVisible(false);
 		jTable1.addMouseListener(this);
 		jTable1.setAutoCreateRowSorter(true);
 		tc = jTable2.getColumnModel().getColumn(TBL_SER_UID);
@@ -220,6 +221,9 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		} catch (Exception e) { stackTrace2Log(e); }*/
 		jCurrDB = jPrefer.getInt("current database", 0);
 		teachList = new ArrayList<bi_dbTeaching>();
+		String jpath = jPrefer.get("report path", null);
+		if( jpath == null || jpath.isEmpty()) jpath = jPrefer.get("significant image path", "");
+		jTextPathName.setText(jpath);
 		isInitialized = true;
 		setAnimatedFile();
 		updateDbList();
@@ -456,6 +460,11 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		readWriteDelFlg = 0;
 		bkgdMode = 0;
 		loadData();
+	}
+
+	void teachingVisible(boolean show) {
+		TableColumn tc = jTable1.getColumnModel().getColumn(TBL_TEACHING);
+		jTable1.removeColumn(tc);
 	}
 
 	// this has been extended to do both read and delete
@@ -1790,7 +1799,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 				return true;
 			}
 			bi_dbWriteInfo biWr1 = new bi_dbWriteInfo();
-			biWr1.generateInfo(null, null);
+			biWr1.generateInfo(null, null, true);
 			if( biWr1.fileName == null) return false;
 			fout = new File( biWr1.path1);
 			if( fout.exists()) {
@@ -2868,7 +2877,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 	void setOrSaveColumnWidths(int type, boolean saveFlg) {
 		DefaultTableModel mod1;
 		String colStr = "readDb series col";
-		int i, x, n = 7;
+		int i, x, n = 6;	// was 7 with teaching
 		JTable jTab = jTable1;
 		if( type == 1) {
 			jTab = jTable2;
@@ -3285,16 +3294,18 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		dataWindow = saveWindow;
 		saveJpeg(1);
 		myWriteDicom dcm1 = new myWriteDicom((PetCtFrame) saveWindow, this);
+		dcm1.specialType = 2;	// significant image
 		dcm1.writeDicomHeader();
 	}
 
 	void saveJpeg(int type) {
 		int i;
+		boolean useOrthanc = false;
 		Date styDate;
 		BI_dbSaveInfo currDb = null;
 		ImagePlus img1;
 		SaveMip dlg1 = null;
-		String sql, ext1, name, patId, accession, meta = null;
+		String sql, jname, ext1, name, patId, accession, meta = null;
 		try {
 			if( dataWindow == null) {
 				JOptionPane.showMessageDialog(this, "Choose a study to be saved and try again.");
@@ -3349,33 +3360,64 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 				name = currDb.patName + "." + ext1;
 				patId = currDb.patID;
 			}
-			bi_dbWriteInfo biWr1 = new bi_dbWriteInfo();
-			biWr1.generateInfo(styDate, name);
-			String sDat1 = formatDate(styDate);
-			Connection conn1 = openDBConnection();
-			Statement stm = conn1.createStatement();
-			sql = "select sty_date from jpeg where filename = '" + biWr1.fileName;
-			sql += "' and sty_date = " + sDat1;
-			sql += " and accession = " + accession;
-			sql += " and pat_id = '" + patId + "'";
-			ResultSet rSet = stm.executeQuery(sql);
-			if( rSet.next()) {
-				rSet.close();
-				String tmp = "The jpeg file = " + biWr1.fileName + " has already been written to database.\n" +
-					"A correction will be made and the missing file rewritten."	;
-				JOptionPane.showMessageDialog(this, tmp);
-			} else {
-				sql = "insert into jpeg (pat_id, sty_date, accession, filename) values ('";
-				sql += patId  + "', " + sDat1 + ", " + accession + ", '" + biWr1.fileName + "')";
-				stm.executeUpdate(sql);
+			if( orthanc1 != null) useOrthanc = true;
+			else {
+				bi_dbWriteInfo biWr0 = new bi_dbWriteInfo();
+				biWr0.generateInfo(styDate, name, false);
+				if( biWr0.fileName == null) useOrthanc = true;
 			}
-			stm.close();
+			if( useOrthanc) {
+				jname = jTextPathName.getText();
+				if( jname.isEmpty()) return;
+				if( jname.startsWith("@")) {
+					IJ.log("Please use a disk location, not a write to Orthanc");
+					return;
+				}
+				File test = new File(jname);
+				if( !test.exists()) {
+					IJ.log("Can't find directory: " + jname);
+					return;
+				}
+				jPrefer.put("report path", jname);
+				if( type == 0) {
+					Date now1 = new Date();
+					long sec0 = now1.getTime() / 600;
+					Integer min = (int)(sec0 % 6000);	// min*100
+					name = name.substring(0, name.length() - 4);
+					name += "_" + min.toString() + "." + ext1;
+				}
+				jname += "/" + name;
+			} else {
+				bi_dbWriteInfo biWr1 = new bi_dbWriteInfo();
+				biWr1.generateInfo(styDate, name, true);
+				if( biWr1.fileName == null) return;
+				String sDat1 = formatDate(styDate);
+				Connection conn1 = openDBConnection();
+				Statement stm = conn1.createStatement();
+				sql = "select sty_date from jpeg where filename = '" + biWr1.fileName;
+				sql += "' and sty_date = " + sDat1;
+				sql += " and accession = " + accession;
+				sql += " and pat_id = '" + patId + "'";
+				ResultSet rSet = stm.executeQuery(sql);
+				if( rSet.next()) {
+					rSet.close();
+					String tmp = "The jpeg file = " + biWr1.fileName + " has already been written to database.\n" +
+						"A correction will be made and the missing file rewritten."	;
+					JOptionPane.showMessageDialog(this, tmp);
+				} else {
+					sql = "insert into jpeg (pat_id, sty_date, accession, filename) values ('";
+					sql += patId  + "', " + sDat1 + ", " + accession + ", '" + biWr1.fileName + "')";
+					stm.executeUpdate(sql);
+				}
+				stm.close();
+				jname = biWr1.path1 + biWr1.fileName;
+			}
 //			IJ.wait(2000);
 			if( type > 0 && dlg1 != null) {
-				dlg1.doAction(biWr1.path1 + biWr1.fileName);
+				dlg1.doAction(jname);
 			} else {
 				if( work2 != null) return;
-				bkgdFile = biWr1.path1 + biWr1.fileName;
+				bkgdFile = jname;
 				bkgdMode = 2;
 				loadData();
 				return;
@@ -3392,7 +3434,25 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			
 		} catch (Exception e)  { ChoosePetCt.stackTrace2Log(e); }
 	}
-	
+
+	String browseReportPath() {
+		String tmp = jTextPathName.getText();
+		File fl1;
+		JFileChooser fc;
+		if( tmp.isEmpty() || tmp.startsWith("@")) fc = new JFileChooser();
+		else fc = new JFileChooser(tmp);
+		fc.setDialogTitle("Choose directory for Report files.");
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fc.setAcceptAllFileFilterUsed(false);
+		int i = fc.showOpenDialog(this);
+		if( i == JFileChooser.APPROVE_OPTION) {
+			fl1 = fc.getSelectedFile();
+			tmp = fl1.getPath();
+			jTextPathName.setText(tmp);
+		}
+		return tmp;
+	}
+
 	void runRobot() {
 		try {
 			int i;
@@ -3429,12 +3489,16 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		boolean jpegFlg = false;
 		String path1 = null;
 
-		void generateInfo( Date styDate, String initName) {
+		void generateInfo( Date styDate, String initName, boolean showErr) {
 			try {
 				fileName = null;
 				path1 = null;
 				jpegFlg = false;
 				Connection conn1 = openDBConnection();
+				if( conn1 == null) {
+					if( showErr) IJ.log("Can't connect to database.");
+					return;
+				}
 				Statement stm = conn1.createStatement();
 				String sql = "select d.diskcode, d.diskname from disks d, write_disk w where d.diskcode = w.diskcode";
 				ResultSet rSet = stm.executeQuery(sql);
@@ -3798,10 +3862,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
         jTable3 = new javax.swing.JTable();
         jLabel7 = new javax.swing.JLabel();
         jPanelReport = new javax.swing.JPanel();
-        jButJpeg = new javax.swing.JButton();
-        jButAll3 = new javax.swing.JButton();
-        jButCine = new javax.swing.JButton();
-        jPanel3 = new javax.swing.JPanel();
+        jPanelAnimate = new javax.swing.JPanel();
         jRadioAvi = new javax.swing.JRadioButton();
         jRadioPng = new javax.swing.JRadioButton();
         jRadioGif = new javax.swing.JRadioButton();
@@ -3816,6 +3877,12 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
         jTextTeachName = new javax.swing.JTextField();
         jScrollPane4 = new javax.swing.JScrollPane();
         jTextTeachReport = new javax.swing.JTextArea();
+        jPanelReportType = new javax.swing.JPanel();
+        jTextPathName = new javax.swing.JTextField();
+        jButBrowse = new javax.swing.JButton();
+        jButJpeg = new javax.swing.JButton();
+        jButAll3 = new javax.swing.JButton();
+        jButCine = new javax.swing.JButton();
         jPanelOptions = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jTextN = new javax.swing.JTextField();
@@ -4111,7 +4178,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                         .addComponent(dateFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelReadLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jDB1)
@@ -4178,7 +4245,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
         jPanelWriteLayout.setHorizontalGroup(
             jPanelWriteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelWriteLayout.createSequentialGroup()
-                .addContainerGap(660, Short.MAX_VALUE)
+                .addContainerGap(678, Short.MAX_VALUE)
                 .addComponent(jLabelDbName1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButWrite)
@@ -4188,7 +4255,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             .addGroup(jPanelWriteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanelWriteLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 801, Short.MAX_VALUE)))
         );
         jPanelWriteLayout.setVerticalGroup(
             jPanelWriteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -4197,11 +4264,11 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                     .addComponent(jButExit1)
                     .addComponent(jButWrite)
                     .addComponent(jLabelDbName1))
-                .addContainerGap(283, Short.MAX_VALUE))
+                .addContainerGap(316, Short.MAX_VALUE))
             .addGroup(jPanelWriteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanelWriteLayout.createSequentialGroup()
                     .addGap(28, 28, 28)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
                     .addContainerGap()))
         );
 
@@ -4305,34 +4372,13 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                             .addComponent(dateTo1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel7))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Delete Database", jPanelDelete);
 
-        jButJpeg.setText("Jpeg -> DB");
-        jButJpeg.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButJpegActionPerformed(evt);
-            }
-        });
-
-        jButAll3.setText("Jpeg+Signifcant Image + MIP");
-        jButAll3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButAll3ActionPerformed(evt);
-            }
-        });
-
-        jButCine.setText("Cine (or MIP) -> DB");
-        jButCine.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButCineActionPerformed(evt);
-            }
-        });
-
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Animated Files"));
+        jPanelAnimate.setBorder(javax.swing.BorderFactory.createTitledBorder("Animated Files"));
 
         jRadioAvi.setText("Avi");
 
@@ -4342,26 +4388,26 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 
         jLabel9.setText("Frame time (msec)");
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanelAnimateLayout = new javax.swing.GroupLayout(jPanelAnimate);
+        jPanelAnimate.setLayout(jPanelAnimateLayout);
+        jPanelAnimateLayout.setHorizontalGroup(
+            jPanelAnimateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelAnimateLayout.createSequentialGroup()
                 .addComponent(jRadioAvi)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jRadioPng)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jRadioGif))
-            .addGroup(jPanel3Layout.createSequentialGroup()
+            .addGroup(jPanelAnimateLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanelAnimateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel9)
                     .addComponent(jTextFrmTime, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+        jPanelAnimateLayout.setVerticalGroup(
+            jPanelAnimateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelAnimateLayout.createSequentialGroup()
+                .addGroup(jPanelAnimateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jRadioAvi)
                     .addComponent(jRadioPng)
                     .addComponent(jRadioGif))
@@ -4386,7 +4432,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jLabSty2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabSty3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabSty1, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
+            .addComponent(jLabSty1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -4430,7 +4476,9 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                 .addComponent(jTextTeachName)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButTeachUpdate))
-            .addComponent(jScrollPane4)
+            .addGroup(jPanelTeachingLayout.createSequentialGroup()
+                .addGap(94, 94, 94)
+                .addComponent(jScrollPane4))
         );
         jPanelTeachingLayout.setVerticalGroup(
             jPanelTeachingLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -4439,7 +4487,66 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                     .addComponent(jButTeachUpdate)
                     .addComponent(jTextTeachName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4))
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
+        );
+
+        jPanelReportType.setBorder(javax.swing.BorderFactory.createTitledBorder("Report"));
+
+        jButBrowse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/open.gif"))); // NOI18N
+        jButBrowse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButBrowseActionPerformed(evt);
+            }
+        });
+
+        jButJpeg.setText("Jpeg -> DB");
+        jButJpeg.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButJpegActionPerformed(evt);
+            }
+        });
+
+        jButAll3.setText("Jpeg+Signifcant Image + MIP");
+        jButAll3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButAll3ActionPerformed(evt);
+            }
+        });
+
+        jButCine.setText("Cine (or MIP) -> DB");
+        jButCine.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButCineActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelReportTypeLayout = new javax.swing.GroupLayout(jPanelReportType);
+        jPanelReportType.setLayout(jPanelReportTypeLayout);
+        jPanelReportTypeLayout.setHorizontalGroup(
+            jPanelReportTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelReportTypeLayout.createSequentialGroup()
+                .addComponent(jTextPathName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButBrowse))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelReportTypeLayout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addGroup(jPanelReportTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButCine)
+                    .addComponent(jButJpeg)
+                    .addComponent(jButAll3)))
+        );
+        jPanelReportTypeLayout.setVerticalGroup(
+            jPanelReportTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelReportTypeLayout.createSequentialGroup()
+                .addGroup(jPanelReportTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTextPathName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButBrowse))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButJpeg)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButAll3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButCine))
         );
 
         javax.swing.GroupLayout jPanelReportLayout = new javax.swing.GroupLayout(jPanelReport);
@@ -4447,36 +4554,31 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
         jPanelReportLayout.setHorizontalGroup(
             jPanelReportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelReportLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanelReportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButJpeg)
-                    .addComponent(jButAll3)
-                    .addComponent(jButCine)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                    .addGroup(jPanelReportLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jPanelAnimate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanelReportType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelReportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanelTeaching, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(200, Short.MAX_VALUE))
+                .addContainerGap(219, Short.MAX_VALUE))
         );
         jPanelReportLayout.setVerticalGroup(
             jPanelReportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelReportLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanelReportLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanelReportLayout.createSequentialGroup()
+                        .addContainerGap()
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanelTeaching, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanelReportLayout.createSequentialGroup()
-                        .addComponent(jButJpeg)
+                        .addComponent(jPanelReportType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButAll3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButCine)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 67, Short.MAX_VALUE)))
+                        .addComponent(jPanelAnimate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -4538,7 +4640,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                         .addComponent(jButTile)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButShowTile)))
-                .addContainerGap(304, Short.MAX_VALUE))
+                .addContainerGap(322, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -4581,7 +4683,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                     .addComponent(jLabel6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(161, Short.MAX_VALUE))
+                .addContainerGap(176, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Options", jPanelOptions);
@@ -4760,7 +4862,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             }
         });
 
-        jLabAbout.setText("version: 2.29");
+        jLabAbout.setText("version: 2.30");
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);
@@ -4779,7 +4881,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
                         .addGap(21, 21, 21)
                         .addComponent(jButHelp))
                     .addComponent(jLabAbout))
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addContainerGap(76, Short.MAX_VALUE))
         );
         jPanelSetupLayout.setVerticalGroup(
             jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -4985,6 +5087,10 @@ private void jButCineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 		callWeb();
     }//GEN-LAST:event_jButWebActionPerformed
 
+    private void jButBrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButBrowseActionPerformed
+		browseReportPath();
+    }//GEN-LAST:event_jButBrowseActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -4994,6 +5100,7 @@ private void jButCineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private com.michaelbaranov.microba.calendar.DatePicker dateTo;
     private com.michaelbaranov.microba.calendar.DatePicker dateTo1;
     private javax.swing.JButton jButAll3;
+    private javax.swing.JButton jButBrowse;
     private javax.swing.JButton jButCine;
     private javax.swing.JButton jButClear;
     private javax.swing.JButton jButDelCD;
@@ -5058,13 +5165,14 @@ private void jButCineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JLabel jLabelWhichDB;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanelAnimate;
     private javax.swing.JPanel jPanelDelete;
     private javax.swing.JPanel jPanelOptions;
     private javax.swing.JPanel jPanelRead;
     private javax.swing.JPanel jPanelReport;
+    private javax.swing.JPanel jPanelReportType;
     private javax.swing.JPanel jPanelSetup;
     private javax.swing.JPanel jPanelTeaching;
     private javax.swing.JPanel jPanelWrite;
@@ -5088,6 +5196,7 @@ private void jButCineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JTextField jTextPatName;
     private javax.swing.JTextField jTextPatName1;
     private javax.swing.JTextField jTextPath;
+    private javax.swing.JTextField jTextPathName;
     private javax.swing.JTextField jTextStamp;
     private javax.swing.JTextField jTextTeachName;
     private javax.swing.JTextArea jTextTeachReport;
