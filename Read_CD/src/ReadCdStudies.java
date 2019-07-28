@@ -79,6 +79,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		jPrefer = jPrefer.node("biplugins");
 		jCurrCD = jPrefer.getInt("current CD", 0);
 		setTitle("Read Studies from CD or location on disk");
+		jPrefer.put("start Fiji with", "Read_CD");
 //		IJ.register(ReadCdStudies.class);
 		accessFlg = jPrefer.getBoolean("readCD Accession", false);
 		jCheckAccession.setSelected(accessFlg);
@@ -1727,7 +1728,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.11");
+        jLabel12.setText("version: 2.12");
 
         jLabJava.setText("jLabel13");
 
