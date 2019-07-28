@@ -1,14 +1,7 @@
-
 import ij.IJ;
 import ij.Macro;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /**
  *
@@ -40,7 +33,7 @@ public class StartPetData extends javax.swing.JFrame {
 	void init1() {
 		jPrefer = Preferences.userNodeForPackage(StartPetData.class);
 		jPrefer = jPrefer.node("biplugins");
-		indx = jPrefer.getInt("start up reader", 0);
+		int indx = jPrefer.getInt("start up reader", 0);
 		isAuto = false;
 		if( runArg != null && runArg.startsWith("default")) isAuto = true;
 //		IJ.log("arg= "+runArg +", " +isAuto);
@@ -65,16 +58,19 @@ public class StartPetData extends javax.swing.JFrame {
 
 	@Override
 	public void dispose() {
+		int indx = 2;	// do nothing
+		String cmd = jPrefer.get("start Fiji with", "Read_CD");
 		if( jRadCD.isSelected()) {
 			indx = 0;
-			IJ.runPlugIn("Read_CD", null);
 		}
 		if( jRadBiDb.isSelected()) {
+			cmd = "Read_BI_Studies";
 			indx = 1;
-			IJ.runPlugIn("Read_BI_Studies", null);
 		}
-		if( jRadNone.isSelected()) indx = 2;
-		if( !isAuto) jPrefer.putInt("start up reader", indx);
+		if( isAuto) {
+			if( indx < 2) IJ.runPlugIn(cmd, null);
+		}
+		else jPrefer.putInt("start up reader", indx);
 		super.dispose(); //To change body of generated methods, choose Tools | Templates.
 	}
 
@@ -152,7 +148,6 @@ public class StartPetData extends javax.swing.JFrame {
     private javax.swing.JRadioButton jRadNone;
     // End of variables declaration//GEN-END:variables
 	Preferences jPrefer;
-	int indx;
 	boolean isAuto, isInitialized;
 	String runArg;
 }

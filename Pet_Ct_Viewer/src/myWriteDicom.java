@@ -90,7 +90,7 @@ public class myWriteDicom {
 			String path1 = prefer1.get(key1, null);
 			if (path1 == null || path1.isEmpty()) {
 				JOptionPane.showMessageDialog(par1.getOwner(),
-						"Please fill in Significant Image Directory (Options).\nThen try again.");
+						"Please fill in Directory for Significant Image (on menu: Edit->Options).\nThen try again.");
 				return false;
 			}
 			if( mipPipe != null) {

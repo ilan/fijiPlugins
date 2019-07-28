@@ -1,4 +1,3 @@
-
 import ch.reto_hoehener.japng.Apng;
 import ch.reto_hoehener.japng.ApngFactory;
 import ij.ImagePlus;
@@ -10,11 +9,6 @@ import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /*
  * SaveMip.java
@@ -35,11 +29,11 @@ public class SaveMip extends javax.swing.JDialog {
         super(parent, modal);
 		this.parent = parent;
         initComponents();
-		setLocationRelativeTo(parent);
 		init();
     }
 
 	private void init() {
+		setLocationRelativeTo(parent);
 		jPrefer = Preferences.userNodeForPackage(SaveMip.class);
 		jPrefer = jPrefer.node("biplugins");
 		buttonGroup1 = new javax.swing.ButtonGroup();
@@ -306,7 +300,8 @@ public class SaveMip extends javax.swing.JDialog {
 		buff1 = mipPipe.data1.pixels.get(indx1);
 		for( j=0; j<sizeXY; j++) {
 			currShort = (short)(buff1[j] + coef0);
-			curr1 = (int)((currShort - min1) * localScale);
+			curr1 = mipPipe.maybeLog(currShort);
+			curr1 = (int)((curr1 - min1) * localScale);
 			if( curr1 > 255) curr1 = 255;
 			if( curr1 < 0) curr1 = 0;
 			buff[j] = (byte) curr1;

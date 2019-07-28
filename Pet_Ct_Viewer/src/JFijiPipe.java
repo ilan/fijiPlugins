@@ -2746,7 +2746,7 @@ public class JFijiPipe {
 			if( n<=1) rescaleSlope = null;
 
 			// now the data is sorted, so find its maximum value
-			double tmpd, currSlice, mean, currDbl1, maxDbl;
+			double tmpd, ratio, currSlice, mean, currDbl1, maxDbl;
 			float zdif, zmin=0, zmax=0;
 			int currVal1, n1, maxi, coefAll;
 			short currShort;
@@ -2891,6 +2891,21 @@ public class JFijiPipe {
 			}
 			else winSlope = sliderSUVMax / maxVal;
 			dirtyFlg = true;
+			n = getNormalizedNumFrms();
+			if( zpos != null && n > 32) {
+				tmpd = Math.abs(zpos.get(0) - zpos.get(zpos.size()-1));
+				if( tmpd > 0.01 && sliceThickness != 0.0) {
+					i = 1;
+					if( sliceThickness < 0) i = -1;
+					tmpd = i * tmpd/(n-1);
+					ratio = sliceThickness / tmpd;
+					if( ratio < 0.9 || ratio > 1.1) {
+//						ratio = PetCtFrame.roundN(ratio, 2);
+//						IJ.log("fix slice thickness " + sliceType + ", ratio = " + ratio);
+						avgSliceDiff = sliceThickness = tmpd;
+					}
+				}
+			}
 /*			String tmp = "unknown";
 			if( pixByt != null) tmp = "byte data";
 			if( pixels != null) tmp = "short data";

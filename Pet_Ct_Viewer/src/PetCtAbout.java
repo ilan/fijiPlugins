@@ -16,12 +16,15 @@ public class PetCtAbout extends javax.swing.JDialog {
     /** Creates new form PetCtAbout
 	 * @param parent
 	 * @param modal */
-	@SuppressWarnings("OverridableMethodCallInConstructor")
     public PetCtAbout(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-		setLocationRelativeTo(parent);
+		init();
     }
+
+	private void init() {
+		setLocationRelativeTo(getOwner());
+	}
 
 	void goLink() {
 		String url = "http://petctviewer.org";
@@ -77,7 +80,7 @@ public class PetCtAbout extends javax.swing.JDialog {
         jLabel11.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jLabel11.setText("Version:");
 
-        jLabVersion.setText("4.55");
+        jLabVersion.setText("4.63");
 
         jButClose.setText("Close");
         jButClose.addActionListener(new java.awt.event.ActionListener() {

@@ -89,7 +89,8 @@ public class Radionomic {
 		int prevPetZ, ctSlice, x1, y1, numXY, numZ=0, zin, minx1, miny1;
 		boolean MRIflg = par2.MRIflg;
 		double maxVal, minVal, scl1, sclCt;
-		double[] SuvCt = par2.bfDlg.getSUVandCTLimits();
+		BrownFat bf = par2.bfDlg;
+		double[] SuvCt = bf.getSUVandCTLimits();
 		byte[][] pixels = null;
 		JFijiPipe ctPipe = par2.getMriOrCtPipe();
 		n = suvp.getListSize();
@@ -98,19 +99,24 @@ public class Radionomic {
 		coef0 = ctPipe.data1.getCoefficentAll();
 		double[] slope = null;
 		short[][] data1 = null;
+		int[] modInt = bf.maybeChangeOrientation(suvp.sliceType, JFijiPipe.DSP_AXIAL);
 		numXY = (int)(sclCt + 0.999);
-		SUVpoints.SavePoint curpnt;
-		curpnt = suvp.getPoint(0);
+		SUVpoints.SavePoint origPnt, curpnt;
+		origPnt = suvp.getPoint(0);
+		curpnt = suvp.modifySuvPoint(origPnt, modInt);
 		prevPetZ = curpnt.z1;
 		ctSlice = ctPipe.findCtPos(prevPetZ, false);
 		if( ctSlice < 0) return null;
 		getCtVal(par2, curpnt, ctSlice);
+		if( curpnt.ctVal == -10000)
+			return null;
 		minx = maxx = curpnt.x1;
 		miny = maxy = curpnt.y1;
 		minz = maxz = curpnt.z1;
 		maxVal = minVal = curpnt.ctVal;
 		for( i=1; i<n; i++) {
-			curpnt = suvp.getPoint(i);
+			origPnt = suvp.getPoint(i);
+			curpnt = suvp.modifySuvPoint(origPnt, modInt);
 			if( curpnt.z1 != prevPetZ) {
 				prevPetZ = curpnt.z1;
 				ctSlice = ctPipe.findCtPos(prevPetZ, false);
@@ -128,7 +134,7 @@ public class Radionomic {
 				red1 = i;
 				z1 = curpnt.z1;
 			}
-			if( curpnt.ctVal < minVal) minVal = curpnt.ctVal;
+			if( curpnt.ctVal < minVal && curpnt.ctVal != -10000) minVal = curpnt.ctVal;
 		}
 		if( !MRIflg) {
 			if( minVal < SuvCt[2]) minVal = SuvCt[2];
@@ -139,7 +145,6 @@ public class Radionomic {
 		miny1 = par2.shift2Ct(ctPipe, miny, 1);
 		scl1 = (cooccurenceHi - 1);
 		if( isMask) {
-			BrownFat bf = par2.bfDlg;
 			bf.maskParms = new int[6];
 			bf.maskParms[0] = minx1;
 			bf.maskParms[1] = miny1;
@@ -158,7 +163,8 @@ public class Radionomic {
 		for( z=0; z<depth; z++) {
 //			if( (z+minz)!= z1) continue;	// use a single slice
 			for( i=0; i<n; i++) {
-				curpnt = suvp.getPoint(i);
+				origPnt = suvp.getPoint(i);
+				curpnt = suvp.modifySuvPoint(origPnt, modInt);
 				if( curpnt.z1 != (z+minz)) continue;
 				if( curpnt.z1 != prevPetZ) {
 					prevPetZ = curpnt.z1;
@@ -217,7 +223,9 @@ public class Radionomic {
 		x1 = par.shift2Ct(ctPipe, curPnt.x1, 0);
 		y1 = par.shift2Ct(ctPipe, curPnt.y1, 1);
 		offst = y1*width1 + x1;
-		ctVal = (short)((data1[offst]+coef0)*slope);
+		if( offst >= 0 && offst < data1.length) {
+			ctVal = (short)((data1[offst]+coef0)*slope);
+		} else ctVal = -10000;
 		curPnt.ctVal = ctVal;
 		return ctVal;
 	}

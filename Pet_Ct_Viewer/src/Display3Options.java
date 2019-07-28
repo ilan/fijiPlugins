@@ -1,10 +1,4 @@
-
 import java.util.prefs.Preferences;
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /*
  * Display3Options.java
@@ -19,17 +13,19 @@ import java.util.prefs.Preferences;
 public class Display3Options extends javax.swing.JDialog {
 	Display3Frame parent = null;
 
-    /** Creates new form Display3Options */
+    /** Creates new form Display3Options
+	 * @param parent
+	 * @param modal */
     public Display3Options(java.awt.Frame parent, boolean modal) {
 		super(parent, modal);
 		initComponents();
 		this.parent = (Display3Frame) parent;
-		setLocationRelativeTo(getOwner());
 		init();
     }
 	
 	private void init() {
 		Preferences prefer1 = parent.jPrefer;
+		setLocationRelativeTo(parent);
 		jCheckSmallCursor.setSelected(prefer1.getBoolean("small 3cursor", false));
 		Integer pixels = prefer1.getInt("3cursor size", 10);
 		jTextNumPix.setText(pixels.toString());

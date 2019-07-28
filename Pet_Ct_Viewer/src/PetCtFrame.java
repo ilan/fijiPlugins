@@ -437,7 +437,9 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 			if( flName == null) return 0;
 			BrownFat.instance.saveParentExt(this);
 			BrownFat.instance.loadStoredROIs(flName, numFrm);
+			mySleep(500);	// loading ROIs needs some extra time
 			BrownFat.instance.calculateVol(true);
+			BrownFat.instance.followCheck();
 			return 0;
 		}
 		if( flName != null) {

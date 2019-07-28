@@ -120,6 +120,28 @@ public class SUVpoints {
 		return true;
 	}
 
+	SavePoint modifySuvPoint(SavePoint orig, int[] modifyInt) {
+		int i, x0, y0, z0, x1, y1, z1;
+		x0 = x1 = orig.x1;
+		y0 = y1 = orig.y1;
+		z0 = z1 = orig.z1;
+		if( modifyInt != null && modifyInt.length == 3) {
+			i = modifyInt[0];
+			if(i==1) x1 = y0;
+			if(i==2) x1 = z0;
+
+			i = modifyInt[1];
+			if(i==0) y1 = x0;
+			if(i==2) y1 = z0;
+
+			i = modifyInt[2];
+			if(i==0) z1 = x0;
+			if(i==1) z1 = y0;
+		}
+		SavePoint ret1 = newPoint( orig.petVal, orig.ctVal, x1, y1, z1, orig.rn1, orig.labelIndx);
+		return ret1;
+	}
+
 	// we want the z direction to be the "slice number"
 	void addRearrangePoint( double pet1, int ct1, int x0, int y0, int z0, int rn0, int li) {
 		int y1, z1;
@@ -343,9 +365,13 @@ public class SUVpoints {
 				if( summary[z1][0] > x1 || summary[z1][1] < x1) break;
 				if( summary[z1][2] > y1 || summary[z1][3] < y1) break;
 				jhi = summary[z1][5];
+				if( jhi > modified.size())
+					jhi = modified.size();
 				for( j=summary[z1][4]; j<jhi; j++) {
 //				for( j=0; j<n; j++) {
 //					if( j>=0) break;
+					if( j<0 || j>modified.size())
+						break;
 					excl = modified.get(j);
 					if( x1 != excl.x1 || y1 != excl.y1 || z1 != excl.z1) continue;
 					total += excl.petVal;

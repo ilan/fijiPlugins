@@ -131,6 +131,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		jCheckDate.setSelected(prefer.getBoolean("bf check date", false));
 		jCheckId.setSelected(prefer.getBoolean("bf check id", false));
 		jCheckInvert.setSelected(prefer.getBoolean("bf invert image", false));
+//		jCheckScale.setSelected(prefer.getBoolean("bf scale z", true));
 		jCheckUseSUV.setSelected(prefer.getBoolean("bf use suv", true));
 		jCheckUseCt.setSelected(prefer.getBoolean("bf use ct", true));
 		jCheckOld.setSelected(prefer.getBoolean("old bf", true));
@@ -237,6 +238,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		prefer.putBoolean("bf check date", jCheckDate.isSelected());
 		prefer.putBoolean("bf check id", jCheckId.isSelected());
 		prefer.putBoolean("bf invert image", jCheckInvert.isSelected());
+//		prefer.putBoolean("bf scale z", jCheckScale.isSelected());
 		prefer.putBoolean("bf use suv", jCheckUseSUV.isSelected());
 		prefer.putBoolean("bf use ct", jCheckUseCt.isSelected());
 		prefer.putBoolean("old bf", jCheckOld.isSelected());
@@ -296,6 +298,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return true;
 	}
 
+	private void repaintAllStudies() {
+		bfGroup bfTmp;
+		for( int i=0; i<m_bf.size(); i++) {
+			bfTmp = m_bf.get(i);
+			bfTmp.parentPet.repaintAll();
+		}
+	}
 
 	// when the study is changed these values need to follow the study
 	private void setXYZminMax() {
@@ -342,6 +351,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				if( n> 1) {
 					bf = m_bf.get(0);
 					bf.parentPet.bfDlg = this;
+					setSpin0Val();
+					bf.parentPet.repaintAll();
 				}
 				return;
 			}
@@ -350,20 +361,18 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 	void switchBf(PetCtPanel curr1) {
 		bfGroup bfTmp;
-		int i, oldLast;
+		int i;
 		SpinnerNumberModel spin1 = getSpinModel(0);
 //		IJ.log("m_bf, at start ="+ m_bf.size());
 		for( i=0; i<m_bf.size(); i++) {
 			bfTmp = m_bf.get(i);
 			if( bfTmp.parentPet.equals(curr1)) {
-				oldLast = bf.lastRoiVal;
 				bf = bfTmp;
 				bf.fillSdyLab();
 				bf.setNifLabs(NIFTI_BOTH);
 				jCheckDefLimits.setEnabled(bf.nifLimits);
 				setXYZminMax();
-				spin1.setValue(bf.lastRoiVal);	// this does nothing if there is no change
-				if( oldLast == bf.lastRoiVal) changedRoiChoice(true); // make it happen
+				setSpin0Val();
 				return;
 			}
 		}
@@ -373,10 +382,21 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		bf.setNifLabs(NIFTI_BOTH);
 		jCheckDefLimits.setEnabled(bf.nifLimits);
 		setXYZminMax();
+//		setSpin0Val();
+//		oldLast = spin1.getNumber().intValue();
 		spin1.setValue(bf.lastRoiVal);
+//		if( oldLast == bf.lastRoiVal) changedRoiChoice(true); // make it happen
 		m_bf.add(bf);
 //		IJ.log("m_bf ="+ m_bf.size());
 	}
+
+	void setSpin0Val() {
+		SpinnerNumberModel spin1 = getSpinModel(0);
+		int old = spin1.getNumber().intValue();
+		spin1.setValue(bf.lastRoiVal);	// this does nothing if there is no change
+		if( old == bf.lastRoiVal) changedRoiChoice(true); // make it happen
+	}
+
 /*	private class CustomFocusTraversalPolicy extends ContainerOrderFocusTraversalPolicy {
 
 		@Override
@@ -1203,7 +1223,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			}
 			return;
 		}
-		i = getSpinInt(0) - getRoiSize(1);
+		i = bf.lastRoiVal - getRoiSize(1);
 		if( i < 1 || i > n) return;
 		poly1 = bf.polyVect.get(i-1);
 		drawCurrRoi(g, poly1, false);
@@ -1378,6 +1398,43 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( d3panel != null) orientation++;
 			else break;	// single orietation for pet-ct panel
 		}
+	}
+
+	int[] maybeChangeOrientation(int input, int output) {
+		int srcX=0, srcY=1, srcZ=2;
+		switch(input) {
+			case JFijiPipe.DSP_CORONAL:
+				srcX = 0;
+				srcY = 2;
+				srcZ = 1;
+				break;
+
+			case JFijiPipe.DSP_SAGITAL:
+				srcX = 2;
+				srcY = 0;
+				srcZ = 1;
+				break;
+		}
+		int[] ret3 = new int[3];
+		switch(output) {
+			case JFijiPipe.DSP_CORONAL:
+				ret3[0] = srcX;
+				ret3[1] = srcZ;
+				ret3[2] = srcY;
+				break;
+
+			case JFijiPipe.DSP_SAGITAL:
+				ret3[0] = srcY;
+				ret3[1] = srcZ;
+				ret3[2] = srcX;
+				break;
+
+			default:
+				ret3[0] = srcX;
+				ret3[1] = srcY;
+				ret3[2] = srcZ;
+		}
+		return ret3;
 	}
 
 	private void drawFoundAllSub(Graphics2D g, Display3Panel d3panel, boolean red,
@@ -2188,7 +2245,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if(roiNum<n1) return false;
 		Poly3Save polCur = bf.polyVect.get(roiNum-n1);
 		tmp = polCur.ROIlabel;
-		return ( tmp != null && tmp.startsWith("exclude ROI"));
+		return ( tmp != null && (tmp.startsWith("exclude ROI") || tmp.startsWith("excluded ROI")));
 	}
 
 	SaveVolROI calculateVol(boolean dispFlg) {
@@ -2928,8 +2985,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	}
 
 	void buildDataset() {
-		int i, x, x1, x0, y, y1, z, z1, ctSlice, width, height, nSize, ctWidth;
-		int gray, offY, offCt, ctCoef, min1, numPnt, maxCtDsp;
+		int i, x, x1, y, y1, z, z1, z2, ctSlice, width, height, nSize, nSize1, ctWidth;
+		int gray, offY=0, offCt, ctCoef, min1, numPnt, maxCtDsp, offX=0, offY1;
+		int start1;
 		int[] pixels;
 		ColorModel cm = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
 		Color colIn = Color.green, colOut = Color.red;
@@ -2939,8 +2997,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		ArrayList<Point> slicePoints;
 		SUVpoints.SavePoint currPnt;
 		short val1, shortBuf[];
-		boolean useCt, inRoi, invertImg;
-		double xSpacing, scale, slope, slop1, petVal, suvNorm, suvLo, suvNoRoi;
+		boolean useCt, inRoi, invertImg, scaleImg;
+		double scale, slope, slop1, petVal, suvNorm, suvLo, suvNoRoi;
+		double zoomX, scaleZ = 1.0, pixSpacing, sliceThick;
 		Preferences prefer = bf.parentPet.parent.jPrefer;
 		i = prefer.getInt("inside color", 0);
 		if( i != 0) colIn = new Color(i);
@@ -2956,11 +3015,34 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		petPipe = bf.parentPet.petPipe;
 		ctPipe = bf.parentPet.ctPipe;
 		ctWidth = ctPipe.data1.width;
+		zoomX = petPipe.zoomX;
 		width = petPipe.data1.width;
 		height = petPipe.data1.height;
-		nSize = petPipe.getNormalizedNumFrms();
+		if( zoomX > 1.0) {
+			i = ChoosePetCt.round(width/zoomX) & -2; // the construction size
+			offX = (width - i)/2;
+			width = i;
+			i = ChoosePetCt.round(height/zoomX) & -2; // the construction size
+			offY = (height - i)/2;
+			height = i;
+		}
+		invertImg = jCheckInvert.isSelected();
+//		scaleImg = jCheckScale.isSelected();
+		scaleImg = false;
+		nSize = nSize1 = petPipe.getNormalizedNumFrms();
+		if( scaleImg) {
+			pixSpacing = petPipe.getPixelSpacing(0);
+			if( petPipe.data1.pixelSpacing == null) pixSpacing = 0;	// kill the scaling
+			sliceThick = Math.abs(petPipe.data1.sliceThickness);
+			scaleZ = pixSpacing/sliceThick;
+			if( scaleZ > 0.1 && scaleZ < 10.0) {
+				nSize1 = ChoosePetCt.round(nSize/scaleZ);
+				scaleZ = ((double) nSize)/nSize1;
+			}
+			else scaleZ = 1.0;
+		}
 		stack = new ImageStack( width, height, cm);
-		xSpacing = bf.parentPet.pointSpacing(ctPipe);
+//		xSpacing = bf.parentPet.pointSpacing(ctPipe);
 		ctCoef = ctPipe.data1.getCoefficentAll();
 		slope = ctPipe.winSlope;
 		double[] suvAndCt = getSUVandCTLimits();
@@ -2979,28 +3061,28 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		maxCtDsp = (int) (2.55 * suvAndCt[4]);	// 2.55*100 = 255
 		scale = (maxCtDsp+1)*slope/ctPipe.winWidth;
 		min1 = (int) ((ctPipe.winLevel - ctPipe.winWidth/2 - ctPipe.data1.shiftIntercept())/slope);
-		invertImg = jCheckInvert.isSelected();
-		for( z=0; z<nSize; z++) {
-			z1 = z;
-			if( invertImg) z1 = nSize - z - 1;
+		for( z=1; z<=nSize1; z++) {
+			z2 = ChoosePetCt.round(z*scaleZ);
+			z1 = z2-1;	// z1 counts from zero
+			if( invertImg) z1 = nSize - z2;
 			pixels = new int[width * height];
 			// with findCtPos, if it is outside the range, use last good value
 			ctSlice = ctPipe.findCtPos(z1, true);
 			shortBuf = ctPipe.data1.pixels.get(ctSlice);
 			slop1 = ctPipe.data1.getRescaleSlope(ctSlice);
 			for( y=0; y<height; y++) {
-				y1 = bf.parentPet.shift2Ct(ctPipe, y, 1);
+				y1 = bf.parentPet.shift2Ct(ctPipe, y+offY, 1);
 				offCt = ctWidth*y1;
-				offY = width*y;
+				offY1 = width*y;
 				for( x=0; x<width; x++) {
-					x1 = bf.parentPet.shift2Ct(ctPipe, x, 0) + offCt;
+					x1 = bf.parentPet.shift2Ct(ctPipe, x+offX, 0) + offCt;
 					if(x1 >= 0 && x1 < shortBuf.length) {
 						val1 = (short) ((shortBuf[x1] + ctCoef)*slop1);
 						gray = (int) ((val1 - min1) * scale);
 						if( gray < 0) gray = 0;
 						if( gray > maxCtDsp) gray = maxCtDsp;
 					} else gray = 0;
-					pixels[x+offY] = black | gray << 16 | gray << 8 | gray;
+					pixels[x+offY1] = black | gray << 16 | gray << 8 | gray;
 				}
 			}
 			stack.addSlice(null, pixels);
@@ -3010,9 +3092,11 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		useCt = jCheckUseCt.isSelected();
 		int wideCT = getCTcalc();
 		suvNorm = 256.0 / suvAndCt[5];	// display max SUV
-		if( jCheckUseSUV.isSelected() ) for( z=0; z<nSize; z++) {
-			z1 = z;
-			if( invertImg) z1 = nSize - z - 1;
+		if( jCheckUseSUV.isSelected() ) for( z=1; z<=nSize1; z++) {
+			z2 = ChoosePetCt.round(z*scaleZ);
+			start1 = 0;
+			z1 = z2-1;	// z1 counts from zero
+			if( invertImg) z1 = nSize - z2;
 			numPnt = bf.suvPnt.getListSize();
 			slicePoints = new ArrayList<Point>();
 			for( i=0; i< numPnt; i++) {
@@ -3035,25 +3119,37 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				}
 			}
 			numPnt = slicePoints.size();	// num of points in this slice
+			if( numPnt == 0) continue;
 			ctSlice = ctPipe.findCtPos(z1, false);
-			pixels = (int []) stack.getPixels(z +1);
+			pixels = (int []) stack.getPixels(z);
 			if(pixels == null) return;
 			for( y=0; y<height; y++) {
-				currLine = petPipe.data1.getLineOfData(0, y, z1);
+				y1 = y+offY;
+				currLine = petPipe.data1.getLineOfData(0, y1, z1);
 				for( x=0; x<width; x++) {
-					if (currLine.pixels != null) petVal = currLine.pixels[x] * currLine.slope;
-					else petVal = currLine.pixFloat[x];
+					x1 = x+offX;
+					if (currLine.pixels != null) petVal = currLine.pixels[x1] * currLine.slope;
+					else petVal = currLine.pixFloat[x1];
 					if( currLine.SUVfactor > 0) petVal /= currLine.SUVfactor;
 					if( petVal < suvLo) continue;
 					if( !isPercent && petVal > suvAndCt[1]) continue;
 					if( useCt) {
-						if( !isCtFat(ctSlice, x, y, suvAndCt, bf.volSliceType, wideCT)) continue;
+						if( !isCtFat(ctSlice, x1, y1, suvAndCt, bf.volSliceType, wideCT)) continue;
 					}
 					inRoi = false;
-					for( i=0; i<numPnt; i++) {
+					for( i=start1; i<numPnt; i++) {	// start from the last good point
 						roiPnt = slicePoints.get(i);
-						if( roiPnt.x == x && roiPnt.y == y) {
+						if( roiPnt.x == x1 && roiPnt.y == y1) {
 							inRoi = true;
+							start1 = i;
+							break;
+						}
+					}
+					if( !inRoi) for( i=0; i<start1; i++) {
+						roiPnt = slicePoints.get(i);
+						if( roiPnt.x == x1 && roiPnt.y == y1) {
+							inRoi = true;	// if they are not completely sorted
+							start1 = i;
 							break;
 						}
 					}
@@ -3061,6 +3157,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					if( gray < 0) gray = 0;
 					if( gray > 255) gray = 255;
 					i = y*width + x;
+					if( i >= pixels.length)
+						continue;
 					// erase the CT contribution and leave only PET
 					if( inRoi) pixels[i] = setPixelColor(gray, colIn);
 					else pixels[i] = setPixelColor(gray, colOut);
@@ -3068,6 +3166,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			}
 		}
 		ImagePlus myImage = new ImagePlus(windowName, stack);
+		myImage.copyScale(petPipe.data1.srcImage);
 		String meta1 = makeMetaData(seriesName, nSize, null,
 				ChoosePetCt.SOPCLASS_TYPE_NM, bf.parentPet.petPipe.data1.metaData);
 		myImage.setProperty("Info", meta1);
@@ -3078,10 +3177,14 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			int SOPtype, String srcMeta) {
 		Date dt1 = new Date();
 		String SOP = generateSOPInstanceUID(dt1);
+		String modality = "SC";
 		String AET = ChoosePetCt.getDicomValue(srcMeta, "0002,0016");
 		if( AET == null) AET = "A123";
 		String SOPClass = ChoosePetCt.SOPCLASS_SC;
-		if( SOPtype == ChoosePetCt.SOPCLASS_TYPE_NM) SOPClass = ChoosePetCt.SOPCLASS_NM;
+		if( SOPtype == ChoosePetCt.SOPCLASS_TYPE_NM) {
+			SOPClass = ChoosePetCt.SOPCLASS_NM;
+			modality = "NM";
+		}
 		String meta = "0002,0002  Media Storage SOP Class UID: " + SOPClass + "\n";
 		// use transfer syntax explicit little endian
 		meta += "0002,0003  Media Storage SOP Inst UID: " + SOP + "\n" +
@@ -3096,7 +3199,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		meta = append2Meta("0008,0020", meta, srcMeta);
 		meta = append2Meta("0008,0021", meta, srcMeta);
 		meta = append2Meta("0008,0050", meta, srcMeta);
-		meta = append2Meta("0008,0060", meta, srcMeta);
+//		meta = append2Meta("0008,0060", meta, srcMeta);
+		meta += "0008,0060  Modality: " + modality + "\n";
 		meta = append2Meta("0008,0080", meta, srcMeta);
 		meta = append2Meta("0008,0090", meta, srcMeta);
 		meta = append2Meta("0008,1030", meta, srcMeta);
@@ -5653,6 +5757,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		dlg1.specialType = 1;	// TMTV Report
 		dlg1.writeBuffImage();
 		frm.dispose();
+		if( dlg1.outFile1 == null) {
+			this.setVisible(true);
+			return;
+		}
 		tmpTxt = dlg1.outFile1.getPath();
 		Opener open1 = new Opener();
 		open1.setSilentMode(true);
@@ -6487,7 +6595,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButBuild))
                     .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(83, Short.MAX_VALUE))
+                .addContainerGap(75, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("3D", j3dTab);
@@ -6929,7 +7037,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 	private void jSpinDiameterStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinDiameterStateChanged
 		jCheckBlue.setSelected(true);
-		bf.parentPet.repaintAll();
+		repaintAllStudies();
 	}//GEN-LAST:event_jSpinDiameterStateChanged
 
 	private void jButBuildActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButBuildActionPerformed
@@ -7006,7 +7114,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
     private void jCheckBlueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBlueActionPerformed
 		setSpinDiameterState();
-		bf.parentPet.repaintAll();
+		repaintAllStudies();
     }//GEN-LAST:event_jCheckBlueActionPerformed
 
     private void jButMaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButMaskActionPerformed
