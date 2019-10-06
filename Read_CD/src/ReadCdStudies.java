@@ -395,7 +395,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			selected[i] = jTab.convertRowIndexToModel(selected[i]);
 		}
 
-		imgList = new ArrayList<ImagePlus>();
+		imgList = new ArrayList<>();
 		DefaultTableModel mod1;
 		mod1 = (DefaultTableModel) jTab.getModel();
 		if( readWriteDelFlg != 2) {
@@ -1026,7 +1026,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		int i, j;
 		String tmp;
 		CD_dirInfo tableEntry, nextEntry;
-		tableList = new ArrayList<CD_dirInfo>();
+		tableList = new ArrayList<>();
 		String path = getCurrPath();
 		try {
 			if( path == null) {
@@ -1059,7 +1059,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			}
 			setOrSaveColumnWidths(type1, false);
 			recurseDirectory(path);
-			if( jCheckAutoSort.isSelected()) sortTableList();
+			sortTableList(jCheckAutoSort.isSelected());
 			for( i=0; i<tableList.size(); i++) {
 				Object[] row1 = new Object[TBL_BF+1];
 				tableEntry = tableList.get(i);
@@ -1085,7 +1085,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 	
-	void sortTableList() {
+	void sortTableList(boolean doSort) {
 		ArrayList<CD_dirInfo> sortedList;
 		int i, j, k, n = tableList.size();
 		int[] indx =  new int[n];
@@ -1115,8 +1115,25 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			if( tUID == null || tUID.isEmpty()) sortUID = false;
 			sUIDs[i] = tUID;
 		}
+		// check for changed name by using study UID
+		if( sortUID) {
+			for( i=0; i<n; i++) {
+				sUID0 = sUIDs[i];
+				name0 = names[i];
+				for( j=i+1; j<n; j++) {
+					sUID1 = sUIDs[j];
+					if( sUID0.equals(sUID1)) {
+						if( !names[j].equals(name0)) {
+							dirty = true;
+							names[j] = name0;
+						}
+					}
+				}
+			}
+		}
 		// now sort for name ascending, date descending
 		i = 0;
+		if( !doSort && !dirty) i = n;
 		while( i < n-1) {
 			name0 = names[i];
 			name1 = names[i+1];
@@ -1160,7 +1177,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			else i++;
 		}
 		if( !dirty) return;
-		sortedList = new ArrayList<CD_dirInfo>();
+		sortedList = new ArrayList<>();
 		for( i=0; i<n; i++) {
 			j = indx[i];
 			tableEntry = tableList.get(j);
@@ -1197,7 +1214,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 					if( n1 <= 0) continue;
 					img1 = dcm.m_aImage.get(off2);
 					tableEntry = new CD_dirInfo();
-					tableEntry.flList = new ArrayList<File>();
+					tableEntry.flList = new ArrayList<>();
 					for(k=0; k<n1; k++) {
 						img2 = dcm.m_aImage.get(off2+k);
 						flPath = new File(path + File.separatorChar + img2.dirName);
@@ -1728,7 +1745,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.12");
+        jLabel12.setText("version: 2.13");
 
         jLabJava.setText("jLabel13");
 
