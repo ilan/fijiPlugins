@@ -1628,7 +1628,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabAbout">
               <Properties>
-                <Property name="text" type="java.lang.String" value="version: 2.30"/>
+                <Property name="text" type="java.lang.String" value="version: 2.32"/>
               </Properties>
             </Component>
           </SubComponents>

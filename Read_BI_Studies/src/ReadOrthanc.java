@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -104,7 +105,7 @@ public class ReadOrthanc {
 					dStyName = parent.getDlgPatName(type1).trim().toLowerCase();	// same position for study
 					break;
 			}
-			orthStudies = new ArrayList<orth1Study>();
+			orthStudies = new ArrayList<>();
 			Object[] row1 = new Object[ReadBIdatabase.TBL_BF+2];
 			patients = (JSONArray) orthSub.ReadJson("patients");
 			for(i = n1 = 0; i < patients.size(); i++) {
@@ -131,9 +132,7 @@ public class ReadOrthanc {
 					currStudy.patID = patID;
 					study = (JSONObject) orthSub.ReadJson("studies/" + uuid1);
 					mains = (JSONObject) study.get("MainDicomTags");
-					tmp1 = (String) mains.get("StudyDate");
-					tmp0 = (String) mains.get("StudyTime");
-					currStudy.studyDate = ChoosePetCt.getDateTime(tmp1, tmp0);
+					currStudy.studyDate = getStudyDate(study, mains);
 					if( currStudy.studyDate != null) {
 						if( currStudy.studyDate.before(startDate)|| currStudy.studyDate.after(stopDate)) continue;
 					}
@@ -191,6 +190,30 @@ public class ReadOrthanc {
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
 	}
 
+	// the study date can be garbage, so use series if necessary
+	Date getStudyDate(JSONObject study, JSONObject mains) {
+		Date ret1 = null, dt0;
+		JSONArray series;
+		JSONObject ser1, main1;
+		String tmp0, tmp1, uuid2;
+		try {
+			SimpleDateFormat df1 = new SimpleDateFormat("d MMM yyyy", Locale.US);
+			dt0 = df1.parse("1 Jan 1980");
+			tmp1 = (String) mains.get("StudyDate");
+			tmp0 = (String) mains.get("StudyTime");
+			ret1 = ChoosePetCt.getDateTime(tmp1, tmp0);
+			if( ret1 == null || ret1.before(dt0)) {
+				series = (JSONArray) study.get("Series");
+				uuid2 = (String) series.get(0);
+				ser1 = (JSONObject) orthSub.ReadJson("series/" + uuid2);
+				main1 = (JSONObject) ser1.get("MainDicomTags");
+				tmp1 = (String) main1.get("SeriesDate");
+				tmp0 = (String) main1.get("SeriesTime");
+				ret1 = ChoosePetCt.getDateTime(tmp1, tmp0);
+			}
+		} catch (Exception e) {  ChoosePetCt.stackTrace2Log(e);}
+		return ret1;
+	}
 	boolean checkSeriesOk(ImagePlus img1, String serName) {
 		JSONArray series;
 		JSONObject ser1, main1;
@@ -347,6 +370,9 @@ public class ReadOrthanc {
 							if( tags == null) break;
 							tmp1 = (String) tags.get("MediaStorageSOPClassUID");
 							if( tmp1 != null && tmp1.startsWith(ChoosePetCt.SOPCLASS_SC)) isScreenCapture = true;
+							if( tmp1 != null && tmp1.startsWith(ChoosePetCt.SOPCLASS_SR)) {
+								continue;	// ignore radiation dose reports
+							}
 							tmp1 = (String) tags.get("TransferSyntaxUID");
 							if( tmp1 != null && tmp1.startsWith("1.2.840.10008.1.2.4.")) {
 								isCompressed = true;
@@ -354,7 +380,7 @@ public class ReadOrthanc {
 						}
 						if( isCompressed) {
 							stack = readCompressed(uuid2, stack, j+1, isScreenCapture);
-							if( stack == null) break;
+							if( stack == null) continue;
 						} else {
 							flOut1 = new FileOutputStream(outFile1);
 							uri = orthSub.baseURL + "instances/" + uuid2 + "/file";
@@ -402,7 +428,7 @@ public class ReadOrthanc {
 					}
 					lastGood = path4;
 				}
-				if( stack == null ) return;
+				if( stack == null ) continue;
 				if( isCompressed) {
 					stack = ChoosePetCt.mySort(stack);
 					info = stack.getSliceLabel(1);
@@ -449,7 +475,8 @@ public class ReadOrthanc {
 			BufferedImage bi = ImageIO.read( orthSub.OpenUrl(uri, "image/png"));
 			if( bi.getType() != bufType) {
 				IJ.showProgress(1.0);
-				IJ.log("Compressed Dicom files not read");
+				// don't show message on screen captures
+				if( !SC) IJ.log("Compressed Dicom files not read");
 				return null;
 			}
 			if( SC) slice = new ColorProcessor(bi);

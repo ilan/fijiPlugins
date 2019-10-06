@@ -220,7 +220,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) { stackTrace2Log(e); }*/
 		jCurrDB = jPrefer.getInt("current database", 0);
-		teachList = new ArrayList<bi_dbTeaching>();
+		teachList = new ArrayList<>();
 		String jpath = jPrefer.get("report path", null);
 		if( jpath == null || jpath.isEmpty()) jpath = jPrefer.get("significant image path", "");
 		jTextPathName.setText(jpath);
@@ -471,7 +471,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 	void doRead() {
 		JTable jTab = jTable1;
 		if( readWriteDelFlg == 2) jTab = jTable3;
-		else imgList = new ArrayList<ImagePlus>();
+		else imgList = new ArrayList<>();
 		int n = jTab.getSelectedRowCount();
 		int cols = TBL_BF+2;
 //		if( jCheckSeries.isSelected()) cols = 5;
@@ -1232,12 +1232,12 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		int currID, wlSz = 0;
 		if( myList != null) wlSz = myList.length;
 		ImagePlus img1;
-		petImages = new ArrayList<Object>();
+		petImages = new ArrayList<>();
 		ArrayList<Object> currImages;
 		int i, j, k, n = 0;
 		if(PetCtFrame.conferenceList != null) n = PetCtFrame.conferenceList.size();
 		for( i=0; i<n; i++) {
-			currImages = new ArrayList<Object>();
+			currImages = new ArrayList<>();
 			PetCtFrame pet1 = (PetCtFrame) PetCtFrame.conferenceList.get(i);
 			currList = pet1.getImageList(currImages);
 			for( j=0; j<currList.length; j++) {
@@ -1269,7 +1269,14 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			if(i<wlSz) img1 = WindowManager.getImage(fullList[i]);
 			else img1 = (ImagePlus) petImages.get(i-wlSz);
 			flInfo = img1.getOriginalFileInfo();
-			if( flInfo == null) continue;
+			if( flInfo == null) {	// this is null for Orthanc compressed images
+//			if( ij != null) {
+				if(img1.getStackSize() > 0) {
+					myWriteDicom dcm1 = new myWriteDicom(img1);
+					dcm1.writeDicomHeader(makeFilePath(img1));
+				}
+				continue;
+			}
 			dir1 = new File(flInfo.directory);
 			list1 = dir1.listFiles();
 			if( list1 == null) continue;
@@ -1289,14 +1296,29 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		this.toFront();
 	}
 
+	String makeFilePath(ImagePlus ij) {
+		String ret = getPathReadCD();
+		int i;
+		String meta = ChoosePetCt.getMeta(1,ij);
+		ret += "/" + ChoosePetCt.getCompressedPatName(meta) + "/";
+		String tmp = ChoosePetCt.getDicomValue(meta, "0008,0021") + "/";
+		ret += tmp;
+		tmp = ChoosePetCt.getSeriesUID(meta);
+		i = tmp.length() - 10;
+		if( tmp.charAt(i) == '.') i++;
+		tmp = tmp.substring(i);
+		ret += tmp;
+		return ret;
+	}
+
 	String[] getOldFrameText(String info) {
 		String[] retVal = null;
 		Scanner sc;
 		String unprocessed, curr1, tmpStr;
-		ArrayList<Integer> pos, yPos,  frmNm = new ArrayList<Integer>();
-		ArrayList<String> strVals = new ArrayList<String>();
+		ArrayList<Integer> pos, yPos,  frmNm = new ArrayList<>();
+		ArrayList<String> strVals = new ArrayList<>();
 		int i, y1, frm1, maxFrm = -1;
-		yPos = new ArrayList<Integer>();
+		yPos = new ArrayList<>();
 		unprocessed = info;
 		while( (i = unprocessed.indexOf('\n')) > 0) {
 			curr1 = unprocessed.substring(0, i-1);
@@ -1305,7 +1327,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			if( i<0) continue;
 			tmpStr = curr1.substring(i+1);
 			curr1 = curr1.substring(0, i);
-			pos = new ArrayList<Integer>();
+			pos = new ArrayList<>();
 			sc = new Scanner(curr1).useDelimiter(",");
 			while( sc.hasNextInt()) {
 				i = sc.nextInt();
@@ -1387,12 +1409,12 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		BI_dbSaveInfo[] ret1 = null;
 		BI_dbSaveInfo db1;
 		int i, n;
-		ArrayList<File> flVect = new ArrayList<File>();
-		ArrayList<String>serName = new ArrayList<String>();
-		ArrayList<String>dbName = new ArrayList<String>();
-		ArrayList<String>accessNum = new ArrayList<String>();
-		ArrayList<String>teachName = new ArrayList<String>();
-		ArrayList<String>teachReport = new ArrayList<String>();
+		ArrayList<File> flVect = new ArrayList<>();
+		ArrayList<String>serName = new ArrayList<>();
+		ArrayList<String>dbName = new ArrayList<>();
+		ArrayList<String>accessNum = new ArrayList<>();
+		ArrayList<String>teachName = new ArrayList<>();
+		ArrayList<String>teachReport = new ArrayList<>();
 		File currFile;
 		String sql, flName, styName, patName, series, mrn1, accession;
 		String teaching, report;
@@ -1514,7 +1536,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		dcm4Patient thisPat;
 		dcm4Study thisSdy = null;
 		dcm4Series thisSer;
-		ArrayList<BI_dbSaveInfo> tmpList = new ArrayList<BI_dbSaveInfo>();
+		ArrayList<BI_dbSaveInfo> tmpList = new ArrayList<>();
 		BI_dbSaveInfo db1;
 		int pkPat = -1, pkSdy = -1, start, numSer=0;
 		Connection conn1 = openDBConnection();
@@ -1692,7 +1714,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 				else {	// normal case, check for bad files e.g. DIRFILE of Philips
 					// watch out for DICOMDIR. The whole mess can be in a single directory.
 					// thus checkDicomValid is not enough (valid files for another series)
-					tmpList = new ArrayList<File>();
+					tmpList = new ArrayList<>();
 					int k, n, stkSz = img1.getImageStackSize()/fi.nImages;
 					if( stkSz == 0) stkSz = 1;	// try to fix montages
 					n = fileLst1.length;
@@ -1940,7 +1962,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		int i, n;
 		File fin = null, fout;
 		File[] outFlst = null;
-		ArrayList<String> currList = new ArrayList<String>();
+		ArrayList<String> currList = new ArrayList<>();
 		Node root, study, series, instance, baseSub;
 		String seriesUID, locSeriesUID, meta, tmp;
 		for( i=0; i<inFlst.length; i++) {
@@ -2175,8 +2197,8 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 				Connection conn1 = openDBConnection();
 				Statement stm = conn1.createStatement();
 				ResultSet rSet = stm.executeQuery(sql);
-				serVect = new ArrayList<String>();
-				teachVect = new ArrayList<String>();
+				serVect = new ArrayList<>();
+				teachVect = new ArrayList<>();
 				while( rSet.next()) {
 					series = rSet.getString(1);
 					if( series == null) series = "";	// empty string
@@ -2640,7 +2662,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 	}
 	
 	void fillDcm3Table(int indx, DefaultTableModel mod, String name1, Connection con1) {
-		dcmPatient = new ArrayList<dcm4Patient>();	// study and series are null
+		dcmPatient = new ArrayList<>();	// study and series are null
 		if( indx != 0) {
 			IJ.log("\nOnly patient name, id is supported\n");
 			return;
@@ -2675,8 +2697,8 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 				thisPat = dcmPatient.get(i);
 				summary[i] = thisPat.pk;
 			}
-			dcmStudy = new ArrayList<dcm4Study>();
-			dcmSeries = new ArrayList<dcm4Series>();
+			dcmStudy = new ArrayList<>();
+			dcmSeries = new ArrayList<>();
 			sql = "select pk, patient_fk, study_datetime, accession_no, study_desc, ";
 			sql += "num_series, num_instances from study";
 			start = 0;
@@ -2770,7 +2792,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		mod1 = (DefaultTableModel) jTable2.getModel();
 		mod1.setNumRows(0);
 		setOrSaveColumnWidths(1, false);
-		imgList = new ArrayList<ImagePlus>();
+		imgList = new ArrayList<>();
 		ImagePlus img1;
 		BI_dbSaveInfo curr1;
 		String meta, patName, patID, study, series, tmp1, serUID;
@@ -4862,7 +4884,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             }
         });
 
-        jLabAbout.setText("version: 2.30");
+        jLabAbout.setText("version: 2.32");
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);
