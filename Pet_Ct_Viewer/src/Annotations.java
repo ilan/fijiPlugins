@@ -268,7 +268,7 @@ public class Annotations extends javax.swing.JDialog {
 		String flName = getFileName(indx, true);
 		String tmp;
 		if( indx == 0) {
-			m_BMList = new ArrayList<myBookMark>();
+			m_BMList = new ArrayList<>();
 			m_china = new ArrayList[3];
 			m_measurements = new ArrayList[3];
 			m_floatingText = new String[3];
@@ -276,8 +276,8 @@ public class Annotations extends javax.swing.JDialog {
 		if( flName == null) return;
 		File fl1 = new File(flName);
 		if( !fl1.exists()) return;
-		m_china[indx] = new ArrayList<myChina>();
-		m_measurements[indx] = new ArrayList<myMeasure>();
+		m_china[indx] = new ArrayList<>();
+		m_measurements[indx] = new ArrayList<>();
 		try {
 			FileInputStream in = new FileInputStream(fl1);
 			FileChannel fc = in.getChannel();
@@ -585,7 +585,7 @@ public class Annotations extends javax.swing.JDialog {
 			if( i != JOptionPane.YES_OPTION) return;
 		}
 		if( jRadSaveDelete.isSelected()) {
-			m_BMList = new ArrayList<myBookMark>();
+			m_BMList = new ArrayList<>();
 			m_china = new ArrayList[3];
 			m_measurements = new ArrayList[3];
 			m_floatingText = new String[3];
@@ -795,7 +795,7 @@ public class Annotations extends javax.swing.JDialog {
 			}
 			meas1.type = (short)(4*sliceType + tmpMeasDraw);
 			if(m_measurements[m_lastView] == null)
-				m_measurements[m_lastView] = new ArrayList<myMeasure>();
+				m_measurements[m_lastView] = new ArrayList<>();
 			m_measurements[m_lastView].add(meas1);
 			m_dirtyFlg = true;
 			setObliqueLabel();
@@ -948,7 +948,7 @@ public class Annotations extends javax.swing.JDialog {
 		chin1.type = (byte)(4*sliceType + m_activeArrow);
 		chin1.size = (byte) getSetArrowSize(0);
 		if(m_china[m_lastView] == null)
-			m_china[m_lastView] = new ArrayList<myChina>();
+			m_china[m_lastView] = new ArrayList<>();
 		m_china[m_lastView].add(chin1);
 /*		if(jCheckChinSUV.isSelected() && m_activeArrow == 0 && m_lastView == 0) {
 			Point pt2 = chin1.textPos(pt1, scale);

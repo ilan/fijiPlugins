@@ -844,7 +844,7 @@ public class DicomFormat {
 		int i, j, numSer, dirType = -1;
 //		int nextRecord, nextStudy, nextSeries, nextImage;
 		try {
-			m_aStudy = new ArrayList<studyEntry>();
+			m_aStudy = new ArrayList<>();
 			m_currSOPInstanceUID = null;
 			bufLen = chunkVal = fileOff = currlen = fis.read(byt1);
 			if (currlen < 1024) {
@@ -864,8 +864,8 @@ public class DicomFormat {
 			currlen -= off1;
 			byt2.position(off1);
 			numSer = 0;
-			m_aSeries = new ArrayList<seriesEntry>();
-			m_aImage = new ArrayList<imageEntry>();
+			m_aSeries = new ArrayList<>();
+			m_aImage = new ArrayList<>();
 			do {
 				group = byt2.getShort();
 				element = byt2.getShort();
@@ -1316,7 +1316,7 @@ public class DicomFormat {
 	}
 
 	private ArrayList<Double> getDcmDoubleVect(ByteBuffer byt2, int leng) {
-		ArrayList<Double> v1 = new ArrayList<Double>();
+		ArrayList<Double> v1 = new ArrayList<>();
 		String tmp1;
 		tmp1 = getDcmString(byt2, leng);
 		tmp1 = tmp1.replace('\\', ' ');

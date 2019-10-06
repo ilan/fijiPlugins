@@ -308,7 +308,7 @@ public class ReadOrthancSub {
 		String info = new String();
 		String type1;
 
-		ArrayList<String> tagsIndex = new ArrayList<String>();
+		ArrayList<String> tagsIndex = new ArrayList<>();
 		for (Object tag : tags.keySet()) {
 			tagsIndex.add((String) tag);
 		}
@@ -331,8 +331,7 @@ public class ReadOrthancSub {
 
 	private int seqDepth = 0;
 	String addSequence(String info0, JSONObject value, Object tag) {
-		String type2, arrow, info = info0;
-		int i;
+		String type2, info = info0;
 		JSONArray seq0;
 		JSONObject seqVal, vals;
 		seq0 = (JSONArray)value.get("Value");
@@ -343,7 +342,7 @@ public class ReadOrthancSub {
 		seqDepth++;
 		seqVal = (JSONObject) seq0.get(0);
 
-		ArrayList<String> tagsIndex = new ArrayList<String>();
+		ArrayList<String> tagsIndex = new ArrayList<>();
 		for( Object tag0 : seqVal.keySet()) {
 			tagsIndex.add((String) tag0);
 		}

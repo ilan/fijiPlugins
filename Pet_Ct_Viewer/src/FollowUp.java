@@ -54,8 +54,8 @@ public class FollowUp extends javax.swing.JDialog {
 		i = jComboPosLabel.getSelectedIndex();
 		tmpLab = presetLab.get(i);
 		if( tmpLab.isEmpty()) return;
-		ArrayList<PetCtFrame> petCt = new ArrayList<PetCtFrame>();
-		ArrayList<Display3Frame> view3 = new ArrayList<Display3Frame>();
+		ArrayList<PetCtFrame> petCt = new ArrayList<>();
+		ArrayList<Display3Frame> view3 = new ArrayList<>();
 		getCurrPositions(petCt, view3);
 		i = tmpLab.indexOf(",");
 		tmpLab = tmpLab.substring(i+1);
@@ -156,8 +156,8 @@ public class FollowUp extends javax.swing.JDialog {
 		int i, xsz;
 		String title;
 		Point pt1;
-		ctPos = new ArrayList<Point>();
-		view3Pos = new ArrayList<Point>();
+		ctPos = new ArrayList<>();
+		view3Pos = new ArrayList<>();
 		xSize = x3Size = 0;
 		Window win;
 		Window[] frList = WindowManager.getAllNonImageWindows();
@@ -185,7 +185,7 @@ public class FollowUp extends javax.swing.JDialog {
 	void rereadList() {
 		int i, j, n;
 		String in1, lab1;
-		presetLab = new ArrayList<String>();
+		presetLab = new ArrayList<>();
 		if( jPrefer == null) return;
 		jComboPosLabel.removeAllItems();
 		for( i=1; i<=10; i++) {

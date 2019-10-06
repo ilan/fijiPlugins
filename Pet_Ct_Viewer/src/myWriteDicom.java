@@ -90,7 +90,7 @@ public class myWriteDicom {
 			String path1 = prefer1.get(key1, null);
 			if (path1 == null || path1.isEmpty()) {
 				JOptionPane.showMessageDialog(par1.getOwner(),
-						"Please fill in Directory for Significant Image (on menu: Edit->Options).\nThen try again.");
+					"Please fill in Directory for Significant Image (on menu: Edit->Options).\nThen try again.");
 				return false;
 			}
 			if( mipPipe != null) {
@@ -200,16 +200,14 @@ public class myWriteDicom {
 		double progVal;
 		ImageStack stk1;
 		String meta1, parPath, flName;
+		outFile1.mkdirs();
+		parPath = outFile1.getPath() + File.separator;
 		n = img1.getImageStackSize();
 		stack1: if( n> 1) {
 			stk1 = img1.getImageStack();
-			outFile1.mkdirs();
-			parPath = outFile1.getPath() + File.separator;
 			meta1 = stk1.getSliceLabel(1);
-			if(meta1 == null || meta1.isEmpty()) {
-				outFile1 = new File(parPath + "saveAs.dcm");
-				break stack1;
-			}
+			if(meta1 == null || meta1.isEmpty()) break stack1;
+
 			IJ.showStatus("Writing images, please be patient...");
 			ImageJ ij = IJ.getInstance();
 			if( ij != null) ij.toFront();
@@ -230,6 +228,7 @@ public class myWriteDicom {
 			par1.toFront();
 			return;
 		}
+		outFile1 = new File(parPath + "saveAs.dcm");
 		doImgPlusSaveDataSub(0);
 	}
 
@@ -769,6 +768,9 @@ public class myWriteDicom {
 			pos1 = out1.position();
 			flOut1.write(outBuf, 0, pos1);
 
+			// group 3002, RT Image - ignore for now
+//			out1.position(0);
+			
 			// group 0x7fe0 - pixel data
 			out1.position(0);
 			dataSz = dataSz1 * numFrms;
@@ -889,7 +891,9 @@ public class myWriteDicom {
 		if( img1 == null) return -1;
 		meta = ChoosePetCt.getMeta(1, img1);
 		if( meta == null) return -1;
-		outFile1 = new File(outFile);
+		// Windows has problems with comma in the path, replace it
+		String tmp = outFile.replaceAll(",", " ");
+		outFile1 = new File(tmp);
 		if( outFile1 == null) return -1;
 		SaveData();
 		return 0;
@@ -1210,6 +1214,7 @@ public class myWriteDicom {
 					case 0x80:
 					case 0x1030:
 					case 0x103e:
+					case 0x1040:
 					case 0x1090:
 						retVal = LO;
 						break;
@@ -1220,6 +1225,7 @@ public class myWriteDicom {
 
 					case 0x90:
 					case 0x1048:
+					case 0x1050:
 					case 0x1060:
 					case 0x1070:
 						retVal = PN;
@@ -1297,6 +1303,7 @@ public class myWriteDicom {
 						retVal = DS;
 						break;
 
+					case 0x1000:
 					case 0x1020:
 					case 0x1030:
 						retVal = LO;
@@ -1333,6 +1340,11 @@ public class myWriteDicom {
 						retVal = SH;
 						break;
 
+					case 0x1200:
+						retVal = DA;
+						break;
+
+					case 0x1201:
 					case 0x1072:
 						retVal = TM;
 						break;
@@ -1369,6 +1381,10 @@ public class myWriteDicom {
 
 					case 0x1040:
 						retVal = LO;
+						break;
+
+					case 0x4000:
+						retVal = LT;
 						break;
 				}
 				break;
@@ -1472,9 +1488,43 @@ public class myWriteDicom {
 						retVal = LO;
 						break;
 
+					case 0x1200:
 					case 0x1300:
 					case 0x1321:
+					case 0x1322:
+					case 0x1323:
 						retVal = DS;
+						break;
+
+					case 0x1201:
+						retVal = IS;
+						break;
+				}
+				break;
+
+			case 0x3002:
+				switch(element) {
+					case 2:
+					case 0x20:
+						retVal = SH;
+						break;
+
+					case 0xa:
+					case 0xc:
+						retVal = CS;
+						break;
+
+					case 0xd:
+					case 0xe:
+					case 0x11:
+					case 0x12:
+					case 0x22:
+					case 0x26:
+						retVal = DS;
+						break;
+
+					case 0x30:
+						retVal = SQ;
 						break;
 				}
 				break;
@@ -1673,8 +1723,8 @@ public class myWriteDicom {
 		String tmp0, tmp1, val1;
 		short type1;
 		checkDcmElement currElement;
-		goodDcmList = new ArrayList<checkDcmElement>();
-		goodSeqList = new ArrayList<checkSeqList>();
+		goodDcmList = new ArrayList<>();
+		goodSeqList = new ArrayList<>();
 		pos0 = 0;
 		while( (pos1 = meta.indexOf("\n", pos0)) >= 0) {
 			currElement = new checkDcmElement();
@@ -1702,7 +1752,7 @@ public class myWriteDicom {
 			if( group == 0x7fe0) break;
 		}
 
-		tmpList = new ArrayList<dupElement>();
+		tmpList = new ArrayList<>();
 		rmOff = 0;
 		n = goodDcmList.size();
 		prevGrp = -1;
@@ -1926,6 +1976,17 @@ public class myWriteDicom {
 						break;
 				}
 				break;
+
+			case 0x3002:
+				switch(element) {
+					case 0x30:
+						retVal = new seqElement[3];
+						retVal[0] = new seqElement(0x18, 0x60);
+						retVal[1] = new seqElement(0x18, 0x1150);
+						retVal[2] = new seqElement(0x18, 0x1151);
+						break;
+				}
+				break;
 		}
 		return retVal;
 	}
@@ -1975,7 +2036,7 @@ public class myWriteDicom {
 		checkSeqList(int group, int element) {
 			seqGroup = group;
 			seqElement = element;
-			seqList = new ArrayList<checkDcmElement>();
+			seqList = new ArrayList<>();
 		}
 	}
 	

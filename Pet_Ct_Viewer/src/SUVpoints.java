@@ -19,7 +19,7 @@ public class SUVpoints {
 	
 	SUVpoints(int slcType) {
 		sliceType = slcType;
-		volPointList = new ArrayList<SavePoint>();
+		volPointList = new ArrayList<>();
 		ptListSz = -1;
 		ij = null;
 	}
@@ -30,7 +30,7 @@ public class SUVpoints {
 
 	private void copyMe(SUVpoints old) {
 		sliceType = old.sliceType;
-		volPointList = new ArrayList<SavePoint>();
+		volPointList = new ArrayList<>();
 		for( int i=0; i < old.getListSize(); i++ ) {
 			SavePoint s = old.getPoint(i);
 			addPoint(s.petVal, s.ctVal, s.x1, s.y1, s.z1, s.rn1, s.labelIndx);
@@ -258,7 +258,7 @@ public class SUVpoints {
 		ArrayList<SavePoint> curList;
 		SavePoint pntCur;
 		for(i=0; i<n; i++) {
-			curList = new ArrayList<SavePoint>();
+			curList = new ArrayList<>();
 			for( j=0; j<n0; j++) {
 				pntCur = volPointList.get(j);
 				if( pntCur.z1 != i+zmin) continue;
@@ -277,7 +277,7 @@ public class SUVpoints {
 			if(excludedROI[i] != null) break;
 		}
 		if( i>=n ) return null;
-		ArrayList<SavePoint> removedPointList = new ArrayList<SavePoint>();
+		ArrayList<SavePoint> removedPointList = new ArrayList<>();
 		SavePoint tst1;
 		ArrayList<SavePoint> tstList;
 		for( i=0; i<n; i++) {
@@ -297,7 +297,7 @@ public class SUVpoints {
 	private void buildExcludeObj(ArrayList<SavePoint>removedList) {
 		int i, j, z, zadd, zstart, maxZ=0;
 		SavePoint tst1;
-		modified = new ArrayList<SavePoint>();
+		modified = new ArrayList<>();
 		if( removedList == null) return;
 		int n=removedList.size();
 		for( i=0; i<n; i++) {
@@ -348,7 +348,7 @@ public class SUVpoints {
 		buildExcludeObj(removedList);
 		if( modified == null || modified.isEmpty()) return total;
 		int i, j, jhi, n=volPointList.size();
-		ArrayList<SavePoint> tstList = new ArrayList<SavePoint>();
+		ArrayList<SavePoint> tstList = new ArrayList<>();
 		short x1, y1, z1, sumLen;
 		boolean isOK;
 		SavePoint excl, tst1;
@@ -427,8 +427,8 @@ public class SUVpoints {
 	}
 
 	void calcRadiomics(BrownFat bf, boolean isCalc) {
-		glcm = new ArrayList<CooccurencePoint>();
-		radioList = new ArrayList<RadioPoint>();
+		glcm = new ArrayList<>();
+		radioList = new ArrayList<>();
 		if( !isCalc) return;
 		RadioPoint res;
 		ImagePlus imp, imp2;
@@ -459,7 +459,7 @@ public class SUVpoints {
 				if( imp2 == null) return;
 				type = 1;
 				if( bf.getParentPet().MRIflg) type = 2;
-				glcm = new ArrayList<CooccurencePoint>();
+				glcm = new ArrayList<>();
 				img2.calcGlcm(this, imp2);
 				for( i=0; i<=16; i++) {
 					res = new RadioPoint();

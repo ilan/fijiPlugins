@@ -106,6 +106,7 @@ public class SUVDialog extends javax.swing.JDialog {
 			int day0 = getDayOfYear(petPipe.data1.injectionTime);
 			int day1 = getDayOfYear(petPipe.data1.serTime);
 			int diff = (day1 - day0)*86400;	// sec/day
+			if( diff < 0) diff = 0;	// Brooks found this in breast study
 			if( Math.abs(day1-day0)>4) {
 				diff = 0;
 				IJ.log("Something seems to be wrong with the date-time entries.\nThe SUV may be incorrect.");
@@ -136,7 +137,7 @@ public class SUVDialog extends javax.swing.JDialog {
 			lim = 1;
 			curDb = (BI_dbSaveInfo) srcImage.getProperty("bidb");
 			if( curDb != null && curDb.basUrl != null) { // Orthanc
-				ArrayList<String> names = new ArrayList<String>();
+				ArrayList<String> names = new ArrayList<>();
 				for( i=0; i<results.length; i++) names.add(results[i].toString());
 				java.util.Collections.sort(names);
 				for( i=0; i<results.length; i++) results[i] = new File(names.get(i));

@@ -135,12 +135,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		jCheckUseSUV.setSelected(prefer.getBoolean("bf use suv", true));
 		jCheckUseCt.setSelected(prefer.getBoolean("bf use ct", true));
 		jCheckOld.setSelected(prefer.getBoolean("old bf", true));
-//		jCheckGrown.setSelected(prefer.getBoolean("grown roi", false));
-		jCheckGrown.setSelected(true);
+//		setCheckGrown(prefer.getBoolean("grown roi", false));
+		setCheckGrown(true);
 		// allow BN Lee to see this - comment out next line
 //		jCheckGrown.setVisible(false);
 		jCheckDefLimits.setSelected(prefer.getBoolean("defined limits", false));
-		jCheckUseTemp.setSelected(prefer.getBoolean("nifti tmp", false));
+		jCheckUseTemp.setSelected(prefer.getBoolean("nifti tmp", true));
 		if( getNiftiPrefs(0)) jCheckUseTemp.setSelected(true);
 		changeTmp();
 		jTextParms.setVisible(false);
@@ -2121,7 +2121,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				type = 2;
 			}
 		}
-		ArrayList<Integer> retList = new ArrayList<Integer>();
+		ArrayList<Integer> retList = new ArrayList<>();
 		for( i=0; i<=n; i++) {
 			cbox = getRadioCB(i);
 			if( cbox.isSelected()) {
@@ -2352,7 +2352,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		}
 
 		for( i=0; i<maxCalc; i++) {
-			currSliceRois = new ArrayList<Poly3Save>();
+			currSliceRois = new ArrayList<>();
 			if( RoiState > 0) for( roi=j=0; roi<getRoiSize(0); roi++) {
 				currRoi = bf.polyVect.get(roi);
 				if( currRoi.type != bf.volSliceType) continue;
@@ -3098,7 +3098,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			z1 = z2-1;	// z1 counts from zero
 			if( invertImg) z1 = nSize - z2;
 			numPnt = bf.suvPnt.getListSize();
-			slicePoints = new ArrayList<Point>();
+			slicePoints = new ArrayList<>();
 			for( i=0; i< numPnt; i++) {
 				currPnt = bf.suvPnt.getPoint(i);
 				switch (bf.volSliceType) {
@@ -3257,7 +3257,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	
 	String setSeries3dName( ArrayList<String> serNames) {
 		String tmp, retName = "3D";
-		ArrayList<String> filteredNames = new ArrayList<String>();
+		ArrayList<String> filteredNames = new ArrayList<>();
 		int i, j, n = serNames.size();
 		for( i=0; i<n; i++) {
 			tmp = serNames.get(i).toUpperCase();
@@ -3278,7 +3278,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	}
 	
 	static ArrayList<String> getSeries4dateID( Date inDate, String inID) {
-		ArrayList<String> retSer = new ArrayList<String>();
+		ArrayList<String> retSer = new ArrayList<>();
 		int i, j;
 		ImagePlus img1;
 		String meta, ID0, ID1, serName;
@@ -3322,6 +3322,11 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return black | pixRed << 16 | pixGreen << 8 | pixBlue;
 	}
 
+	boolean setCheckGrown(boolean val) {
+		boolean ret = jCheckGrown.isSelected();
+		jCheckGrown.setSelected(val);
+		return ret;
+	}
 	void activateBuildButton() {
 		boolean enabled = true;
 		if( jTextName.getText().isEmpty()) enabled = false;
@@ -3741,7 +3746,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			fl1 = new File(flName);
 			if( !fl1.exists()) return;
 			boolean flipOld = jCheckOld.isSelected();
-			bf.polyVect = new ArrayList<Poly3Save>();
+			bf.polyVect = new ArrayList<>();
 			Roi1StartTime = null;
 			NiftiStartTime = null;
 			measureTime = -1;
@@ -5330,7 +5335,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		int labelIndx;
 		
 		Nifti3() {
-			vectNif = new ArrayList<short []>();
+			vectNif = new ArrayList<>();
 			ROIlabel = "";
 			labelIndx = 0;
 		}
@@ -5618,7 +5623,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		Object [] nifList = null;
 		SUVpoints suvPnt = null;
 		int [] redPoints = new int[5];
-		ArrayList<Poly3Save> polyVect = new ArrayList<Poly3Save>();
+		ArrayList<Poly3Save> polyVect = new ArrayList<>();
 
 		void fillSdyLab() {
 			if(parentPet == null) return;
@@ -7342,7 +7347,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	int [] maskParms = null;
 	int black, saveRoiPntIndx, saveRoiIndx;
 	int CtCenterVal;
-	ArrayList<Component> elementList = new ArrayList<Component>();
-	ArrayList<bfGroup> m_bf = new ArrayList<bfGroup>();
+	ArrayList<Component> elementList = new ArrayList<>();
+	ArrayList<bfGroup> m_bf = new ArrayList<>();
 	bfGroup bf = new bfGroup();
 }

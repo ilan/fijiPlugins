@@ -186,7 +186,7 @@ public class AnoToolBar {
 		String flName = getFileName(indx, true);
 		String tmp;
 		if( indx == 0) {
-			m_BMList = new ArrayList<myBookMark>();
+			m_BMList = new ArrayList<>();
 			m_china = new ArrayList[3];
 			m_measurements = new ArrayList[3];
 			m_floatingText = new String[3];
@@ -194,8 +194,8 @@ public class AnoToolBar {
 		if( flName == null) return;
 		File fl1 = new File(flName);
 		if( !fl1.exists()) return;
-		m_china[indx] = new ArrayList<myChina>();
-		m_measurements[indx] = new ArrayList<myMeasure>();
+		m_china[indx] = new ArrayList<>();
+		m_measurements[indx] = new ArrayList<>();
 		try {
 			FileInputStream in = new FileInputStream(fl1);
 			FileChannel fc = in.getChannel();
@@ -658,7 +658,7 @@ public class AnoToolBar {
 				break;
 
 			case RB_BM:
-				if( killAll) m_BMList = new ArrayList<myBookMark>();
+				if( killAll) m_BMList = new ArrayList<>();
 				else {
 					size1 = m_BMList.size();
 					if( size1 > 0) m_BMList.remove(size1-1);
@@ -722,7 +722,7 @@ public class AnoToolBar {
 			}
 			meas1.type = (short)(4*sliceType + m_measDraw);
 			if(m_measurements[m_lastView] == null)
-				m_measurements[m_lastView] = new ArrayList<myMeasure>();
+				m_measurements[m_lastView] = new ArrayList<>();
 			m_measurements[m_lastView].add(meas1);
 			m_dirtyFlg = true;
 //			setObliqueLabel();
@@ -807,7 +807,7 @@ public class AnoToolBar {
 		chin1.type = (byte)(4*sliceType + currRB - RB_UPARROW);
 		chin1.size = 12;	// fixed value in toolbar
 		if(m_china[m_lastView] == null)
-			m_china[m_lastView] = new ArrayList<myChina>();
+			m_china[m_lastView] = new ArrayList<>();
 		m_china[m_lastView].add(chin1);
 		m_dirtyFlg = true;
 		addBookMark(true);

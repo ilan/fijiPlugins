@@ -1326,7 +1326,7 @@ public class JFijiPipe {
 		switch( data1.depth) {
 			case 32:
 				if( rawFloatPix == null) {
-					rawFloatPix = new ArrayList<float[]>(2);
+					rawFloatPix = new ArrayList<>(2);
 					rawFloatPix.add(null);
 					rawFloatPix.add(null);
 				}
@@ -1334,7 +1334,7 @@ public class JFijiPipe {
 
 			case 8:
 				if( rawBytPix == null) {
-					rawBytPix = new ArrayList<byte[]>(2);
+					rawBytPix = new ArrayList<>(2);
 					rawBytPix.add(null);
 					rawBytPix.add(null);
 				}
@@ -1342,7 +1342,7 @@ public class JFijiPipe {
 
 			default:
 				if( rawPixels == null) {
-					rawPixels = new ArrayList<short[]>(2);
+					rawPixels = new ArrayList<>(2);
 					rawPixels.add(null);
 					rawPixels.add(null);
 				}
@@ -1459,7 +1459,7 @@ public class JFijiPipe {
 		switch( data1.depth) {
 			case 32:
 				if( rawFloatPix == null) {
-					rawFloatPix = new ArrayList<float[]>(2);
+					rawFloatPix = new ArrayList<>(2);
 					rawFloatPix.add(null);
 					rawFloatPix.add(null);
 				}
@@ -1467,7 +1467,7 @@ public class JFijiPipe {
 
 			case 8:
 				if( rawBytPix == null) {
-					rawBytPix = new ArrayList<byte[]>(2);
+					rawBytPix = new ArrayList<>(2);
 					rawBytPix.add(null);
 					rawBytPix.add(null);
 				}
@@ -1475,7 +1475,7 @@ public class JFijiPipe {
 
 			default:
 				if( rawPixels == null) {
-					rawPixels = new ArrayList<short[]>(2);
+					rawPixels = new ArrayList<>(2);
 					rawPixels.add(null);
 					rawPixels.add(null);
 				}
@@ -1715,7 +1715,7 @@ public class JFijiPipe {
 
 	protected class mipXYentry {
 		int zlo, zhi = -1;
-		ArrayList<mipEntry> xydata = new ArrayList<mipEntry>();
+		ArrayList<mipEntry> xydata = new ArrayList<>();
 	}
 	
 	lungInsert createLungInsert() {
@@ -1873,7 +1873,7 @@ public class JFijiPipe {
 				// compressed Orthanc
 				if( SOPclass == ChoosePetCt.SOPCLASS_TYPE_NM) spectFlg = true;
 			}
-			if( !spectFlg && depth < 32) rescaleSlope = new ArrayList<Double>();
+			if( !spectFlg && depth < 32) rescaleSlope = new ArrayList<>();
 			// the orientation is assumed to be the same for all slices in the stack
 			i = 0;
 			try {
@@ -1938,7 +1938,7 @@ public class JFijiPipe {
 				seriesType != ChoosePetCt.SER_FORCE_CPET)) return;
 			if( pixelSpacing != null && 2*pixelSpacing[0] < triThick) return;
 			if( pixels == null) return;
-			pixel2 = new ArrayList<short []>();	// 16 bits
+			pixel2 = new ArrayList<>();	// 16 bits
 			valMin = 0;
 			valMax = 10000.;
 			if( qualityRendering && numTimeSlots == 1 && Math.abs(sliceThickness) > triThick ) {
@@ -2391,8 +2391,8 @@ public class JFijiPipe {
 			seriesType = srcData.seriesType;	// in case it was forced
 			origSerType = srcData.origSerType;
 			srcImage = srcData.srcImage;
-			if( srcData.pixel2 != null) pixel2 = new ArrayList<short[]>();
-			if( srcData.rescaleSlope != null) rescaleSlope = new ArrayList<Double>();
+			if( srcData.pixel2 != null) pixel2 = new ArrayList<>();
+			if( srcData.rescaleSlope != null) rescaleSlope = new ArrayList<>();
 			for( i=0; i<numFrms; i++) {
 				switch( depth) {
 					case 32:
@@ -2510,8 +2510,8 @@ public class JFijiPipe {
 			}
 			SOPclass = ChoosePetCt.getSOPClass(ChoosePetCt.getDicomValue( meta, "0008,0016"));
 			serTime = ChoosePetCt.getStudyDateTime( meta, 1);
-			tmp = ChoosePetCt.getDicomValue(meta, "0009,100D");	// give GE a chance to veto
-			if( tmp != null) serTime = ChoosePetCt.getDateTime(tmp, null);
+//			tmp = ChoosePetCt.getDicomValue(meta, "0009,100D");	// give GE a chance to veto
+//			if( tmp != null) serTime = ChoosePetCt.getDateTime(tmp, null);
 			acquisitionTime = ChoosePetCt.getStudyDateTime(meta, 2);
 			seriesName = ChoosePetCt.getDicomValue( meta, "0008,103E");
 			if( seriesName == null || seriesName.isEmpty()) seriesName = ChoosePetCt.getDicomValue( meta, "0054,0400");
@@ -2541,27 +2541,27 @@ public class JFijiPipe {
 				numTimeSlots = numDyn;
 			}
 			if( numTimeSlots > 1) {
-				trigTime = new ArrayList<Integer>();
+				trigTime = new ArrayList<>();
 				frameTime = ChoosePetCt.parseInt(ChoosePetCt.getDicomValue(meta, "0018,1063"));
 				if( frameTime < 1) frameTime = 1;
 			}
 			if( numTimeSlots < 1) numTimeSlots = 1;
-			zpos = new ArrayList<Float>();
+			zpos = new ArrayList<>();
 			rescaleIntercept = ChoosePetCt.parseDouble(ChoosePetCt.getFirstDicomValue(meta, "0028,1052"));
-			imageNumber = new ArrayList<Integer>();
+			imageNumber = new ArrayList<>();
 			sliceThickness = -ChoosePetCt.parseDouble(ChoosePetCt.getDicomValue(meta, "0018,0050"));
 			if( isFeetFirst) sliceThickness = -sliceThickness;
 			switch( depth) {
 				case 32:
-					pixFloat = new ArrayList<float []>();
+					pixFloat = new ArrayList<>();
 					break;
 
 				case 8:
-					pixByt = new ArrayList<byte []>();
+					pixByt = new ArrayList<>();
 					break;
 
 				default:
-					pixels = new ArrayList<short []>();	// 16 bits
+					pixels = new ArrayList<>();	// 16 bits
 			}
 			return true;
 		}
@@ -2699,13 +2699,13 @@ public class JFijiPipe {
 					else i++;
 				}
 				if( dirty) {
-					if( pixFloat != null) pixFloat = new ArrayList<float []>();
-					if( pixels != null) pixels = new ArrayList<short []>();
-					if( pixByt != null) pixByt = new ArrayList<byte []>();
-					zpos = new ArrayList<Float>();
-					imageNumber = new ArrayList<Integer>();
-					if( rescaleSlope != null) rescaleSlope = new ArrayList<Double>();
-					if( trigTime != null) trigTime = new ArrayList<Integer>();
+					if( pixFloat != null) pixFloat = new ArrayList<>();
+					if( pixels != null) pixels = new ArrayList<>();
+					if( pixByt != null) pixByt = new ArrayList<>();
+					zpos = new ArrayList<>();
+					imageNumber = new ArrayList<>();
+					if( rescaleSlope != null) rescaleSlope = new ArrayList<>();
+					if( trigTime != null) trigTime = new ArrayList<>();
 					gaussSort = sortVect;	// save sort vector
 					for( i=0; i<numFrms; i++) {
 						j0 = sortVect[i];
@@ -3156,8 +3156,8 @@ public class JFijiPipe {
 			if( srcPet.data1.depth == 32) grandMax = srcPet.data1.maxVal;
 			maxVal = 0;
 			numTimeSlots = 1;
-			pixels = new ArrayList<short []>();
-			tmpPix = new ArrayList<short []>();
+			pixels = new ArrayList<>();
+			tmpPix = new ArrayList<>();
 			work2 = null;
 			bkgCalc();
 			cores = 2;
@@ -3197,7 +3197,7 @@ public class JFijiPipe {
 			numFrms = NUM_MIP;
 			if( type == 1) {	// combine the 2 MIPs
 				tmpPix = pixels;
-				pixels = new ArrayList<short []>();
+				pixels = new ArrayList<>();
 				for( i=0; i<NUM_MIP; i++) {
 					if( oldPixels == null) break;
 					currSlice = oldPixels.get(i);
@@ -3245,7 +3245,7 @@ public class JFijiPipe {
 			grandMax = maxPixel = srcPet.data1.maxPixel;
 			if( srcPet.data1.depth == 32) grandMax = srcPet.data1.maxVal;
 			maxVal = 0;
-			pixFloat = new ArrayList<float[]>();
+			pixFloat = new ArrayList<>();
 			for( ang1 =0; ang1 < NUM_MIP; ang1++) {
 				coss = setCosSin( ang1);
 				currSlice = new float[width*height];

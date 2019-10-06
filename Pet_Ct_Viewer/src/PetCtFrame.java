@@ -165,8 +165,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		ctWidth[3] = 2000;
 		ctLevel[4] = 40;	// Brain-Sinus
 		ctWidth[4] = 80;
-		ArrayList<ImagePlus> imgList = new ArrayList<ImagePlus>();
-		ArrayList<Integer> seriesType = new ArrayList<Integer>();
+		ArrayList<ImagePlus> imgList = new ArrayList<>();
+		ArrayList<Integer> seriesType = new ArrayList<>();
 		for( i=0; i<foundData; i++) {
 			j = chosen.get(i);
 			k = chooseDlg.getSeriesType(j);
@@ -187,9 +187,9 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 			keyDelay[i] = j;
 			j = (int) (j * 1.3);
 		}
-		if( conferenceList == null) conferenceList = new ArrayList<Object>();
+		if( conferenceList == null) conferenceList = new ArrayList<>();
 		conferenceList.add(this);
-		if(extList == null) extList = new ArrayList<Object>();
+		if(extList == null) extList = new ArrayList<>();
 		addWindowFocusListener(this);
 	}
 	
@@ -465,7 +465,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	int  [] getImageList( ArrayList<Object> petImages) {
 		int [] IDList = null;
 		int i, n;
-		ArrayList<Integer> ID1 = new ArrayList<Integer>();
+		ArrayList<Integer> ID1 = new ArrayList<>();
 		addImage(petCtPanel1.petPipe, petImages, ID1);
 		addImage(petCtPanel1.upetPipe, petImages, ID1);
 		addImage(petCtPanel1.ctPipe, petImages, ID1);

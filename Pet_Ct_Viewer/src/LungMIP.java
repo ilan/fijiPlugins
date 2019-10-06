@@ -326,7 +326,7 @@ public class LungMIP extends javax.swing.JDialog {
 			pip1 = poly1.getPipe();
 			indx = -1;
 			insert = null;
-			if( pip1.lungData == null) pip1.lungData = new ArrayList<JFijiPipe.lungInsert>();
+			if( pip1.lungData == null) pip1.lungData = new ArrayList<>();
 			int i, zCurr, n=pip1.lungData.size();
 			zCurr = getCurrZPos();
 			JFijiPipe.lungInsert lData;
@@ -559,5 +559,5 @@ public class LungMIP extends javax.swing.JDialog {
 	double slSize = 5;
 	Poly3Save currPoly = null;
 	Point currMousePos = new Point(-1,0);
-	ArrayList<Poly3Save> polyVect = new ArrayList<Poly3Save>();
+	ArrayList<Poly3Save> polyVect = new ArrayList<>();
 }
