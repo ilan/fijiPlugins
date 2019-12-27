@@ -3390,16 +3390,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	}
 
 	String generateFileName(int type, boolean spcSwap) {
-		String retVal;
-		if( type == 0) {
-			retVal = bf.parentPet.parent.m_patName.replace('.', ' ').trim();
-			retVal = retVal.replaceAll("[,/]", "_");
-		} else {
-			retVal = ChoosePetCt.UsaDateFormat(bf.parentPet.parent.getStudyDate());
-			retVal = retVal.replace(", ", "_");
-		}
-		if( spcSwap) return retVal.replace(' ', '_');
-		return retVal;
+        return bf.parentPet.parent.generateFileNameExt(type, spcSwap);
 	}
 
 	@SuppressWarnings("null")

@@ -561,6 +561,19 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		petCtPanel1.operatorName = opName;
 	}
 
+	String generateFileNameExt(int type, boolean spcSwap) {
+		String retVal;
+		if( type == 0) {
+			retVal = m_patName.replace('.', ' ').trim();
+			retVal = retVal.replaceAll("[,/]", "_");
+		} else {
+			retVal = ChoosePetCt.UsaDateFormat(getStudyDate());
+			retVal = retVal.replace(", ", "_");
+		}
+		if( spcSwap) return retVal.replace(' ', '_');
+		return retVal;
+	}
+
 	void fillSUV_SUL(boolean showFlg) {
 		double SUV, SUL;
 		SUVDialog dlg1 = new SUVDialog(this, true);
@@ -1227,6 +1240,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		for( i=-1; i<frList.length; i++) {
 			if( i>=0) {
 				win = frList[i];
+                if( win==null ) continue;
 				title = win instanceof Frame?((Frame)win).getTitle():((Dialog)win).getTitle();
 			}
 			item1 = new javax.swing.JMenuItem(title);
@@ -1272,7 +1286,12 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 			}
 		}
 	}
-	
+
+	void scriptMip() {
+		SaveMip dlg = new SaveMip(this, true);
+		dlg.scriptAction();
+	}
+
 	void annotationSave(int indx) {
 		Annotations currAno = getPetCtPanel1().anotateDlg;
 		AnoToolBar currAnoTb = getPetCtPanel1().anotateTB;
@@ -2561,6 +2580,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	private void jMenuSaveMipActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuSaveMipActionPerformed
 		SaveMip dlg = new SaveMip(this, true);
+//		dlg.scriptAction();
 		dlg.setVisible(true);
 		dlg.doAction(null);
 	}//GEN-LAST:event_jMenuSaveMipActionPerformed

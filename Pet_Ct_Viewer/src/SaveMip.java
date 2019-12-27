@@ -88,12 +88,52 @@ public class SaveMip extends javax.swing.JDialog {
 		jPrefer.putInt("Mip frame time", getFrameTime());
 	}
 
+    String getFileName(String ext) {
+        String ret=null;
+        PetCtFrame par;
+ 		if( parent instanceof PetCtFrame) {
+            par = (PetCtFrame)parent;
+            ret = "mip_" + par.generateFileNameExt(0, true) + "_";
+            ret += par.generateFileNameExt(1, true) + "." + ext;
+        }
+       return ret;
+    }
+
+	private String getFileExt(int type) {
+		String ret = "avi";
+		switch(type) {
+			case 1:
+				ret = "png";
+				break;
+
+			case 2:
+				ret = "gif";
+				break;
+
+			case 3:
+				ret = "dcm";
+				break;
+		}
+		return ret;
+	}
+
+	void scriptAction() {
+		int flType = getFileType();
+		String ext1 = getFileExt(flType);
+		String name = jPrefer.get("Mip file path", "");
+		if( name.isEmpty()) return;
+		name += "/" + getFileName(ext1);
+		doAction(name);
+	}
+
 	int doAction(String iniName) {
-		String key1, ext1, path = iniName;
+		String key1, ext1, flName, path = iniName;
 		mipPipe = null;
-		int i;
+		int i, flType = getFileType();
 		directColorFlg = false;
 		JPanel parPanel;
+		ext1 = getFileExt(flType);
+		flName = getFileName(ext1);
 		if( iniName == null) {
 			if( !retOK) return -1;
 			key1 = "significant image path";
@@ -101,28 +141,12 @@ public class SaveMip extends javax.swing.JDialog {
 			if( i > 0) key1 += i;
 			path = jPrefer.get(key1, null);
 			JFileChooser dlg = new JFileChooser(path);
+            dlg.setSelectedFile(new File( flName));
 			i = dlg.showSaveDialog(this);
 			if( i != JFileChooser.APPROVE_OPTION) return -1;
 			path = dlg.getSelectedFile().getPath();
-		}
-		i = getFileType();
-		ext1 = "avi";
-		switch(i) {
-			case 1:
-				ext1 = "png";
-				break;
-
-			case 2:
-				ext1 = "gif";
-				break;
-
-			case 3:
-				ext1 = "dcm";
-				break;
-		}
-		if( iniName == null) {
-			String tmp = path.toLowerCase();
-			if( !tmp.endsWith(ext1)) path += "." + ext1;
+			i = path.lastIndexOf('/');
+			jPrefer.put("Mip file path", path.substring(0, i));
 		}
 		if( parent instanceof PetCtFrame) {
 			parPanel = ((PetCtFrame) parent).getPetCtPanel1();
@@ -141,7 +165,7 @@ public class SaveMip extends javax.swing.JDialog {
 			JOptionPane.showMessageDialog(parent, "Can't find MIP object");
 			return -1;
 		}
-		switch(i) {
+		switch(flType) {
 			case 0:
 				return writeAvi1( path);
 
