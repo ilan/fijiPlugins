@@ -446,6 +446,19 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		m_dataPath = pref1.get("db path" + jCurrDB, null);
 	}
 
+	// run reader under external control, groovy
+	int extReadButton(int rowNum, int rowEnd) {	// range of rows selected
+		int i, n = jTable1.getRowCount();
+		unselectAllTableEntries();
+		if( rowNum>=0 && rowNum<n) {
+			i = rowEnd;	// rowEnd = 0 means use rowNum
+			if( i<rowNum || i>=n) i = rowNum;
+			jTable1.setRowSelectionInterval(rowNum, i);
+			readButton();
+		}
+		return n;
+	}
+
 	void readButton() {
 		maybeShowWriteMip(null);
 		if( work2 != null) return;
@@ -4884,7 +4897,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             }
         });
 
-        jLabAbout.setText("version: 2.32");
+        jLabAbout.setText("version: 2.33");
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);
