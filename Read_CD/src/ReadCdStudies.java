@@ -332,6 +332,19 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		changeCDSelected(jCurrCD + 1);
 	}
 
+	// run reader under external control, groovy
+	int extReadButton(int rowNum, int rowEnd) {	// range of rows selected
+		int i, n = jTable1.getRowCount();
+		unselectAllTableEntries();
+		if( rowNum>=0 && rowNum<n) {
+			i = rowEnd;	// rowEnd = 0 means use rowNum
+			if( i<rowNum || i>=n) i = rowNum;
+			jTable1.setRowSelectionInterval(rowNum, i);
+			readButton();
+		}
+		return n;
+	}
+
 	void readButton() {
 		maybeShowWriteMip(null);
 		if( work2 != null) return;
@@ -1059,7 +1072,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			}
 			setOrSaveColumnWidths(type1, false);
 			recurseDirectory(path);
-			sortTableList(jCheckAutoSort.isSelected());
+			if( jCheckAutoSort.isSelected()) sortTableList();
 			for( i=0; i<tableList.size(); i++) {
 				Object[] row1 = new Object[TBL_BF+1];
 				tableEntry = tableList.get(i);
@@ -1085,7 +1098,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 	
-	void sortTableList(boolean doSort) {
+	void sortTableList() {
 		ArrayList<CD_dirInfo> sortedList;
 		int i, j, k, n = tableList.size();
 		int[] indx =  new int[n];
@@ -1120,20 +1133,14 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			for( i=0; i<n; i++) {
 				sUID0 = sUIDs[i];
 				name0 = names[i];
-				for( j=i+1; j<n; j++) {
+				for( j=1; j<n; j++) {
 					sUID1 = sUIDs[j];
-					if( sUID0.equals(sUID1)) {
-						if( !names[j].equals(name0)) {
-							dirty = true;
-							names[j] = name0;
-						}
-					}
+					if( sUID0.equals(sUID1)) names[j] = name0;
 				}
 			}
 		}
 		// now sort for name ascending, date descending
 		i = 0;
-		if( !doSort && !dirty) i = n;
 		while( i < n-1) {
 			name0 = names[i];
 			name1 = names[i+1];
@@ -1745,7 +1752,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.13");
+        jLabel12.setText("version: 2.14");
 
         jLabJava.setText("jLabel13");
 
