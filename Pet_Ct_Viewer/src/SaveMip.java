@@ -122,7 +122,7 @@ public class SaveMip extends javax.swing.JDialog {
 		String ext1 = getFileExt(flType);
 		String name = jPrefer.get("Mip file path", "");
 		if( name.isEmpty()) return;
-		name += "/" + getFileName(ext1);
+		name += File.separator + getFileName(ext1);
 		doAction(name);
 	}
 
@@ -145,7 +145,8 @@ public class SaveMip extends javax.swing.JDialog {
 			i = dlg.showSaveDialog(this);
 			if( i != JFileChooser.APPROVE_OPTION) return -1;
 			path = dlg.getSelectedFile().getPath();
-			i = path.lastIndexOf('/');
+//			IJ.log("path = " + path);
+			i = path.lastIndexOf(File.separator);
 			jPrefer.put("Mip file path", path.substring(0, i));
 		}
 		if( parent instanceof PetCtFrame) {

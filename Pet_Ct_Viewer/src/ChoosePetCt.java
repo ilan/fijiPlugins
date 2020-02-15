@@ -313,6 +313,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		imgList = new ArrayList<>();
 		seriesType = new ArrayList<>();
 		seriesUIDs = new ArrayList<>();
+		seriesName = new ArrayList<>();
 		ImagePlus img1;
 		String meta, patName, study, series, tmp1;
 		Date date1;
@@ -362,6 +363,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			imgList.add(img1);
 			seriesType.add(serType);
 			seriesUIDs.add(getSeriesUID(meta));
+			seriesName.add(series);
 		}
 	}
 	
@@ -374,7 +376,29 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		if(serType == SERIES_MRI) val1 = "MRI";
 		row1[TBL_SER_TYPE] = val1;
 	}
-	
+
+	// getSeriesName, setCheckBox and pressOkCancel are used in groovy scripts
+	public String getSeriesName(int indx) {
+		if( seriesName == null) return null;
+		if( indx >= seriesName.size()) return null;
+		return seriesName.get(indx);
+	}
+
+	public void setCheckBox(int indx) {
+		TableModel mod1 = (DefaultTableModel) jTable1.getModel();
+		if( indx>=mod1.getRowCount()) return;
+		mod1.setValueAt(true, indx, 0);
+	}
+
+	public int pressOkCancel() {
+		if(jButOK.isEnabled()) {
+			jButOK.doClick();
+			return 1;
+		}
+		jButCancel.doClick();
+		return 0;
+	}
+
 	static String UsaDateFormat( Date inDate) {
 		if(inDate == null) return "";
 		return DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US).format(inDate);
@@ -590,6 +614,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		tmp1 = getDicomValue(meta,key0);
 		if(tmp1==null) {
 			tmp1 = getDicomValue(meta,"0008,0020");
+			if( tmp1 == null) return null;
 			// be careful of bad study dates like 1899
 			if(Integer.valueOf(tmp1.substring(0, 4)) < 1980) {
 				tmp1 = getDicomValue(meta,"0008,0021");
@@ -1449,6 +1474,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	ArrayList<Integer> seriesForce = null;
 	ArrayList<Integer> chosenOnes = null;
 	ArrayList<String> seriesUIDs = null;
+	ArrayList<String> seriesName = null;
 	static String userDir = null;
 	static PetCtPanel MipPanel = null;
 	static int loadingData = 0;	// not loading
