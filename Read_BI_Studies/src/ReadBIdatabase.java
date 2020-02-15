@@ -454,6 +454,12 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 			i = rowEnd;	// rowEnd = 0 means use rowNum
 			if( i<rowNum || i>=n) i = rowNum;
 			jTable1.setRowSelectionInterval(rowNum, i);
+			DefaultTableModel mod1;
+			mod1 = (DefaultTableModel) jTable1.getModel();
+			String series = (String) mod1.getValueAt(rowNum, TBL_SERIES);
+			n = 1;		// single series in folder
+			if( series == null || i > rowNum)
+				n = 2;	// multiple series in folder
 			readButton();
 		}
 		return n;
@@ -3508,6 +3514,22 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 
+	// used in groovy script- priority to visible windows
+	public Window getDlgWindow(String fndWnd) {
+		Window[] wins = Window.getWindows();
+		Window winRet = null;
+		int i, n = wins.length;
+		String tmp;
+		for(i=0; i<n; i++) {
+			tmp = wins[i].toString();
+			if(tmp.startsWith(fndWnd)) {
+				winRet = wins[i];
+				if(winRet.isVisible()) return winRet;
+			}
+		}
+		return winRet;
+	}
+
 	@Override
 	public void dispose() {
 		WindowManager.removeWindow(this);
@@ -4897,7 +4919,7 @@ public class ReadBIdatabase extends javax.swing.JFrame implements MouseListener,
             }
         });
 
-        jLabAbout.setText("version: 2.33");
+        jLabAbout.setText("version: 2.35");
 
         javax.swing.GroupLayout jPanelSetupLayout = new javax.swing.GroupLayout(jPanelSetup);
         jPanelSetup.setLayout(jPanelSetupLayout);
