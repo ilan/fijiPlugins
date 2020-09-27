@@ -109,6 +109,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		jTextN.setText(sl1.toString());
 		jCheckTile.setSelected(jPrefer.getBoolean("cd tile windows", false));
 //		jChkForceDicomDir.setSelected(jPrefer.getBoolean("force use dicomdir", false));
+		jChkForceDicomDir.setVisible(false);
 		sl1 = jPrefer.getInt("postage stamp size", 0);
 		jTextStamp.setText(sl1.toString());
 		Rectangle scr1 = ChoosePetCt.getScreenDimensions();
@@ -1271,7 +1272,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			n = dcm.checkDicomValid(flPath.getParent(), flPath.getName());
 			if( n<=0) {
 				if(!flPath.getName().endsWith(".zip")) failed++;
-				if( failed > NUM_FAILS) return;
+				if( failed > NUM_FAILS)
+					return;
 				continue;
 			}
 			tableEntry = new CD_dirInfo();
@@ -1781,7 +1783,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.17");
+        jLabel12.setText("version: 2.18");
 
         jLabJava.setText("jLabel13");
 
