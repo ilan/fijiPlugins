@@ -671,7 +671,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				tmp = getDicomValue(meta, "0054,0400");
 				if( tmp == null) {
 					tmp = getDicomValue(meta, "0054,0202");	// last chance
-					if( tmp == null) return SERIES_UNKNOWN;
+					if( tmp == null) {
+						array1 = parseMultString(getDicomValue(meta, "0028,0051"));
+						if( !multStringContains( array1, "ATTN")) return SERIES_UNKNOWN;
+						tmp = "STEP";
+					}
 					if( tmp.startsWith("STEP")) {
 						int numFrm = parseInt(getDicomValue( meta, "0028,0008"));
 						// the SERIES_SIEMENS_SPECT is only for the new Siemens format

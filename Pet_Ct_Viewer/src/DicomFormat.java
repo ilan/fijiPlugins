@@ -1,5 +1,6 @@
 import ij.IJ;
 import java.awt.Dimension;
+import java.io.EOFException;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -8,6 +9,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Scanner;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.io.DicomInputStream;
 
 
 /**
@@ -21,10 +25,10 @@ public class DicomFormat {
 	public String m_currStyName,  m_currSerName,  m_currPatName,  m_ImageID,  m_label;
 	public String m_petUnits, m_modelName, m_atten, m_acqDate, m_birthdate, m_accession;
 	public Dimension m_size = null;
-	public double m_patHeight,  m_patWeight,  m_sliceThickness,  m_posX,  m_posY,  m_posZ;
-	int m_SOPClass, m_modality, m_dataType, m_indx, m_numFrms, m_depth, m_frameTime;
-	int m_orientation;
-	String refSeriesUID;
+//	public double m_patHeight,  m_patWeight,  m_sliceThickness,  m_posX,  m_posY,  m_posZ;
+	int m_SOPClass, m_modality, m_dataType, m_indx;
+//	int m_numFrms, m_depth, m_frameTime, m_orientation;
+//	String refSeriesUID;
 	ArrayList<studyEntry> m_aStudy = null;
 	ArrayList<seriesEntry> m_aSeries = null;
 	ArrayList<imageEntry> m_aImage = null;
@@ -207,6 +211,85 @@ public class DicomFormat {
 	}
 
 	public int checkDicomValid(String path, String flName) {
+		try {
+			Attributes at;
+			String in1 = path + DIR_SEP_CHAR + flName;
+			if( flName == null) return 0;
+			File fl1 = new File(in1);
+			if( !fl1.exists()) {
+				in1 = path + DIR_SEP_CHAR + flName.toLowerCase();
+				fl1 = new File(in1);
+			}
+			if (!fl1.exists() || fl1.isDirectory()) {
+				return 0;
+			}
+			if( !initialDicomCheck(fl1)) return 0;
+			m_currPatName = null;
+			m_currPatID = null;
+			m_currSOPInstanceUID = null;
+			m_currSeriesInstanceUID = null;
+			m_currStudyInstanceUID = null;
+			m_studyDate = null;
+			m_accession = null;
+			m_birthdate = null;
+			m_currStyName = null;
+			m_currSerName = null;
+			m_SOPClass = ChoosePetCt.SOPCLASS_UNKNOWN;
+			DicomInputStream dis = new DicomInputStream(fl1);
+			at = dis.readDataset(-1, -1);
+			dis.close();
+			if( at.isEmpty()) return 0;
+			m_currPatName = getDcmName(at, Tag.PatientName);
+			m_currPatID = getDcmString(at, Tag.PatientID);
+			m_studyDate = getStudyDate(at);
+			m_birthdate = getDcmString(at, Tag.PatientBirthDate);
+			m_accession = getDcmString(at, Tag.AccessionNumber);
+			m_currStyName = getDcmString(at, Tag.StudyDescription);
+			if( m_currStyName == null)
+				m_currStyName = getDcmString(at, Tag.StudyID);
+			m_currSerName = getDcmString(at, Tag.SeriesDescription);
+			m_currSOPInstanceUID = getDcmString(at, Tag.SOPInstanceUID);
+			m_currSeriesInstanceUID = getDcmString(at, Tag.SeriesInstanceUID);
+			m_currStudyInstanceUID = getDcmString(at, Tag.StudyInstanceUID);
+			String tmp1 = getDcmString(at, Tag.SOPClassUID);
+			m_SOPClass = ChoosePetCt.getSOPClass(tmp1);
+			if(m_SOPClass == ChoosePetCt.SOPCLASS_TYPE_SR_STORAGE ||
+				m_SOPClass == ChoosePetCt.SOPCLASS_UNKNOWN) return 0;
+			return 1;
+		} catch(EOFException eof1) {
+			String s1 = "Not listed: " + path + DIR_SEP_CHAR + flName;
+			IJ.log(s1);
+			return 0;
+		}
+		catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
+		return 0;
+	}
+
+	private boolean initialDicomCheck(File fl1) {
+		RandomAccessFile fis;
+		byte[] byt1 = new byte[20480];
+		int currlen, currInt;
+		ByteBuffer byt2;
+		try {
+			fis = new RandomAccessFile(fl1, "r");
+			byt2 = ByteBuffer.wrap(byt1);
+			byt2 = byt2.order(ByteOrder.LITTLE_ENDIAN);
+			currlen = fis.read(byt1);
+			if( currlen <= 1020) {
+//				IJ.log("Dicom file too small");
+				fis.close();
+				return false;
+			}
+			currInt = byt2.getInt(128);	// gets as little endian
+			if (currInt != 0x4d434944) {	// DICM
+				fis.close();
+				return false;
+			}
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
+		return true;
+	}
+
+	/*	public int checkDicomValid(String path, String flName) {
 		byte[] byt1 = new byte[20480];
 		ByteBuffer byt2;
 		String tmp1;
@@ -329,9 +412,9 @@ public class DicomFormat {
 					}
 				}
 				
-/*				if (group == 0x7a1) {
-					if(element == 3) type1 = 1;
-				}*/
+//				if (group == 0x7a1) {
+//					if(element == 3) type1 = 1;
+//				}
 
 				if (group == 8) {
 					switch (element) {
@@ -776,16 +859,16 @@ public class DicomFormat {
 				off1 = byt2.position() + len;
 				currlen -= len + 8;
 				if( currlen < 0) break;
-/*				if(off1 < 0) { // used only for debugging
-					group = -1;
-					group++;
-				}*/
+//				if(off1 < 0) { // used only for debugging
+//					group = -1;
+//					group++;
+//				}
 				byt2.position(off1);
 			} while (len <= 10240 && currlen > 16);
 			fis.close();
-		} catch (Exception e) {	ChoosePetCt.stackTrace2Log(e); }
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		return 0;
-	}
+	}*/
 	
 	private void getCardiacIndx() {
 		String tmp = m_ImageID.toLowerCase();
@@ -1004,12 +1087,12 @@ public class DicomFormat {
 										if( !sr1.isSameDir(tmp1) ) for( j=0; j<n1; j++) {
 											srTmp = m_aSeries.get(j);
 											if( srTmp.parDir == null) srTmp.parDir = tmp1;
-											if( !forceDicomDir && srTmp.isSameDir(tmp1)) {
+/*											if( !forceDicomDir && srTmp.isSameDir(tmp1)) {
 												tmp1 = "not using DICOMDIR. " + patName + "  ";
 												tmp1 += st1.styDate + "\npath: " + dataDir;
 												IJ.log(tmp1);
 												return 0;
-											}
+											}*/
 										}
 										if( j<n1) {
 											sr1.numImages--;
@@ -1277,6 +1360,55 @@ public class DicomFormat {
 		n = par.length();
 		out1 = parBuild.substring(n+1);
 		return out1;
+	}
+
+	private String getDcmName(Attributes at, int tag) {
+		String ret1 = at.getString(tag);
+		if( ret1 != null && !ret1.isEmpty()) {
+			ret1 = ret1.replace('^', ' ');
+			ret1 = ret1.trim();
+		}
+		return ret1;
+	}
+
+	private String getDcmString(Attributes at, int tag) {
+		String ret1 = at.getString(tag);
+		if( ret1 != null && !ret1.isEmpty()) ret1 = ret1.trim();
+		return ret1;
+	}
+
+	private String getStudyDate(Attributes at) {
+		int i, tag;
+		String tmp, ret1="";
+		for( i=0; i<3; i++) {
+			switch(i) {
+				case 0:
+					tag = Tag.StudyDate;
+					break;
+	
+				case 2:
+					tag = Tag.ContentDate;
+					break;
+	
+				default:
+					tag = Tag.SeriesDate;
+					break;
+			}
+			tmp = at.getString(tag);
+			if( ret1.isEmpty()) {
+				ret1 = tmp;
+				if( tmp == null)
+					ret1 = "";
+				continue;
+			}
+			if( tmp != null && !ret1.equals(tmp)) {
+				// there is a study where the series date isn't study date
+				// prefer series date
+				if(tmp.length()==8 && i==1)
+					ret1 = tmp;
+			}
+		}
+		return ret1;
 	}
 
 	private String getDcmName(ByteBuffer byt2, int leng) {

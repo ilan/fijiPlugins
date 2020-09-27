@@ -40,7 +40,14 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	static final int CINE_STOPPED = 1;
 	static final int CINE_FORWARD = 2;
 	static final int CINE_SIDE = 3;
-	
+
+	static final int NOTIFY_SPINNER = 1;
+	static final int NOTIFY_LAYOUT = 2;
+	static final int NOTIFY_WIN_LEVELS = 3;
+	static final int NOTIFY_XY_SHIFT = 4;
+	static final int NOTIFY_ZOOM = 5;
+	static final int NOTIFY_PAN = 6;
+
 	static final int WHEEL_SPEED2 = 20000;
 
 	myMouse mouse1 = new myMouse();
@@ -75,11 +82,13 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	double curMax, SUVpeak, SUVmean, SD, SULmax, SULmean, SD_SUL;
 	private Timer m_timer = null;
 
-    /** Creates new form PetCtPanel */
-    public PetCtPanel() {
-        initComponents();
+	/**
+	 * Creates new form PetCtPanel
+	 */
+	public PetCtPanel() {
+		initComponents();
 		init();
-    }
+	}
 
 	private void init() {
 		addMouseListener( this);
@@ -216,13 +225,17 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		// watch out that resizing doesn't change the gray scale - look at cursor
 		if(getCursor() != Cursor.getDefaultCursor()) mouse1.button1 = MouseEvent.NOBUTTON;
 		maybeShowPopupMenu(e);
+		if(zoomTog) parent.notifySyncedStudies(NOTIFY_PAN, 1, 0, null, e);
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		if( bfDlg != null && bfDlg.handleMouseDrag(e, this)) return;	// brown fat changed point
 		if( mouse1.button1 != MouseEvent.BUTTON1 && mouse1.button1 != MouseEvent.BUTTON2) return;
-		if(zoomTog) panDrag( e, false);
+		if(zoomTog) {
+			panDrag( e, false);
+			parent.notifySyncedStudies(NOTIFY_PAN, 0, 0, null, e);
+		}
 		else winLevelDrag( e, false);
 	}
 
@@ -263,9 +276,11 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		j1 *= j;
 //		IJ.log("time " + diff1.toString() + ",  step " + j1.toString());
 		if(zoomTog) {
+			if( parent.frameNotFocus()) return;
 			setAllZoom(j);
 			curPosition[0] = null;	// kill cross hairs
 			repaint();
+			parent.notifySyncedStudies(NOTIFY_ZOOM, j, 0, null, null);
 		}
 		else {
 /*			boolean sliceChg = !showMip;
@@ -279,7 +294,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			if( sliceChg)*/ incrSlicePosition( j1, i, false, 0);
 		}
 	}
-	
+
 	void setAllZoom(int val) {
 		if( petPipe != null) petPipe.setZoom(val);
 		if( upetPipe != null) upetPipe.setZoom(val);
@@ -287,14 +302,23 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		if( mriPipe != null) mriPipe.setZoom(val);
 		updateMultYOff();
 	}
-	
+
+	void maybeNotifyZoom(int val) {
+		if( petPipe == null) return;
+		int zoomVal = petPipe.zoomIndx;
+		if( !zoomTog && zoomVal <= 0) return;
+		setAllZoom( val);
+		curPosition[0] = null;	// kill cross hairs
+		repaint();
+	}
+
 	void repaintAll() {
 //		if( parent.ct3 != null) parent.ct3.repaint();
 		if( parent.pet3 != null) parent.pet3.repaint();
 		if( parent.fuse3 != null) parent.fuse3.repaint();
 		repaint();	// finally repaint this window
 	}
-	
+
 	void changeMIPslice(int diff) {
 		int indx, delay, n;
 		if( runCine) {
@@ -313,7 +337,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			parent.setCineButtons(true);
 		}
 	}
-	
+
 	double getCurrentSlice() {
 		double currSlice = 0;
 		switch(m_sliceType) {
@@ -446,7 +470,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		parent.update3Display();
 		repaint();
 		pt1 = new Point2d(zDiff, 0);	// pass zDiff as pt1.x
-		parent.notifySyncedStudies(1, diff, mousePage, pt1);
+		parent.notifySyncedStudies(NOTIFY_SPINNER, diff, mousePage, pt1, null);
 	}
 
 	void incrGatePosition(boolean isUp) {
@@ -1208,7 +1232,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		parent.showSource(false, parent.isShowSource());
 		if( !isDicom) JOptionPane.showMessageDialog(parent, "This data may not display properly.\nNot all the data is DICOM.");
 		tmp1 = Prefs.getString("prefs.options2", "1");
-		if( petPipe.data1.depth == 32 && !tmp1.startsWith("2050")) {
+		if( (petPipe.data1.depth == 32 || ctPipe.data1.depth == 32) && !tmp1.startsWith("2050")) {
 			tmp1 = "For best memory use and maximum studies use\n";
 			tmp1 += "in the Fiji menu: Edit->Options->DICOM...\n";
 			tmp1 += "and check the box: Ignore Rescale Slope.\n";
@@ -1306,7 +1330,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 		changeCurrentSlider();	// update the values on the gray scale bar
 		repaint();
-		if( notifyFlg) parent.notifySyncedStudies(3, indx, 0, null);
+		if( notifyFlg) parent.notifySyncedStudies(NOTIFY_WIN_LEVELS, indx, 0, null, null);
 	}
 
 	void ActionMipCine(int type) {
@@ -1911,7 +1935,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 				petSagital = syncSagital;
 				break;
 		}
-		parent.notifySyncedStudies(4, slType, 0, pt1);
+		parent.notifySyncedStudies(NOTIFY_XY_SHIFT, slType, 0, pt1, null);
 	}
 
 	void setCursor( Point pt1) {
@@ -2259,6 +2283,14 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		return ChoosePetCt.round(shift2Ctsub(pipe1, pos1, type));
 	}
 
+	int shift2CtCen( JFijiPipe pipe1, int pos1, int type, boolean isSag) {
+		double retVal = shift2Ctsub( pipe1, pos1, type);
+		double factor = -pipe1.sagFactor;
+		if( type > 0) factor = -pipe1.corFactor;
+//		retVal += factor * 0.5;	// half pixel shift
+		return ChoosePetCt.round(retVal);
+	}
+	
 	double shift2Ctsub( JFijiPipe pipe1, double pos1, int type) {
 		double inVal = pos1, mriOff = pipe1.mriOffX;
 		double factor = pipe1.sagFactor, offst = pipe1.sagOffset;

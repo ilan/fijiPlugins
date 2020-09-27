@@ -2854,6 +2854,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		int i, j, x0, x1, y0, y1, x2,y2, width1, offst, upLimit, loLimit, coef0;
 //		int average1;
 		short val1;
+		boolean isSag = (type == JFijiPipe.DSP_SAGITAL);
 		JFijiPipe ctPipe = bf.parentPet.ctPipe;
 		double slope, rescaleIntercept = ctPipe.data1.shiftIntercept();
 		short[] data1 = ctPipe.data1.pixels.get(sliceNum);
@@ -2864,12 +2865,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		coef0 = ctPipe.data1.getCoefficentAll();
 		x0 = x;
 		y0 = y;
-		if( type == JFijiPipe.DSP_SAGITAL) {
+		if( isSag) {
 			x0 = y;
 			y0 = x;
 		}
-		x1 = bf.parentPet.shift2Ct(ctPipe, x0, 0);
-		y1 = bf.parentPet.shift2Ct(ctPipe, y0, 1);
+		x1 = bf.parentPet.shift2CtCen(ctPipe, x0, 0, isSag);
+		y1 = bf.parentPet.shift2CtCen(ctPipe, y0, 1, isSag);
 /*		x2 = bf.parentPet.shift2Ct2(ctPipe, x0, 0);
 		y2 = bf.parentPet.shift2Ct2(ctPipe, y0, 1);
 		if( x1 != x2 || y1 != y2)
@@ -2892,7 +2893,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			val1 = (short) ((data1[offst-width1] + coef0)*slope);
 			return val1 >= loLimit && val1 <= upLimit;
 		}
-		if( acceptWide == 1)	{	// look for maybe bone
+/*		if( acceptWide == 1)	{	// look for maybe bone
 			isFat = isBone = isOther = isHeavy = false;
 			for( i=-1; i<=1; i++) {
 				val1 = (short) ((data1[offst+i]+coef0)*slope);
@@ -2914,18 +2915,17 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				return isBone;
 			}
 			return true;
-		}
-/*		if( acceptWide == 1)	{	// accept according to average point
-			average1 = 0;
+		}*/
+		if( acceptWide == 1)	{	// accept according to average point
+			int average1 = 0;
 			for( i=-1; i<=1; i++) {
 				average1 += data1[offst+i]+coef0;
 			}
 			average1 += data1[offst+width1] + coef0;
 			average1 += data1[offst-width1] + coef0;
 			val1 = (short)(average1/5);
-			if( val1 >= loLimit && val1 <= upLimit) return true;
-			return false;
-		}*/
+			return ( val1 >= loLimit && val1 <= upLimit);
+		}
 		// the default as used up to now
 		for( i=-1; i<=1; i++) {
 			val1 = (short) (data1[offst+i]+coef0);
@@ -2937,7 +2937,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		return !(val1 < loLimit || val1 > upLimit);
 	}
 	
-	private void checkBone( short val1) {
+/*	private void checkBone( short val1) {
 		if( val1 >= 80 && val1 <= 1200) isBone = true;
 	}
 	
@@ -2955,7 +2955,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			return;
 		}
 		isOther = true;
-	}
+	}*/
 
 	void fillPatName() {
 		ArrayList<String> seriesOnScreen;

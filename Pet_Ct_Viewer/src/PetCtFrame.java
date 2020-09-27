@@ -49,7 +49,7 @@ import org.scijava.vecmath.Point3d;
  */
 public class PetCtFrame extends javax.swing.JFrame implements KeyListener, WindowFocusListener {
 
-    /** Creates new form PetCtFrame
+/** Creates new form PetCtFrame
 	 * @param arg */
 	public PetCtFrame(String arg) {
 		super();
@@ -535,7 +535,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		maybeAddWindow();
 		updateAxCoSaButtons();
 		repaint();
-		notifySyncedStudies(2, type, -1, null);
+		notifySyncedStudies(PetCtPanel.NOTIFY_LAYOUT, type, -1, null, null);
 	}
 
 	void fillPatientData() {
@@ -1148,33 +1148,48 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		}
 		extList.add(frm);
 	}
-	
-	void notifySyncedStudies( int type, int val1, int val2, Point2d pt1) {
-		if( !isScroll() || gotFocus != this) return;
+
+	boolean frameNotFocus() {
+		return gotFocus != this;
+	}
+
+	void notifySyncedStudies( int type, int val1, int val2, Point2d pt1, MouseEvent e) {
+		if( !isScroll() || frameNotFocus()) return;
 		int i, n = extList.size();
 		Object this1;
 		PetCtFrame other1;
+		PetCtPanel othPanel;
 		if( n <= 1) return;
 		for( i=0; i<n; i++) {
 			this1 = extList.get(i);
 			if( this1 == gotFocus) continue;
 			if( !(this1 instanceof PetCtFrame)) continue;
 			other1 = (PetCtFrame) this1;
+			othPanel = other1.getPetCtPanel1();
 			switch( type) {
-				case 1:
+				case PetCtPanel.NOTIFY_SPINNER:
 					other1.externalSpinnerChange(val1, val2, pt1.x);
 					break;
 					
-				case 2:
+				case PetCtPanel.NOTIFY_LAYOUT:
 					other1.changeLayout(val1);
 					break;
 
-				case 3:
-					other1.getPetCtPanel1().presetWindowLevels(val1);
+				case PetCtPanel.NOTIFY_WIN_LEVELS:
+					othPanel.presetWindowLevels(val1);
 					break;
 
-				case 4:
-					other1.getPetCtPanel1().notificationOfXYshift(val1, pt1);
+				case PetCtPanel.NOTIFY_XY_SHIFT:
+					othPanel.notificationOfXYshift(val1, pt1);
+					break;
+
+				case PetCtPanel.NOTIFY_ZOOM:
+					othPanel.maybeNotifyZoom(val1);
+					break;
+
+				case PetCtPanel.NOTIFY_PAN:
+					boolean start = val1>0;
+					othPanel.panDrag(e, start);
 					break;
 			}
 		}
@@ -1240,7 +1255,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		for( i=-1; i<frList.length; i++) {
 			if( i>=0) {
 				win = frList[i];
-                if( win==null ) continue;
+				if( win==null ) continue;
 				title = win instanceof Frame?((Frame)win).getTitle():((Dialog)win).getTitle();
 			}
 			item1 = new javax.swing.JMenuItem(title);
