@@ -91,7 +91,7 @@ public class JFijiPipe {
 	Point[] imgPos = null;
 	String fixedLUT = null, extBluesLUT = null, extHotIronLUT = null, extCtMriLUT = null;
 	boolean useSrcPetWinLev = false, qualityRendering = false, dispInsert = false;
-	boolean isLog = false, triFlg = false, isFWHM = false;
+	boolean isLog = false, triFlg = false, isFWHM = false, logOnce = false;
 	int indx = -1, cineIndx = 0;
 	int [] gaussSort = null;
 
@@ -136,7 +136,7 @@ public class JFijiPipe {
 		float fltBuf[] = null;
 		boolean fltFlg = false;
 		int i, n, cntr1;
-		int coef0 = data1.getCoefficent0();
+		int coef0 = data1.getCoefficent0a();
 		sum = sum2 = maxVal = stds = 0;
 		// watch out for byte data. For bytes just set it to 1000, 500
 		if( data1.pixByt != null) {
@@ -192,7 +192,7 @@ public class JFijiPipe {
 		boolean fltFlg = false;
 		int i, n, cntr1;
 		double currVal, maxVal;
-		int coef0 = data1.getCoefficent0();
+		int coef0 = data1.getCoefficent0a();
 		// watch out for byte data. For bytes just set it to 1000, 500
 		if( data1.pixByt != null) {
 			winWidth = 1000;
@@ -1321,7 +1321,7 @@ public class JFijiPipe {
 		double[] p4 = new double[4];
 		double sumRescale=0, scale, scl_1, scl0, scl1, scl2, sliceD, y, pres;
 		short tmpShort;
-		int coef0 = data1.getCoefficent0();
+		int coef0 = data1.getCoefficent0a();
 		iaxSlice = ChoosePetCt.round(axSlice);
 		switch( data1.depth) {
 			case 32:
@@ -1762,7 +1762,7 @@ public class JFijiPipe {
 		}
 
 		void fillP4(int row, int col, short[] pix1) {
-			int coef0 = data1.getCoefficent0();
+			int coef0 = data1.getCoefficent0a();
 			int i, j, k, width1 = data1.width;
 			p4 = new double[4][4];
 			for( j=-1; j<3; j++) {
@@ -1983,7 +1983,7 @@ public class JFijiPipe {
 				pix2[off1] = pix2[off1+1];
 				pix2[off1+width2-1] = pix2[off1+width2-2];
 
-				int coef0 = getCoefficent0();
+				int coef0 = getCoefficent0a();
 				for( j=1; j<height-2; j++) {
 					for( i1=1; i1<width-2; i1++) {
 						off1 = 2*(j*width2 + i1) + width2 + 1;
@@ -2009,7 +2009,7 @@ public class JFijiPipe {
 			short [] pix1;
 			int i, j, k, x, y, z, off1, size1 = width*height;
 			int size4, vali, width2 = width*2;
-			int coef0 = getCoefficent0();
+			int coef0 = getCoefficent0a();
 			size4 = size1*4;
 			inData = new double[size1][numFrms];
 			outData = new double[size4][numFrms*2];
@@ -2076,7 +2076,7 @@ public class JFijiPipe {
 			int p00, p01, p10, p11;
 			double val, py0, py1;
 			int row, col, row2, col2, off2, width2;
-			int coef0 = getCoefficent0();
+			int coef0 = getCoefficent0a();
 			row = i / width;
 			col = i % width;
 			if( col >= width-1 || row >= height-1) return; // edge
@@ -2300,7 +2300,7 @@ public class JFijiPipe {
 					break;
 					
 				default:
-					int i, coef0 = getCoefficent0();
+					int i, coef0 = getCoefficent0a();
 					short[] pix16 = new short[size1];
 					for(i=0; i<size1; i++) pix16[i] = (short) coef0;
 					pixels.add(pix16);
@@ -2947,6 +2947,24 @@ public class JFijiPipe {
 			return coef0;
 		}
 
+		int getCoefficent0a() {
+			short[] pix1;
+			short tst1;
+			int coef0 = getCoefficent0();
+			if( coef0 == -32768 && pixels != null) {
+				pix1 = pixels.get(0);
+				tst1 = (short)(pix1[0]-coef0);
+				if(tst1 < -16384) {	// study norhaslinda directory BNLee/ctonly
+					coef0 = 0;	// study 17021101191001 directory test4/salim2021
+/*					if(!logOnce) {
+						logOnce = true;
+						IJ.log("coef0 set to zero.");
+					}*/
+				}
+			}
+			return coef0;
+		}
+
 		void setSUVfactor( double newSUVfactor) {
 			SUVfactor = newSUVfactor;
 //			SUVfactor = 0.0;	// temporary - fix this!!
@@ -3271,7 +3289,7 @@ public class JFijiPipe {
 			if( srcPet.data1.depth == 32) {
 				fltFlg = true;
 			}
-			coef0 = srcPet.data1.getCoefficent0();
+			coef0 = srcPet.data1.getCoefficent0a();
 			width2 = width / 2;
 			for( yin = -width2 + 0.5; yin < width2; yin += 1.0) {
 				pixx = 0;
@@ -3390,7 +3408,7 @@ public class JFijiPipe {
 				MIPslope = srcPet.data1.maxVal / 32767;
 				scale2 = 1 / MIPslope;
 			}
-			coef0 = srcPet.data1.getCoefficent0();
+			coef0 = srcPet.data1.getCoefficent0a();
 			for( yin = -heigh2 + 0.5; yin < heigh2; yin += 1.0) {
 				xnew = (int)( xin*coss[0] + yin*coss[1] + width2);
 				ynew = (int)(-xin*coss[1] + yin*coss[0] + heigh2);

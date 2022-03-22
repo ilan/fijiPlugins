@@ -38,7 +38,6 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	String SUVresults = "";
 	bkgdLoadData work2 = null;
 	Display3Frame parent;
-	Annotations anotateDlg = null;
 	int d3Color = JFijiPipe.COLOR_INVERSE, CTval, styType = -1;
 	int d3FusedColor = JFijiPipe.COLOR_GRAY;
 	int cursorSize = 10, gateIndx = 0, saveHeight = -1, resizeCnt = 0;
@@ -1181,9 +1180,21 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	}
 	
 	void drawAnnotations(Graphics2D g) {
-		if( anotateDlg == null) return;
+		PetCtFrame petFrm = parent.srcFrame;
+		if( petFrm == null) return;	// when 3 view is called alone
+		PetCtPanel origCaller = petFrm.getPetCtPanel1();
+		// maximum of one of these can be not null
+		Annotations anotateDlg = origCaller.anotateDlg;
+//		AnoToolBar anotateTB = origCaller.anotateTB;
 		mouse1.getMousePage(null, false);	// set widthX
-		anotateDlg.draw3Graphics(g, this);
+
+		if( anotateDlg != null) {
+			anotateDlg.draw3Graphics(g, this);
+		}
+		/* not implemented. No one asked for it.
+		if( anotateTB != null) {
+			anotateTB.draw3Graphics(g, this);
+		}*/
 	}
 
 	void checkLimits() {
@@ -1310,10 +1321,8 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 
 	void doMipBuild() {
 		mipPipe = new JFijiPipe();
-		mipPipe.sliceType = JFijiPipe.DSP_CORONAL;
-		mipPipe.winWidth = 800;
-		mipPipe.winLevel = 400;
 		mipPipe.useSrcPetWinLev = true;
+		mipPipe.isLog = d3Pipe.isLog;
 		if( !mipPipe.LoadMIPData(d3Pipe)) {
 			JOptionPane.showMessageDialog(this, "Failed to build the MIP data");
 			mipPipe = null;

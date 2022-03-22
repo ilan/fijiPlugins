@@ -270,7 +270,6 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		display3Panel1.invertScroll = par1.invertScroll;
 		// need to update brown fat dialog
 //		display3Panel1.bfDlg = par1.getPetCtPanel1().bfDlg;
-		display3Panel1.anotateDlg = par1.getPetCtPanel1().anotateDlg;
 		return change;
 	}
 	
@@ -653,6 +652,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		for( i=-1; i<frList.length; i++) {
 			if( i>=0) {
 				win = frList[i];
+				if( win == null) continue;
 				title = win instanceof Frame?((Frame)win).getTitle():((Dialog)win).getTitle();
 			}
 			item1 = new javax.swing.JMenuItem(title);

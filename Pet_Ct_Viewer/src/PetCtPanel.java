@@ -1474,7 +1474,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		int width1, heigh0, heigh1, type1;
 		type1 = SZ_MIP_AXIAL;
 		if( parent.autoResize) {
-			if( m_sliceType == JFijiPipe.DSP_AXIAL) {
+			// the oblique slice type gives m_sliceType when not oblique
+			if( getObliqueSliceType() == JFijiPipe.DSP_AXIAL) {
 				if( !showMip) type1 = SZ_AXIAL;
 			}
 			else type1 = SZ_CORONAL;
@@ -1972,6 +1973,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		if( !drawingRoi() && anotateDlg == null && anotateTB == null) return false;
 		int pos3 = mouse1.getMousePage(arg0, true);
 		if( pos3 <= 0) return false;	// not one of the 3 sections
+		int posMod;
 		Point pt1 = new Point(mouse1.xPos % mouse1.widthX, mouse1.yPos);
 		double scl1 = getScalePet();	// assume corrected = uncorrected
 		if( drawingRoi()) {
@@ -1983,11 +1985,15 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			return;
 		}*/
 		if( isAnnotations(true)) {
-			if(run) anotateDlg.processMouseSingleClick(pos3, pt1, scl1);
+			posMod = anotateDlg.check4FusedPress(pos3);
+			if(posMod > 2) return false;
+			if(run) anotateDlg.processMouseSingleClick(posMod, pt1, scl1);
 			return true;
 		}
 		if( isAnnoTB(true)) {
-			if(run) anotateTB.processMouseSingleClick(pos3, pt1, scl1);
+			posMod = anotateTB.check4FusedPress(pos3);
+			if(posMod > 2) return false;
+			if(run) anotateTB.processMouseSingleClick(posMod, pt1, scl1);
 			return true;
 		}
 		return false;

@@ -53,11 +53,11 @@ public class Annotations extends javax.swing.JDialog {
 	
 	private void init(java.awt.Frame parent) {
 		parentFrm = (PetCtFrame) parent;
+		parPanel = parentFrm.getPetCtPanel1();
 		setLocationRelativeTo(parent);
 		m_lastView = -2;	// illegal value
 		m_numTemp = 0;
 		m_tempPnt = new Point[3];
-		parPanel = parentFrm.getPetCtPanel1();
 		for( int i =0; i<3; i++) readFiles(i);
 		setObliqueLabel();
 		setCountVals();
@@ -74,6 +74,7 @@ public class Annotations extends javax.swing.JDialog {
 		butGroupSave.add(jRadSaveDelete);
 		jRadSaveMemory.setSelected(true);
 		m_dirtyFlg = false;
+		jLabz.setText(" ");
 		fillStrings();
 		radButAction(1);
 		setActiveArrow(0);
@@ -115,8 +116,8 @@ public class Annotations extends javax.swing.JDialog {
 	}
 	
 	// this process a mouse click from the image to add a point or place text
-	void processMouseSingleClick(int pos3, Point pt1, double scl1) {
-		int posMod = check4FusedPress(pos3);
+	void processMouseSingleClick(int posMod, Point pt1, double scl1) {
+//		int posMod = check4FusedPress(pos3);
 		if( posMod > 2) return;
 		m_thisView = ((posMod-1) & 1)*2;	// 0 for PET, 2 for CT
 		if( m_thisView == 0) { // either corrected or uncorrected PET
@@ -750,32 +751,51 @@ public class Annotations extends javax.swing.JDialog {
 		m_tempPnt[m_numTemp++] = pt1;
 		myMeasure meas1;
 		Point pntTmp;
-		double x1, z1, val1, val2, pixelSize, pixSizeZ;
+		double x1, z0, z1, val1, val2, val3, pixelSize, pixSizeZ;
 		int i, tmpMeasDraw, numPnts = 2;
+		Integer vali;
 		int[] vals;
+		JFijiPipe pet1 = parPanel.petPipe;
+		vals = getNumFrmSlice( pet1, m_lastView);
 		if( m_measDraw == 2) numPnts = 3;
+		if( m_numTemp == 1) m_saveSlice1 = vals[VSLICE];
 		if( m_numTemp >= numPnts) {
 			getParentInfo();
-			JFijiPipe pet1 = parPanel.petPipe;
 			pixelSize = pet1.data1.pixelSpacing[0];
 			pixSizeZ = pet1.data1.sliceThickness;
-			x1 = pixelSize / MEASURE_SCALE;
+			z0 = x1 = pixelSize / MEASURE_SCALE;
 			z1 = pixSizeZ / MEASURE_SCALE;
-			if( sliceType == JFijiPipe.DSP_AXIAL) z1 = x1;
+			if( sliceType == JFijiPipe.DSP_AXIAL) {
+				z0 = z1;
+				z1 = x1;
+			}
 			meas1 = new myMeasure();
 			for( i=0; i<numPnts; i++) {
 				pntTmp = getPoint1000(i, scale);
 				meas1.x[i] = pntTmp.x;
 				meas1.y[i] = pntTmp.y;
 			}
-			vals = getNumFrmSlice( pet1, m_lastView);
 			meas1.zval = (short) vals[VSLICE];
 			tmpMeasDraw = m_measDraw;
 			if( m_measDraw == 1) {
 				val1 = (meas1.x[0] - meas1.x[1]) * x1;
 				val2 = (meas1.y[0] - meas1.y[1]) * z1;
-				val1 = Math.sqrt(val1*val1 + val2*val2);
-				meas1.val1 = val1;
+				val3 = meas1.zval0;
+				if(val3 > 0) {
+					val3 = Math.abs((meas1.zval - val3)*z0*MEASURE_SCALE);
+				}
+				String tmp1 = " ";
+				meas1.val1 = Math.sqrt(val1*val1 + val2*val2 + val3*val3);
+// uncomment to print 2D and 3D values for Michel
+/*				if(val3>0) {
+					double val0;
+					val0 = Math.sqrt(val1*val1 + val2*val2);
+					vali = (int)(val0 + 0.5);
+					tmp1 = "<html>" + vali.toString() + " mm<br>";
+					vali = (int)(meas1.val1 + 0.5);
+					tmp1 += vali.toString() + " mm";
+				}*/
+				jLabz.setText(tmp1);
 			}
 			if( m_measDraw == 2) {
 				val1 = meas1.getAngle(1, 0);
@@ -1195,13 +1215,14 @@ public class Annotations extends javax.swing.JDialog {
 
 	class myMeasure {
 		int[] x, y;
-		short type, zval;
+		short type, zval, zval0;
 		double val1;
 
 		myMeasure() {
 			x = new int[3];
 			y = new int[3];
 			val1 = 0;
+			zval0 = (short) m_saveSlice1;
 		}
 
 		void readData(FileChannel fc) {
@@ -1218,7 +1239,8 @@ public class Annotations extends javax.swing.JDialog {
 				y[2] = buf.getInt();
 				type = buf.getShort();
 				zval = buf.getShort();
-				buf.getInt();	// padding
+				zval0 = buf.getShort();
+				buf.getShort();	// padding
 				val1 = buf.getDouble();
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
@@ -1235,7 +1257,8 @@ public class Annotations extends javax.swing.JDialog {
 				buf.putInt(y[2]);
 				buf.putShort(type);
 				buf.putShort(zval);
-				buf.putInt(0);	// padding
+				buf.putShort(zval0);
+				buf.putShort((short)0);	// padding
 				buf.putDouble(val1);
 				buf.position(0);
 				fc.write(buf);
@@ -1252,14 +1275,66 @@ public class Annotations extends javax.swing.JDialog {
 		void drawData(Graphics2D g, int indx, JFijiPipe pet1) {
 			if( (type/4) != sliceType) return;
 			int offX, offX2=0, widthX;
-			int[] vals = getNumFrmSlice(pet1, indx);
-			if(zval != vals[VSLICE]) return;
-			widthX = parPanel.mouse1.widthX;
 			double scl1 = parPanel.getScalePet();
+			widthX = parPanel.mouse1.widthX;
+			int[] vals = getNumFrmSlice(pet1, indx);
+			if( maybeDrawOnMIP(g, pet1, scl1, widthX, vals)) return;
+			if(zval != vals[VSLICE]) return;
 			offX = 0;
 			if( indx == 2) offX = widthX;
 			if(isFusedShowing()) offX2 = 2*widthX -offX;
 			drawDataSub(g, offX, scl1, pet1, dispType, type/4, null, offX2);
+		}
+
+		private boolean maybeDrawOnMIP(Graphics2D g, JFijiPipe pet1,
+			double scl1, int widthX, int[] vals) {
+			if( zval0 <= 0 || zval0 == zval || isFusedShowing()) return false;
+			if( val1 <= 0) return false;
+			int [] xdsp, ydsp;
+			xdsp = new int[2];
+			ydsp = new int[2];
+			Point pv;
+			JFijiPipe mipPipe = parPanel.mipPipe;
+			double ax, cor, sag, tmp;
+			g.setColor(getTextColor());
+			int i, w2 = 2*widthX, num = vals[VNUMFRMS];
+			for( i=0; i<2; i++) {
+				ax = zval0;
+				sag = ((double)x[i])/MEASURE_SCALE;
+				cor = ((double)y[i])/MEASURE_SCALE;
+				if(i>0) ax = zval;
+				switch(sliceType) {
+					case JFijiPipe.DSP_CORONAL:
+						tmp = ax;
+						ax = cor;
+						cor = tmp;
+						break;
+
+					case JFijiPipe.DSP_SAGITAL:
+						tmp = ax;
+						ax = cor;
+						cor = sag;
+						sag = tmp;
+						break;
+
+					default:	// axial
+						ax = num - ax - 1;
+						break;
+				}
+				pv = mipPipe.getMIPposition(ax, cor, sag, scl1);
+				xdsp[i] = pv.x + w2;
+				ydsp[i] = pv.y;
+				g.fillOval(pv.x+w2-PNTSZ, pv.y-PNTSZ, 2*PNTSZ, 2*PNTSZ);
+			}
+			g.drawPolyline(xdsp, ydsp, 2);
+			if( !parentFrm.isMipRotating()) {
+				Integer vali = (int)(val1 + 0.5);
+				String tmp1 = vali.toString() + " mm";
+				i = 0;
+				if( xdsp[1] > xdsp[0]) i = 1;
+				g.drawString(tmp1, xdsp[i]+PNTSZ, ydsp[i]+PNTSZ);
+			}
+			return true;
 		}
 
 		private void drawDataSub(Graphics2D g, int offX, double scl1, JFijiPipe pet1,
@@ -2010,6 +2085,7 @@ public class Annotations extends javax.swing.JDialog {
         jRadMeasDist = new javax.swing.JRadioButton();
         jRadMeasAngle = new javax.swing.JRadioButton();
         jLabMeas = new javax.swing.JLabel();
+        jLabz = new javax.swing.JLabel();
         jButSetColor = new javax.swing.JButton();
         jArrows = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -2128,6 +2204,9 @@ public class Annotations extends javax.swing.JDialog {
 
         jLabMeas.setText("jLabel1");
 
+        jLabz.setText("10 mm");
+        jLabz.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
         javax.swing.GroupLayout jPanRadioLayout = new javax.swing.GroupLayout(jPanRadio);
         jPanRadio.setLayout(jPanRadioLayout);
         jPanRadioLayout.setHorizontalGroup(
@@ -2137,10 +2216,14 @@ public class Annotations extends javax.swing.JDialog {
                 .addGroup(jPanRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jRadMeasLine)
                     .addComponent(jRadLineSUV)
-                    .addComponent(jRadMeasDist)
-                    .addComponent(jRadMeasAngle)
-                    .addComponent(jLabMeas, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(21, Short.MAX_VALUE))
+                    .addComponent(jLabMeas, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanRadioLayout.createSequentialGroup()
+                        .addGroup(jPanRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jRadMeasDist)
+                            .addComponent(jRadMeasAngle))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabz, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanRadioLayout.setVerticalGroup(
             jPanRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2150,9 +2233,14 @@ public class Annotations extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jRadLineSUV)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jRadMeasDist)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jRadMeasAngle)
+                .addGroup(jPanRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanRadioLayout.createSequentialGroup()
+                        .addComponent(jRadMeasDist)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jRadMeasAngle))
+                    .addGroup(jPanRadioLayout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addComponent(jLabz, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabMeas, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -2777,6 +2865,7 @@ public class Annotations extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabz;
     private javax.swing.JPanel jMeasure;
     private javax.swing.JPanel jPanMove2;
     private javax.swing.JPanel jPanRadio;
@@ -2803,6 +2892,7 @@ public class Annotations extends javax.swing.JDialog {
 	boolean m_hideAnnotations = false, m_thin = false, m_obliqueFlg = false;
 	boolean m_markSliceFlg = true, m_dirtyFlg = false, m_delay = false;
 	Dimension m_origSz;
-	int m_lastView, m_thisView, m_numTemp, m_measDraw, m_activeArrow, m_saveType;
+	int m_lastView, m_thisView, m_numTemp, m_measDraw, m_activeArrow;
+	int m_saveType, m_saveSlice1;
 	Point[] m_tempPnt;
 }

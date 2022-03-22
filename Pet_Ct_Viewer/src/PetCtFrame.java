@@ -1307,6 +1307,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		dlg.scriptAction();
 	}
 
+	boolean isMipRotating() {
+		return jButFwd.isVisible() && jButFwd.isSelected();
+	}
+
 	void annotationSave(int indx) {
 		Annotations currAno = getPetCtPanel1().anotateDlg;
 		AnoToolBar currAnoTb = getPetCtPanel1().anotateTB;
