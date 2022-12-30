@@ -150,7 +150,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			SpinnerNumberModel spin1 = getSpinModel(5);
 			spin1.setValue(tmpi);
 		}
-		oc_pixels = prefer.getInt("OC pixels", 10);
+		oc_ml = prefer.getDouble("OC ml", 2.0);
 		oc_suv = prefer.getDouble("OC SUV", 2.5);
 		jCheckBlue.setSelected(false);
 		jButBkgd.setVisible(false);
@@ -4959,6 +4959,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		Nifti3 currNif, prevNif;
 		byte[] pix1;
 		byte val1;
+		double volPix;
 		int x,y,z, szx, szy, szz, off1, inx0;
 		Object[] prevList;
 		Opener open1 = new Opener();
@@ -4971,6 +4972,16 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 //		inDat.show();
 //		inDat = loci.plugins.BF.openImagePlus(src);
 		int suv10 = (int)(oc_suv*10);
+		JFijiPipe petPipe = bf.parentPet.petPipe;
+		volPix = petPipe.getPixelSpacing(0);
+		volPix = volPix * volPix * volPix * petPipe.data1.y2xFactor;
+//		volPix = Math.abs(petPipe.getPixelSpacing(0)*petPipe.getPixelSpacing(1)*petPipe.data1.sliceThickness);
+		if( volPix < 0.3) volPix = 0.3;	// don't divide by zero
+		oc_pixels = (int) Math.round((1000.0 * oc_ml)/volPix);
+		if( oc_pixels < 6) oc_pixels = 6;
+		if( oc_pixels > 50) {
+			IJ.log("Minimum number of voxels is " + oc_pixels + ".\nMaybe you want a smaller ml value?");
+		}
 		Utilities.Counter3D cnt3D = new Counter3D(inDat, suv10, oc_pixels, szx*szy*szz, false, false);
 		map = cnt3D.getObjMap();
 		prevList = bf.nifList;
@@ -6078,15 +6089,17 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		g.setFont(font1);
 		tmpTxt = "  Parameters:";
 		g.drawString(tmpTxt, 0, heiOff + 6*txtHeight);
-		tmpTxt = "  SUV: min=" + jTextSUVlo.getText() + ", max=" + jTextSUVhi.getText();
+		double suvTest = Double.parseDouble(jTextSUVhi.getText());
+		tmpTxt = "  SUV: min=" + jTextSUVlo.getText();
+		if( suvTest <= 1000) tmpTxt += ", max=" + jTextSUVhi.getText();
 		if( jCheckUseCt.isSelected()) {
 			tmpTxt += "  CT: min=" + jTextCTlo.getText() + ", max=" + jTextCThi.getText();
 		}
 		g.drawString(tmpTxt, 0, heiOff + 7*txtHeight);
 		font1 = font1.deriveFont(Font.PLAIN, 4*fontSz/5);
 		g.setFont(font1);
-		tmpTxt = "  Provided by: http://petctviewer.org";
-		g.drawString(tmpTxt, 0, heiOff + 9*txtHeight);
+//		tmpTxt = "  Provided by: http://petctviewer.org";
+//		g.drawString(tmpTxt, 0, heiOff + 9*txtHeight);
 		g.dispose();
 		JFrame frm = new JFrame();
 		frm.getContentPane().add(new JLabel( new ImageIcon(imgOut)));
@@ -7778,7 +7791,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	int [] maskParms = null;
 	int black, saveRoiPntIndx, saveRoiIndx;
 	int CtCenterVal;
-	double oc_suv;
+	double oc_suv, oc_ml;
 	ArrayList<Component> elementList = new ArrayList<>();
 	ArrayList<bfGroup> m_bf = new ArrayList<>();
 	bfGroup bf = new bfGroup();

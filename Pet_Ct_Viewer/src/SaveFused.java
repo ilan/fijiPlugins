@@ -155,7 +155,7 @@ public class SaveFused extends javax.swing.JDialog {
 			}
 			for( i=0; i<num1; i++) {
 				setSlice(i+slice1);
-				dcm1.writeImmediateDicomHeader( petPanel1.m_sliceType, robot);
+				dcm1.writeImmediateDicomHeader(i+slice1, petPanel1.m_sliceType, robot);
 				IJ.showProgress(i, num1);
 			}
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}

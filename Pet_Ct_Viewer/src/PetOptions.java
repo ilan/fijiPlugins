@@ -80,8 +80,8 @@ public class PetOptions extends javax.swing.JDialog {
 		SpinnerNumberModel spin1 = (SpinnerNumberModel) jSpinSig.getModel();
 		spin1.setValue(curSpin);
 		getSetSignificant(false);
-		Integer oc_pix = prefer1.getInt("OC pixels", 10);
-		jTextMinPix.setText(oc_pix.toString());
+		Double oc_ml = prefer1.getDouble("OC ml", 2.0);
+		jTextMinVol.setText(oc_ml.toString());
 		Double oc_suv = prefer1.getDouble("OC SUV", 2.5);
 		jTextSUV.setText(oc_suv.toString());
 		Integer pgUpDn = parent.pgUpDn;
@@ -135,8 +135,8 @@ public class PetOptions extends javax.swing.JDialog {
 		prefer1.put("MriCt LUT", jTextMriLut.getText());
 		prefer1.put("MriCt name", jTextMriLutMenu.getText());
 		prefer1.put("fixed LUT", jTextUserLUT.getText());
-		int oc_pix = Integer.parseInt(jTextMinPix.getText());
-		if( oc_pix >= 10 && oc_pix <= 80) prefer1.putInt("OC pixels", oc_pix);
+		double oc_ml = Double.parseDouble(jTextMinVol.getText());
+		if( oc_ml > 0.0 && oc_ml <= 50.0) prefer1.putDouble("OC ml", oc_ml);
 		double oc_suv = Double.parseDouble(jTextSUV.getText());
 		if( oc_suv >= 2.5 && oc_suv <= 8) prefer1.putDouble("OC SUV", oc_suv);
 	}
@@ -359,7 +359,7 @@ public class PetOptions extends javax.swing.JDialog {
         jLabSUV = new javax.swing.JLabel();
         jLabMinPix = new javax.swing.JLabel();
         jTextSUV = new javax.swing.JTextField();
-        jTextMinPix = new javax.swing.JTextField();
+        jTextMinVol = new javax.swing.JTextField();
         jButSave1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -783,11 +783,11 @@ public class PetOptions extends javax.swing.JDialog {
 
         jLabSUV.setText("min SUV (2.5 -> 8)");
 
-        jLabMinPix.setText("min num pixels (10 -> 80)");
+        jLabMinPix.setText("min vol in ml");
 
         jTextSUV.setText("2.5");
 
-        jTextMinPix.setText("10");
+        jTextMinVol.setText("4.0");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -795,16 +795,12 @@ public class PetOptions extends javax.swing.JDialog {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabMinPix)
-                        .addGap(3, 3, 3))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabSUV)
-                        .addGap(54, 54, 54)))
+                    .addComponent(jLabSUV)
+                    .addComponent(jLabMinPix))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jTextSUV, javax.swing.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE)
-                    .addComponent(jTextMinPix))
+                    .addComponent(jTextMinVol))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -815,7 +811,7 @@ public class PetOptions extends javax.swing.JDialog {
                     .addComponent(jLabSUV))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextMinPix, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextMinVol, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabMinPix))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -824,9 +820,10 @@ public class PetOptions extends javax.swing.JDialog {
         jPanelNifti.setLayout(jPanelNiftiLayout);
         jPanelNiftiLayout.setHorizontalGroup(
             jPanelNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(jCheckForceTmp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(jPanelNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanelNiftiLayout.setVerticalGroup(
             jPanelNiftiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -986,7 +983,7 @@ public class PetOptions extends javax.swing.JDialog {
     private javax.swing.JTextField jTextBluesLutMenu;
     private javax.swing.JTextField jTextHotLut;
     private javax.swing.JTextField jTextHotLutMenu;
-    private javax.swing.JTextField jTextMinPix;
+    private javax.swing.JTextField jTextMinVol;
     private javax.swing.JTextField jTextMm;
     private javax.swing.JTextField jTextMm2;
     private javax.swing.JTextField jTextMriLut;

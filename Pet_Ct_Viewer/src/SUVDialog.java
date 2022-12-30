@@ -61,7 +61,7 @@ public class SUVDialog extends javax.swing.JDialog {
 			IJ.log("Acquisition time before Series time");
 		}
 		secInject = getTimeInSec(petPipe.data1.injectionTime);
-		privatePhilipsSUV = petPipe.data1.seriesType == ChoosePetCt.SERIES_PHILIPS_PET;
+		privatePhilipsSUV = seriesType == ChoosePetCt.SERIES_PHILIPS_PET;
 		if( showFlg || (!isLegal(true) || secInject <= 0 || secSeries < secInject || showHeight)) {
 			setFields();
 			jHalfLife.setText(halfLifeMin.toString());
@@ -80,7 +80,7 @@ public class SUVDialog extends javax.swing.JDialog {
 			}
 		}
 
-		if(petPipe.data1.seriesType == ChoosePetCt.SERIES_GML_PET) return 1.0;
+		if( seriesType == ChoosePetCt.SERIES_GML_PET) return 1.0;
 		if(privatePhilipsSUV) {
 			// Philips has some really strange data. In most cases the
 			// rescale slope is constant. In 1 case it isn't and the
@@ -98,8 +98,9 @@ public class SUVDialog extends javax.swing.JDialog {
 			IJ.log("Number of cores: " + Runtime.getRuntime().availableProcessors());
 			return 512.;	// 512*maxSlope?
 		}
-		if(petPipe.data1.seriesType != ChoosePetCt.SERIES_BQML_PET &&
-			petPipe.data1.seriesType != ChoosePetCt.SERIES_GE_PRIVATE_PET)
+		if( seriesType != ChoosePetCt.SERIES_BQML_PET &&
+			seriesType != ChoosePetCt.SER_FORCE_CPET &&
+			seriesType != ChoosePetCt.SERIES_GE_PRIVATE_PET)
 			return 0.0;
 		double decay = 1.0;
 		if(decayCorrect && halfLife > 0) {

@@ -954,8 +954,8 @@ public class myWriteDicom {
 		return writeImmediateMip();
 	}
 
-	public int writeImmediateDicomHeader(int slType, int robot) {
-		sliceType = 0;
+	public int writeImmediateDicomHeader(int sliceZ, int slType, int robot) {
+		this.sliceZ = sliceZ;
 		sliceType = slType;
 		robotType = robot;
 		getPetMeta();

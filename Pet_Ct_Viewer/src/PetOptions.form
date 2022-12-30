@@ -675,9 +675,11 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jPanel2" alignment="0" pref="0" max="32767" attributes="0"/>
                       <Component id="jCheckForceTmp" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                          <Component id="jPanel2" alignment="0" max="32767" attributes="0"/>
+                          <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -789,19 +791,13 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                      <Component id="jLabMinPix" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="jLabSUV" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="54" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="jLabSUV" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabMinPix" min="-2" max="-2" attributes="0"/>
                               </Group>
+                              <EmptySpace max="32767" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="jTextSUV" pref="48" max="32767" attributes="0"/>
-                                  <Component id="jTextMinPix" max="32767" attributes="0"/>
+                                  <Component id="jTextMinVol" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -816,7 +812,7 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="jTextMinPix" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jTextMinVol" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabMinPix" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="32767" attributes="0"/>
@@ -832,7 +828,7 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabMinPix">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="min num pixels (10 -&gt; 80)"/>
+                        <Property name="text" type="java.lang.String" value="min vol in ml"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JTextField" name="jTextSUV">
@@ -840,9 +836,9 @@
                         <Property name="text" type="java.lang.String" value="2.5"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="jTextMinPix">
+                    <Component class="javax.swing.JTextField" name="jTextMinVol">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="10"/>
+                        <Property name="text" type="java.lang.String" value="4.0"/>
                       </Properties>
                     </Component>
                   </SubComponents>
