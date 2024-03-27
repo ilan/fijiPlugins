@@ -25,6 +25,10 @@ import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -242,6 +246,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		String studyUID = null;
 		String seriesUID = null;
 		String dicomDirPath = null;
+		Dimension frmSize = null;
 		int sopClass = 0;
 		boolean isBF = false;
 		File flName = null;
@@ -373,13 +378,218 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		readWriteDelFlg = 0;
 		loadData();
 	}
+
+	void showClean() {
+		int n = jTable1.getSelectedRowCount();
+//		isWindows = true;	// for debugging only
+		boolean win = isWindows & cleanFlg & killDir != null;
+		jButClean.setEnabled(n>0);
+		jLabClean4.setVisible(n<=0);
+		jLabClean6.setVisible(cleanFlg);
+		jLabClean7.setVisible(win);
+		jLabClean7a.setVisible(win);
+		jLabClean8.setVisible(win);
+		jLabClean9.setVisible(win);
+	}
+
+	void doClean() {
+		cleanFlg = false;
+		isWindows = (File.separatorChar == '\\');
+//		isWindows = true;	// for debugging only
+		jButClean.setEnabled(false);
+//		killDir = new ArrayList<>();
+		int n = jTable1.getSelectedRowCount();
+		int [] selected = jTable1.getSelectedRows();
+		int i, j;
+		
+		CD_dirInfo currRow;
+		Container c = getContentPane();
+		c.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		for( i=0; i<n; i++) {
+			selected[i] = jTable1.convertRowIndexToModel(selected[i]);
+		}
+		DefaultTableModel mod1;
+		mod1 = (DefaultTableModel) jTable1.getModel();
+		for( i=0; i<n; i++) {
+			Point pnt1 = getPosAndLen(selected[i], mod1);
+			for( j=0; j < pnt1.y; j++) {
+				currRow = tableList.get(pnt1.x + j);
+				doCleanSub(currRow);
+			}
+		}
+		fillReadTable(true);
+		showClean();
+		c.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		cleanFlg = false;
+	}
 	
+	void doCleanSub(CD_dirInfo currRow) {
+		String parName = currRow.flName.getParent();
+		File flPath = new File(parName);
+		int i, j;
+		ArrayList<String> files1 = new ArrayList<>();
+		ArrayList<String> dirs1 = new ArrayList<>();
+		File[] all1;
+		all1 = flPath.listFiles();
+		for( i=0; i<all1.length; i++) {
+			if( all1[i].isDirectory()) {
+				dirs1.add(all1[i].toString());
+			}
+			else if( all1[i].isFile()) {
+				files1.add(all1[i].toString());
+			}
+		}
+		if( !dirs1.isEmpty() && !files1.isEmpty()) {
+			moveCleanFiles(currRow, files1);
+			for( i=0; i<dirs1.size(); i++) {
+				checkCleanFiles(currRow, null, dirs1.get(i));
+			}
+		}
+		else if( dirs1.isEmpty() && !files1.isEmpty()) {
+			checkCleanFiles(currRow, files1, files1.get(0));
+		}
+/*		if( isWindows && killDir != null) {
+			String tmp = "", tmp1;
+			for( i=0; i<killDir.size(); i++) {
+				if( i>0) tmp += ", ";
+				tmp1 = killDir.get(i);
+				j = tmp1.lastIndexOf(File.separatorChar);
+				tmp += tmp1.substring(j+1);
+			}
+			jLabClean7a.setText(parName);
+			jLabClean8.setText("Delete any naked files, along with the directory: " +tmp);
+			killDir = null;
+		}*/
+	}
+
+	void moveCleanFiles(CD_dirInfo currRow, ArrayList<String> files1) {
+		String dst = currRow.flName.getParent() + File.separatorChar + currRow.serName;
+		String src;
+		cleanFlg = true;
+		myCreateDirectory(dst);
+		// this is very rarely used
+		for( int i=0; i<files1.size(); i++) {
+			src = files1.get(i);
+			myFileMove(src, dst);
+		}
+	}
+
+	void myCreateDirectory(String dst) {
+		try {
+			Path path = Paths.get(dst);
+			if( Files.exists(path)) return;
+			Files.createDirectory(path);
+		} catch (Exception e) {ChoosePetCt.stackTrace2Log(e);}
+	}
+
+	void myFileMove(String src, String dst) {
+		try {
+			Path src1 = Paths.get(src);
+			Path dst1 = Paths.get(dst);
+			Files.move(src1, dst1.resolve(src1.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+//			Files.copy(src1, dst1.resolve(src1.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+//			Files.delete(src1);
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
+	}
+
+
+	void checkCleanFiles(CD_dirInfo currRow, ArrayList<String> files1, String parent) {
+		String dstDir, src, dst, tmp1;
+		DicomFormat dcm = new DicomFormat();
+		CD_dirInfo curr1 = currRow;
+		ArrayList<String> fileSrc = files1;
+		ArrayList<String> seriesUID = new ArrayList<>();
+		ArrayList<String> seriesName = new ArrayList<>();
+		ArrayList<String> badFiles = new ArrayList<>();
+		File parPath = new File(parent);
+		Dimension frmSize = null;
+		Path flPath1;
+		int j, k, n, idx0 = 0;
+		Integer i;
+		i = parent.lastIndexOf(File.separatorChar);
+		dstDir = parent.substring(0, i+1);
+		if( files1 == null) {
+			idx0 = 1;
+			File [] results = parPath.listFiles();
+			fileSrc = new ArrayList<>();
+			for( i=0; i<results.length; i++) fileSrc.add(results[i].toString());
+			j = dcm.checkDicomValid(results[0].getParent(), results[0].getName());
+			if(j<=0) return;
+			curr1.seriesUID = dcm.m_currSeriesInstanceUID;
+			curr1.serName = dcm.m_currSerName;
+		}
+		String seriesUID0 = "";
+		n = fileSrc.size();
+		for( i=0; i<n; i++) {
+			flPath1 = Paths.get(fileSrc.get(i));
+			src = flPath1.getParent().toString();
+			dst = flPath1.getFileName().toString();
+			j = dcm.checkDicomValid(src, dst);
+			if( j<=0) continue;
+			if( seriesUID0.isEmpty()) {
+				seriesUID0 = dcm.m_currSeriesInstanceUID;
+				frmSize = dcm.m_size;
+				continue;
+			}
+			if( frmSize!=null && !frmSize.equals(dcm.m_size))
+				badFiles.add(src + File.separatorChar + dst);
+			if( !seriesUID0.equals(dcm.m_currSeriesInstanceUID)) break;
+		}
+		if( i>= fileSrc.size()) {
+			if( !badFiles.isEmpty()) {
+				k = badFiles.size();
+				tmp1 = "There are/is " + k + " file(s) out of " + n + " with a different size";
+				if( k <= n/10) {
+					tmp1 = tmp1 + "\nThis will cause problems in reading the series.\n";
+					tmp1 = tmp1 + "Do you agree to delete these files?";
+					i = JOptionPane.showConfirmDialog(this, tmp1, "Bad frame size", JOptionPane.YES_NO_OPTION);
+					if( i == JOptionPane.YES_OPTION) {
+						for( i=0; i<k; i++) {
+							File del1 = new File(badFiles.get(i));
+							del1.delete();
+						}
+						cleanFlg = true;
+					}
+				} else {
+					tmp1 = tmp1 + "\nThere are too many files to correct. Contact ilan.tal@gmail.com";
+					JOptionPane.showMessageDialog(this, tmp1);
+				}
+			}
+			return;
+		}
+//		long start1 = System.currentTimeMillis();
+		for( i=0; i<fileSrc.size(); i++) {
+			src = fileSrc.get(i);
+			flPath1 = Paths.get(src);
+			j = dcm.checkDicomValid(flPath1.getParent().toString(), flPath1.getFileName().toString());
+			if( j<=0) continue;
+			if( !seriesUID.contains(dcm.m_currSeriesInstanceUID))
+				seriesUID.add(dcm.m_currSeriesInstanceUID);
+//			n = seriesUID.size();
+			j = seriesUID.indexOf(dcm.m_currSeriesInstanceUID);
+			if( j >= seriesName.size()) { // new series name
+				tmp1 = dcm.m_currSerName;
+				if( tmp1 == null || tmp1.isEmpty() || seriesName.contains(tmp1)) {
+					k = j+1;
+					tmp1 = "Series " + k;
+				}
+				seriesName.add(tmp1);
+				cleanFlg = true;
+				myCreateDirectory(dstDir + tmp1);
+			}
+			dst = dstDir + seriesName.get(j);
+			myFileMove(src, dst);
+		}
+//		Integer diff1 = (int)((System.currentTimeMillis() - start1)/100);
+//		IJ.log("sec*10.0 = " + diff1.toString());
+	}
+
 	void showDelete() {
 		String tmp1 = jLabelCdName.getText();
 		jLabelCdName2.setText(tmp1);
 		fillReadTable(false);
 	}
-	
+
 	void deleteButton() {
 		maybeShowWriteMip(null);
 		if( work2 != null) return;
@@ -1042,7 +1252,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 	void fillReadTable(boolean readFlg) {
 		JTable jTab = jTable1;
 		int type1 = 0;
-		boolean isBF, isWindows;
+		boolean isBF;
 		if( !readFlg) {
 			jTab = jTable3;
 			type1 = 2;
@@ -1054,13 +1264,13 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		String tmp;
 		CD_dirInfo tableEntry, nextEntry;
 		tableList = new ArrayList<>();
+		isWindows = (File.separatorChar == '\\');
 		String path = getCurrPath();
 		try {
 			if( path == null) {
 				// may be burned onto a CD, see if there is a DICOMDIR
 				path = System.getProperty("user.dir");
 				i = 0;
-				isWindows = (File.separatorChar == '\\');
 				if( path.startsWith("/media/") || isWindows) {
 					i = 2;	// windows c:\
 					if( !isWindows) i = path.indexOf('/', 8);
@@ -1238,7 +1448,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 					tableEntry.flList = new ArrayList<>();
 					for(k=0; k<n1; k++) {
 						img2 = dcm.m_aImage.get(off2+k);
-						flPath = new File(path + File.separatorChar + img2.dirName);
+						flPath = new File(path + File.separatorChar + img2.getPathFile());
 						tableEntry.flList.add(flPath);
 					}
 					off2 += n1;
@@ -1254,7 +1464,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 					tableEntry.studyUID = sty1.studyUID;
 					tableEntry.seriesUID = ser1.seriesUID;
 					tableEntry.sopClass = ser1.sopClass;
-					tableEntry.flName = new File(path + File.separatorChar + img1.dirName);
+					tableEntry.flName = new File(path + File.separatorChar + img1.getPathFile());
 					tableList.add(tableEntry);
 				}
 				off1 += sty1.numSeries;
@@ -1283,22 +1493,27 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 			tableEntry.birthDate = ChoosePetCt.getDateTime(dcm.m_birthdate, null);
 			tableEntry.accession = dcm.m_accession;
 			tableEntry.styName = dcm.m_currStyName;
-			tableEntry.serName = getSerName(dcm);
+			tableEntry.serName = getSerName(dcm, flPath);
 			tableEntry.studyUID = dcm.m_currStudyInstanceUID;
 			tableEntry.seriesUID = dcm.m_currSeriesInstanceUID;
 			tableEntry.sopClass = dcm.m_SOPClass;
-			tableEntry.isBF = BrownFat.isBfFile(flPath.getParent());
+			tableEntry.isBF = Extra.isBfFile(flPath.getParent());
 			tableEntry.flName = flPath;
 			tableList.add(tableEntry);
 			return;
 		}
 	}
-	
-	private String getSerName(DicomFormat dcm) {
+
+	private String getSerName(DicomFormat dcm, File path0) {
+		int i, j;
 		String retVal = dcm.m_currSerName;
 		if( retVal == null || retVal.isEmpty()) {
-			retVal = "-";
-			int i = dcm.getImageType();
+			retVal = path0.getParent();
+			i = retVal.lastIndexOf(File.separatorChar);
+			j = retVal.length();
+			if( i + 10 < j) j = i+10;
+			retVal = retVal.substring(i+1, j);
+			i = dcm.getImageType();
 			switch(i) {
 				case 0:
 					retVal = "AC";
@@ -1382,6 +1597,18 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jButSaveMip = new javax.swing.JButton();
+        jPanelClean = new javax.swing.JPanel();
+        jLabClean1 = new javax.swing.JLabel();
+        jLabClean2 = new javax.swing.JLabel();
+        jLabClean3 = new javax.swing.JLabel();
+        jButClean = new javax.swing.JButton();
+        jLabClean4 = new javax.swing.JLabel();
+        jLabClean5 = new javax.swing.JLabel();
+        jLabClean6 = new javax.swing.JLabel();
+        jLabClean7 = new javax.swing.JLabel();
+        jLabClean8 = new javax.swing.JLabel();
+        jLabClean9 = new javax.swing.JLabel();
+        jLabClean7a = new javax.swing.JLabel();
         jPanelDelete = new javax.swing.JPanel();
         jButDelAll = new javax.swing.JButton();
         jButDelete = new javax.swing.JButton();
@@ -1582,7 +1809,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addComponent(jCD12)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabelCdName)
-                .addGap(0, 55, Short.MAX_VALUE))
+                .addGap(0, 67, Short.MAX_VALUE))
             .addComponent(jScrollPane1)
         );
         jPanelReadLayout.setVerticalGroup(
@@ -1613,6 +1840,93 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
         );
 
         jReadCDPane.addTab("Read", jPanelRead);
+
+        jPanelClean.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                jPanelCleanComponentShown(evt);
+            }
+        });
+
+        jLabClean1.setText("Normally all files are in folders, where  each series is in a separate folder.");
+
+        jLabClean2.setText("There can be a single file called dicomdir, which is not in a folder.");
+
+        jLabClean3.setText("When it exists, dicomdir is a map, showing the layout of all other files.");
+
+        jButClean.setText("Clean");
+        jButClean.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButCleanActionPerformed(evt);
+            }
+        });
+
+        jLabClean4.setText("First choose a study to be cleaned in the Read tab.  Then...");
+
+        jLabClean5.setText("Use Clean to rearrange the files into different folders.");
+
+        jLabClean6.setFont(new java.awt.Font("Ubuntu", 1, 15)); // NOI18N
+        jLabClean6.setText("Changes made in directory structure");
+
+        jLabClean7.setText("You need to exit Fiji and then navigate to:");
+
+        jLabClean8.setText("text8");
+
+        jLabClean9.setText("After deleting these files, you can restart Fiji and continue to work.");
+        jLabClean9.setToolTipText("");
+
+        jLabClean7a.setText("text7a");
+
+        javax.swing.GroupLayout jPanelCleanLayout = new javax.swing.GroupLayout(jPanelClean);
+        jPanelClean.setLayout(jPanelCleanLayout);
+        jPanelCleanLayout.setHorizontalGroup(
+            jPanelCleanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelCleanLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelCleanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButClean)
+                    .addComponent(jLabClean6))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanelCleanLayout.createSequentialGroup()
+                .addGroup(jPanelCleanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabClean1)
+                    .addComponent(jLabClean2)
+                    .addComponent(jLabClean3)
+                    .addComponent(jLabClean4)
+                    .addComponent(jLabClean5)
+                    .addComponent(jLabClean7)
+                    .addComponent(jLabClean9)
+                    .addComponent(jLabClean7a)
+                    .addComponent(jLabClean8))
+                .addGap(0, 113, Short.MAX_VALUE))
+        );
+        jPanelCleanLayout.setVerticalGroup(
+            jPanelCleanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelCleanLayout.createSequentialGroup()
+                .addComponent(jLabClean1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButClean)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean5)
+                .addGap(18, 18, 18)
+                .addComponent(jLabClean6)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean7)
+                .addGap(3, 3, 3)
+                .addComponent(jLabClean7a)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean8)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabClean9)
+                .addContainerGap(41, Short.MAX_VALUE))
+        );
+
+        jReadCDPane.addTab("Clean", jPanelClean);
 
         jPanelDelete.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent evt) {
@@ -1662,7 +1976,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                 .addGap(18, 18, 18)
                 .addComponent(jButDelAll)
                 .addContainerGap())
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE)
         );
         jPanelDeleteLayout.setVerticalGroup(
             jPanelDeleteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1783,7 +2097,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
             }
         });
 
-        jLabel12.setText("version: 2.18");
+        jLabel12.setText("version: 2.27");
 
         jLabJava.setText("jLabel13");
 
@@ -1812,7 +2126,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
                         .addGroup(jPanelSetupLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel3))
-                        .addGap(0, 97, Short.MAX_VALUE)))
+                        .addGap(0, 130, Short.MAX_VALUE)))
                 .addGap(12, 12, 12))
             .addGroup(jPanelSetupLayout.createSequentialGroup()
                 .addComponent(jLabel6)
@@ -2008,9 +2322,18 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 		fillReadTable(true);
     }//GEN-LAST:event_jChkForceDicomDirActionPerformed
 
+    private void jPanelCleanComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jPanelCleanComponentShown
+		showClean();
+    }//GEN-LAST:event_jPanelCleanComponentShown
+
+    private void jButCleanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButCleanActionPerformed
+		doClean();
+    }//GEN-LAST:event_jButCleanActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JButton jButClean;
     private javax.swing.JButton jButClear;
     private javax.swing.JButton jButDelAll;
     private javax.swing.JButton jButDelete;
@@ -2036,6 +2359,16 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
     private javax.swing.JCheckBox jCheckTile;
     private javax.swing.JCheckBox jChkForceDicomDir;
     private javax.swing.JComboBox jComboLocation;
+    private javax.swing.JLabel jLabClean1;
+    private javax.swing.JLabel jLabClean2;
+    private javax.swing.JLabel jLabClean3;
+    private javax.swing.JLabel jLabClean4;
+    private javax.swing.JLabel jLabClean5;
+    private javax.swing.JLabel jLabClean6;
+    private javax.swing.JLabel jLabClean7;
+    private javax.swing.JLabel jLabClean7a;
+    private javax.swing.JLabel jLabClean8;
+    private javax.swing.JLabel jLabClean9;
     private javax.swing.JLabel jLabJava;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -2052,6 +2385,7 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
     private javax.swing.JLabel jLabelCdName;
     private javax.swing.JLabel jLabelCdName2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanelClean;
     private javax.swing.JPanel jPanelDelete;
     private javax.swing.JPanel jPanelRead;
     private javax.swing.JPanel jPanelSetup;
@@ -2071,6 +2405,8 @@ public class ReadCdStudies extends javax.swing.JFrame implements MouseListener {
 	int xStart =0, yStart=0;
 	ArrayList<ImagePlus> imgList = null;
 	ArrayList<CD_dirInfo> tableList = null;
+	ArrayList<String> killDir = null;
 	private boolean tab1Dirty = true, tab3Dirty = true, accessFlg = false;
 	bkgdLoadData work2 = null;
+	boolean cleanFlg = false, isWindows = false;
 }
