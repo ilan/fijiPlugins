@@ -859,6 +859,7 @@ public class AnoToolBar {
 				parFrm.getComboText().addItem(line);
 			}
 			br.close();
+			fis.close();
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 

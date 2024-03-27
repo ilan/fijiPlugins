@@ -43,14 +43,14 @@
                               <Component id="jButHelp" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jCheckIgnore" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="36" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -118,20 +118,16 @@
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="jLabZ" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-                  <Component id="jSpinOffset" min="-2" pref="50" max="-2" attributes="0"/>
+                  <Component id="jSpinOffZ" min="-2" pref="71" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="jLabX" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                  <Component id="jSpinOffX" min="-2" pref="50" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="jSpinOffX" min="-2" pref="70" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="jLabY" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-                  <Component id="jSpinOffY" min="-2" pref="50" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jLabSag" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-                  <Component id="jSpinOffSag" min="-2" pref="50" max="-2" attributes="0"/>
-                  <EmptySpace pref="45" max="32767" attributes="0"/>
+                  <Component id="jSpinOffY" min="-2" pref="72" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -140,13 +136,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jButReset" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabZ" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jSpinOffset" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jSpinOffZ" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabX" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jSpinOffX" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabY" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jSpinOffY" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabSag" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jSpinOffSag" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -165,9 +159,9 @@
             <Property name="text" type="java.lang.String" value="Z:"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JSpinner" name="jSpinOffset">
+        <Component class="javax.swing.JSpinner" name="jSpinOffZ">
           <Events>
-            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinOffsetStateChanged"/>
+            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinOffZStateChanged"/>
           </Events>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabX">
@@ -188,16 +182,6 @@
         <Component class="javax.swing.JSpinner" name="jSpinOffY">
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinOffYStateChanged"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JLabel" name="jLabSag">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="sag:"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JSpinner" name="jSpinOffSag">
-          <Events>
-            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="jSpinOffSagStateChanged"/>
           </Events>
         </Component>
       </SubComponents>

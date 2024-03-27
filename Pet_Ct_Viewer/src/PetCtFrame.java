@@ -181,6 +181,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		chooseDlg = null;	// free it
 		initToolBar2();
 		petCtPanel1.LoadData(this, imgList, seriesType);
+//		jMenuSyncMri.setEnabled(false);
 		keyDelay = new int[10];
 		j = 300;
 		for( i=1; i<10; i++) {
@@ -259,6 +260,16 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 			hideAllPopupMenus();
 			petCtPanel1.repaint();
 		}
+		if( keyCode == KeyEvent.VK_B) {
+			e.consume();
+			if( !isScroll()) {
+				IJ.log("(ctrl)B to return to base position works only when ⇕ is active");
+				return;
+			}
+			petCtPanel1.useSpinnersBaseValues(0);
+			petCtPanel1.repaint();
+			petCtPanel1.setCursor(petCtPanel1.maybePanImage());
+		}
 	}
 
 	@Override
@@ -299,8 +310,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 				hiVal = dSlide.getHighValue();
 				loVal = dSlide.getLowValue();
 				min = dSlide.getMinimum();
-				oldLevel = roundN(Double.valueOf( levelSave), slideDigits);
-				oldWidth = roundN(Double.valueOf( widthSave), slideDigits);
+				oldLevel = roundN(Double.parseDouble( levelSave), slideDigits);
+				oldWidth = roundN(Double.parseDouble( widthSave), slideDigits);
 				newWidth = roundN(hiVal-loVal, slideDigits);
 				newLevel = roundN((hiVal+loVal)/2, slideDigits);
 				sl1Owner = petCtPanel1.sliderOwner;
@@ -413,7 +424,11 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	// called at init to maybe turn on ROIs and Annotations
 	int checkforROIandAnnotations() {
+		BrownFat dlg;
+//		petCtPanel1.testGetInstance();
 		ReadOrthancSub sub1 = new ReadOrthancSub();
+/*		Bytst btst = new Bytst();
+		btst.test1();*/
 		if( petCtPanel1.anotateDlg == null) {
 			sub1.look4annotations(petCtPanel1, 0);
 			petCtPanel1.anotateDlg = new Annotations(this,false);
@@ -426,29 +441,40 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 				petCtPanel1.anotateDlg.showBookmarksTab();
 			}
 		}
-		if( !startROIs ) return 0;
-		String flName = BrownFat.getSpreadSheetName(petCtPanel1.petPipe);
+		if( !startROIs || !useBF ) return 0;
+		//String flName = BrownFat.getSpreadSheetName(petCtPanel1.petPipe);
+		String flName = getBfName();
 		if( flName == null) {	// look maybe Orthanc
 			sub1.look4annotations(petCtPanel1, 1);
-			flName = BrownFat.getSpreadSheetName(petCtPanel1.petPipe);
+			flName = getBfName();
 		}
 		int numFrm = petCtPanel1.petPipe.getNormalizedNumFrms();
-		if( BrownFat.instance != null) {
+		dlg = BrownFat.getInstance();
+		if( dlg != null) {
 			if( flName == null) return 0;
-			BrownFat.instance.saveParentExt(this);
-			BrownFat.instance.loadStoredROIs(flName, numFrm);
+			dlg.saveParentExt(this);
+			dlg.loadStoredROIs(flName, numFrm);
 			mySleep(500);	// loading ROIs needs some extra time
-			BrownFat.instance.calculateVol(true);
-			BrownFat.instance.followCheck();
+			dlg.calculateVol(true);
+			dlg.followCheck();
 			return 0;
 		}
 		if( flName != null) {
-			BrownFat dlg = new BrownFat(this, false);
+			dlg = BrownFat.makeNew(this);
 			dlg.loadStoredROIs(flName,numFrm);
 //			dlg.setSavedSize();
 			dlg.setVisible(true);
 		}
 		return 0;
+	}
+
+	String getBfName() {
+		String retv = "";
+		try {
+			retv = Extra.getSpreadSheetName(petCtPanel1.petPipe);
+		}
+		catch(Exception e) { IJ.log("Can't find static code."); }
+		return retv;
 	}
 
 	JCheckBox getAutoBM() {
@@ -564,6 +590,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	String generateFileNameExt(int type, boolean spcSwap) {
 		String retVal;
 		if( type == 0) {
+			if( m_patName==null || m_patName.isEmpty()) return "no_name";
 			retVal = m_patName.replace('.', ' ').trim();
 			retVal = retVal.replaceAll("[,/]", "_");
 		} else {
@@ -838,6 +865,8 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	void fitWindow() {
 		Dimension sz1, sz0, sz2;
 		double area1, scale1;
+		int stype = petCtPanel1.m_sliceType;
+		JFijiPipe petPipe = petCtPanel1.petPipe;
 		sz1 = getSize();
 		sz0 = petCtPanel1.getSize();
 		// get the difference between the panel and the whole window
@@ -845,6 +874,9 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		sz1.width -= sz0.width;
 		area1 = sz0.width * sz0.height;
 		sz2 = petCtPanel1.getWindowDim();
+		if( stype == JFijiPipe.DSP_CORONAL || stype == JFijiPipe.DSP_SAGITAL) {
+			if( petPipe != null) sz2.height *= petPipe.zoom1;
+		}
 //		if( autoResize) scale1 = ((double) sz0.width) / sz2.width;
 //		else scale1 = Math.sqrt(area1 / (sz2.width * sz2.height));
 		scale1 = ((double) sz0.width) / sz2.width;
@@ -1101,6 +1133,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	void setExternalSpinners(boolean toggle) {
 		setExternalSpinnersSub( toggle, isScroll(), this);
+		petCtPanel1.useSpinnersBaseValues(1);
 	}
 	
 	boolean isScroll() {
@@ -1190,6 +1223,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 				case PetCtPanel.NOTIFY_PAN:
 					boolean start = val1>0;
 					othPanel.panDrag(e, start);
+					break;
+
+				case PetCtPanel.NOTIFY_BASE_VALUE:
+					othPanel.notificationOfBaseValues(val1);
 					break;
 			}
 		}
@@ -1389,7 +1426,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		setExternalSpinners(false);
 		if(petCtPanel1 != null) {
 			maybeClearSource();
-			petCtPanel1.removeBFdata();
+			if( useBF) petCtPanel1.removeBFdata();
 			petCtPanel1.ctPipe = petCtPanel1.mipPipe = petCtPanel1.mriPipe = null;
 			petCtPanel1.petPipe = petCtPanel1.upetPipe = petCtPanel1.reproPipe = null;
 		}
@@ -1828,7 +1865,6 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
             }
         });
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         jButAxial.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/axial.gif"))); // NOI18N
@@ -1887,7 +1923,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         jToolBar1.add(jButZoom);
 
         jButScroll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/arrows.gif"))); // NOI18N
-        jButScroll.setToolTipText("simultaneously scroll through N studies");
+        jButScroll.setToolTipText("simultaneously scroll through N studies.  Use ↑B to return to base values");
         jButScroll.setFocusable(false);
         jButScroll.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButScroll.setMinimumSize(new java.awt.Dimension(20, 27));
@@ -1979,7 +2015,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 122, Short.MAX_VALUE)
+            .addGap(0, 694, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1994,7 +2030,6 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         jLevelVal.setPreferredSize(new java.awt.Dimension(40, 20));
         jToolBar1.add(jLevelVal);
 
-        jToolBar2.setFloatable(false);
         jToolBar2.setRollover(true);
 
         jLabMeasure.setText("Measure");
@@ -2194,7 +2229,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
         jMenuAnotPane1.setText("Save Annotated Images");
 
-        jMenuAnoPane1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_1, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuAnoPane1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_1, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuAnoPane1.setText("Pane 1");
         jMenuAnoPane1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2203,7 +2238,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         });
         jMenuAnotPane1.add(jMenuAnoPane1);
 
-        jMenuAnoPane2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_2, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuAnoPane2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_2, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuAnoPane2.setText("Pane 2");
         jMenuAnoPane2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2212,7 +2247,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         });
         jMenuAnotPane1.add(jMenuAnoPane2);
 
-        jMenuAnoPane3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_3, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuAnoPane3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_3, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuAnoPane3.setText("Pane 3");
         jMenuAnoPane3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2221,7 +2256,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         });
         jMenuAnotPane1.add(jMenuAnoPane3);
 
-        jMenuAnoAll3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuAnoAll3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuAnoAll3.setText("All 3");
         jMenuAnoAll3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2248,7 +2283,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         });
         jMenuFile.add(jMenuSaveMip);
 
-        jMenuSaveSignificant.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuSaveSignificant.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuSaveSignificant.setText("Save Significant Image");
         jMenuSaveSignificant.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2423,7 +2458,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(petCtPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, 1011, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2505,6 +2540,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	private void jCheckMriActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckMriActionPerformed
 		petCtPanel1.MRIflg = !petCtPanel1.MRIflg;
 		hideAllPopupMenus();
+//		jMenuSyncMri.setEnabled(petCtPanel1.MRIflg);
 		petCtPanel1.repaint();
 }//GEN-LAST:event_jCheckMriActionPerformed
 
@@ -2581,11 +2617,18 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	}//GEN-LAST:event_jMenuShowTextActionPerformed
 
 	private void jMenuBrownFatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuBrownFatActionPerformed
-		if(BrownFat.instance != null) {
-			BrownFat.instance.saveParentExt(this);
+/*		Btst inst1 = Btst.getInstance();
+		if( inst1 != null) return;
+
+		Btst dlg = Btst.makeNew(this);
+		dlg.setVisible(true);*/
+
+		BrownFat inst1 = BrownFat.getInstance();
+		if(inst1 != null) {
+			inst1.saveParentExt(this);
 			return;
 		}
-		BrownFat dlg = new BrownFat(this, false);
+		BrownFat dlg = BrownFat.makeNew(this);
 		dlg.setVisible(true);
 	}//GEN-LAST:event_jMenuBrownFatActionPerformed
 
@@ -2929,6 +2972,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	static int keyIndex = 0;
 	int view3Slop = 6;
 	long currKeyTime;
+	boolean useBF = true;	// change to true
 	static PetCtFrame gotFocus = null;
 	static ArrayList<Object> extList = null;
 	static ArrayList<Object> conferenceList = null;

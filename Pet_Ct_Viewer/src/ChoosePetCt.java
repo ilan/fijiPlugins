@@ -50,14 +50,14 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	static final int TBL_PAT_ID = 6;
 	static final int TBL_SIZE = 7;
 
-	static final int ORIENT_UNKNOWN = 0;
-	static final int ORIENT_AXIAL = 1;
-	static final int ORIENT_CORONAL = 2;
-	static final int ORIENT_SAGITAL = 3;
-	static final int ORIENT_OBL_AXIAL = 4;
-	static final int ORIENT_OBL_COR = 5;
-	static final int ORIENT_OBL_SAG = 6;
-	static final int ORIENT_OBLIQUE = 7;
+//	static final int ORIENT_UNKNOWN = 0;
+//	static final int ORIENT_AXIAL = 1;
+//	static final int ORIENT_CORONAL = 2;
+//	static final int ORIENT_SAGITAL = 3;
+//	static final int ORIENT_OBL_AXIAL = 4;
+//	static final int ORIENT_OBL_COR = 5;
+//	static final int ORIENT_OBL_SAG = 6;
+//	static final int ORIENT_OBLIQUE = 7;
 	static final int ORIENT_AXIAL_ROTATED = 8;
 
 	static final int SERIES_UNKNOWN = 0;
@@ -98,7 +98,8 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	static final int SOPCLASS_TYPE_ENHANCED_PET = 8;
 	static final int SOPCLASS_TYPE_ENHANCED_CT = 9;
 	static final int SOPCLASS_TYPE_SR_STORAGE = 10;
-	static final int SOPCLASS_TYPE_RAW = 11;
+	static final int SOPCLASS_TYPE_ENHANCED_MRI = 11;
+	static final int SOPCLASS_TYPE_RAW = 12;
 	
 	static final String SOPCLASS_SC = "1.2.840.10008.5.1.4.1.1.7";
 	static final String SOPCLASS_NM = "1.2.840.10008.5.1.4.1.1.20";
@@ -193,11 +194,15 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			if( sel1 == true) selVals.add(j);
 		}
 		n = selVals.size();
-		int numCt=0, numMri=0, numAPet=0, numUPet=0, numNM = 0, val1 = SERIES_UNKNOWN;
+		int numCt=0, numMri=0, numAPet=0, numUPet=0, numNM = 0;
+		int numCorSag = 0, val1 = SERIES_UNKNOWN;
 		for( i=0; i<n; i++) {
 			j = selVals.get(i);
 			val1 = getSeriesType(j);
-			if( val1 == SERIES_CT || val1 == SERIES_CT_VARICAM || val1 == SER_FORCE_CT) numCt++;
+			if( val1 == SERIES_CT || val1 == SERIES_CT_VARICAM || val1 == SER_FORCE_CT) {
+				if( isOrigAxial(j)) numCt++;
+				else numCorSag++;
+			}
 			if( val1 == SERIES_MRI || val1 == SER_FORCE_MRI) numMri++;
 			if( val1 == SERIES_BQML_PET || val1 == SERIES_GML_PET
 				|| val1 == SERIES_PHILIPS_PET || val1 == SERIES_GE_PRIVATE_PET || val1 == SERIES_SPECT
@@ -205,7 +210,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			if( val1 == SERIES_UPET || val1 == SER_FORCE_UPET) numUPet++;
 			if( val1 == SERIES_NM3) numNM++;
 		}
-		if( numCt == 1 && numMri < 2 && numNM == 0) {
+		if( numCt == 1 && numMri < 2 && numNM == 0 && numCorSag == 0) {
 			if( (numAPet == 1 || numUPet == 1) && numAPet < 2 && numUPet < 2) readEn = true;
 		}
 		if( n == 1 && val1 != SERIES_UNKNOWN) readEn = true;	// single study
@@ -213,7 +218,15 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		if( readEn == false) selVals = null;
 		return selVals;
 	}
-	
+
+	private boolean isOrigAxial( int indx) {
+		ImagePlus ip0 = imgList.get(indx);
+		String meta = getMeta(1, ip0);
+		int orient0 = getOrientation(getDicomValue( meta, "0020,0037")) & 31;
+		return orient0 == DicomFormat.ORIENT_AXIAL ||
+			orient0 == DicomFormat.ORIENT_OBL_AXIAL;
+	}
+
 	int getSeriesType(int indx) {
 		int val1 = seriesType.get(indx);
 		int val2 = seriesForce.get(indx);
@@ -263,6 +276,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	
 	static int round(double inVal) {
 		return (int) Math.round(inVal);
+	}
+	
+	static Double round10(double inVal) {
+		int val1 = round(inVal * 10.0);
+		return val1 / 10.0;
 	}
 
 	/**
@@ -323,7 +341,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		for( i=0; i<fullList.length; i++) {
 			img1 = WindowManager.getImage(fullList[i]);
 			j = img1.getStackSize();
-			if( j <= 0) continue;
+			if( j < 5) continue;
 			meta = getMeta(1, img1);
 			if( meta == null) continue;	// no information, skip it
 			serType = getImageType(meta);
@@ -332,7 +350,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			row1[TBL_CHECK] = false;
 			patName = getCompressedPatName( meta);
 			// There are anonymous studies with no name
-//			if( patName == null) continue;
+//			if( patName == null) patName = "";
 			row1[TBL_PATNAME] = patName;
 			row1[TBL_PAT_ID] = getCompressedID( meta);
 			date1 = getStudyDateTime( meta, -1);
@@ -616,7 +634,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			tmp1 = getDicomValue(meta,"0008,0020");
 			if( tmp1 == null) return null;
 			// be careful of bad study dates like 1899
-			if(Integer.valueOf(tmp1.substring(0, 4)) < 1980) {
+			if(Integer.parseInt(tmp1.substring(0, 4)) < 1980) {
 				tmp1 = getDicomValue(meta,"0008,0021");
 			}
 		}
@@ -662,12 +680,12 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			int SOPClassVar = getSOPClass(getDicomValue( meta, "0008,0016"));
 			if( SOPClassVar == SOPCLASS_TYPE_NM) {
 				tmp = getDicomValue(meta, "0008,103E");
-				if( orientation == ORIENT_UNKNOWN && tmp != null && tmp.startsWith("MIP data")) return SERIES_MIP;
-				if( orientation != ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED) return SERIES_NM;
+				if( orientation == DicomFormat.ORIENT_UNKNOWN && tmp != null && tmp.startsWith("MIP data")) return SERIES_MIP;
+				if( orientation != DicomFormat.ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED) return SERIES_NM;
 				String[] array1 = parseMultString(getDicomValue(meta, "0008,0008"));
 				if( !multStringContains( array1, "RECON TOMO")) return SERIES_NM3;
 				if( tmp != null && tmp.startsWith("ATT MAP")) return SERIES_NM3;
-				if( orientation != ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED) return SERIES_UNKNOWN;
+				if( orientation != DicomFormat.ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED) return SERIES_UNKNOWN;
 				tmp = getDicomValue(meta, "0054,0400");
 				if( tmp == null) {
 					tmp = getDicomValue(meta, "0054,0202");	// last chance
@@ -698,9 +716,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 					if( tmp.equals("CT")) return SERIES_CT;
 				}
 			}
-			// uncomment ORIENT_OBL_AXIAL for BN Lee
-			if( orientation != ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED /*&&
-					orientation != ORIENT_OBL_AXIAL*/) return SERIES_UNKNOWN;
+			// uncomment isOK |= (...) for BN Lee
+			boolean isOK = orientation == DicomFormat.ORIENT_AXIAL
+					|| orientation ==ORIENT_AXIAL_ROTATED;
+			isOK |= (orientation > DicomFormat.ORIENT_AXIAL && orientation < DicomFormat.ORIENT_OBLIQUE);
+			if( !isOK) return SERIES_UNKNOWN;
 
 			if( SOPClassVar == SOPCLASS_TYPE_CT) {
 				if( parseInt(getDicomValue( meta, "0028,0011")) <= 128) return SERIES_REDUCED_CT;
@@ -747,7 +767,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				return SERIES_CT;
 			}
 
-			if( SOPClassVar == SOPCLASS_TYPE_MRI) {
+			if( SOPClassVar == SOPCLASS_TYPE_MRI || SOPClassVar == SOPCLASS_TYPE_ENHANCED_MRI) {
 				return SERIES_MRI;
 			}
 		} catch (Exception e) { stackTrace2Log(e);}
@@ -781,6 +801,9 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 			return SOPClass;	// SOPCLASS_UNKNOWN - not handled
 		}
 		if (tmp1.startsWith("1.2.840.10008.5.1.4.1.1.4")) {
+			if (tmp1.startsWith("1.2.840.10008.5.1.4.1.1.4.1")) {
+				return SOPCLASS_TYPE_ENHANCED_MRI;
+			}
 			SOPClass = SOPCLASS_TYPE_MRI;
 		}
 		if (tmp1.equals("1.2.840.10008.5.1.4.1.1.1")) {
@@ -800,28 +823,28 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 
 	static int getOrientation(String tmp1) {
 		float fltIn[] = parseMultFloat( tmp1);
-		int retVal = ORIENT_UNKNOWN;
+		int retVal = DicomFormat.ORIENT_UNKNOWN;
 		if (fltIn == null || fltIn.length != 6) {
 			return retVal;
 		}
 		// allow some sloppiness in the measurement
 		if (Math.abs(fltIn[0]) > 0.96 && Math.abs(fltIn[4]) > 0.96) {
-			retVal = ORIENT_AXIAL;
+			retVal = DicomFormat.ORIENT_AXIAL;
 			// check if the buffer needs to be reversed
 			if( fltIn[0] < 0) retVal += 32;
 			if( fltIn[4] < 0) retVal += 64;
 		} else if (fltIn[5] < -0.97) {
 			if (fltIn[0] > 0.98) {
-				retVal = ORIENT_CORONAL;
+				retVal = DicomFormat.ORIENT_CORONAL;
 			}
 			if (fltIn[1] > 0.96 || fltIn[1] < -0.96) {
-				retVal = ORIENT_SAGITAL;
+				retVal = DicomFormat.ORIENT_SAGITAL;
 			}
 		} else if( Math.abs(fltIn[1]) > 0.96 && Math.abs(fltIn[3]) > 0.96) {
 			retVal = ORIENT_AXIAL_ROTATED;
 		}
 
-		if (retVal == ORIENT_UNKNOWN) {
+		if (retVal == DicomFormat.ORIENT_UNKNOWN) {
 			// let's try to find what it is closest to, oblAxial, oblCor, oblSag
 			int indx, jmax, imax;
 			double maxi, maxj, maxTmp;
@@ -840,15 +863,15 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 					jmax = indx;
 				}
 			}
-			retVal = ORIENT_OBLIQUE;	// if nothing else fits, use oblique
+			retVal = DicomFormat.ORIENT_OBLIQUE;	// if nothing else fits, use oblique
 			if (imax == 0 && jmax == 1) {
-				retVal = ORIENT_OBL_AXIAL;
+				retVal = DicomFormat.ORIENT_OBL_AXIAL;
 			}
 			if (imax == 0 && jmax == 2) {
-				retVal = ORIENT_OBL_COR;
+				retVal = DicomFormat.ORIENT_OBL_COR;
 			}
 			if (imax == 1 && jmax == 2) {
-				retVal = ORIENT_OBL_SAG;
+				retVal = DicomFormat.ORIENT_OBL_SAG;
 			}
 		}
 		return retVal;
@@ -947,18 +970,18 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		// watch out for bad date 01.01.1900
 		if(inDate.charAt(2) == '.') return null;
 
-		year = Integer.valueOf(inDate.substring(0, 4));
-		month = Integer.valueOf(inDate.substring(4+off, 6+off)) - 1;	// month 0 based
-		day = Integer.valueOf(inDate.substring(6+2*off, 8+2*off));
+		year = Integer.parseInt(inDate.substring(0, 4));
+		month = Integer.parseInt(inDate.substring(4+off, 6+off)) - 1;	// month 0 based
+		day = Integer.parseInt(inDate.substring(6+2*off, 8+2*off));
 		if( inDate.length() >= 14) {
-			hour = Integer.valueOf(inDate.substring(8, 10));
-			min1 = Integer.valueOf(inDate.substring(10, 12));
-			sec = Integer.valueOf(inDate.substring(12, 14));
+			hour = Integer.parseInt(inDate.substring(8, 10));
+			min1 = Integer.parseInt(inDate.substring(10, 12));
+			sec = Integer.parseInt(inDate.substring(12, 14));
 		}
 		else if( inTime != null && inTime.length() >= 6) {
-			hour = Integer.valueOf(inTime.substring(0, 2));
-			min1 = Integer.valueOf(inTime.substring(2, 4));
-			sec = Integer.valueOf(inTime.substring(4, 6));
+			hour = Integer.parseInt(inTime.substring(0, 2));
+			min1 = Integer.parseInt(inTime.substring(2, 4));
+			sec = Integer.parseInt(inTime.substring(4, 6));
 		}
 		dat1.set(year, month, day, hour, min1, sec);
 		retDate = dat1.getTime();
@@ -1048,7 +1071,7 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 		orientation = getOrientation(getDicomValue( meta, "0020,0037")) & 31;
 		sortVect = new int[n];
 		zpos = new float[n];
-		if( orientation == ORIENT_AXIAL || orientation == ORIENT_AXIAL_ROTATED)
+		if( orientation == DicomFormat.ORIENT_AXIAL || orientation == ORIENT_AXIAL_ROTATED)
 			for(i=0; i<n; i++) {
 			sortVect[i] = i;
 			meta = stack0.getSliceLabel(i+1);
@@ -1236,8 +1259,10 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				yPos.add(pos.get(1));
 				strVals.add(tmpStr);
 			}
+			br1.close();
+			fl1.close();
 
-			if( frmNm.size() > 0 && maxFrm >= 0) {
+			if( !frmNm.isEmpty() && maxFrm >= 0) {
 				retVal = new String[maxFrm+1];
 				Integer[] maxY = new Integer[maxFrm+1];
 				for( i1=0; i1<frmNm.size(); i1++) {
@@ -1482,4 +1507,5 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 	static String userDir = null;
 	static PetCtPanel MipPanel = null;
 	static int loadingData = 0;	// not loading
+	static boolean msgNoFocus = false;
 }

@@ -46,7 +46,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	boolean splitCursor = false, limitCursor = false, runGated = false, isGated = false;
 	boolean zoomTog = false, invertScroll = false, isInitializing;
 	double minSlider = 0, maxSlider = 1000, SUVorCount, saveWidth, saveLevel;
-	double d3Axial, d3Coronal, d3Sagital, d3AxialFake;
+	double d3Axial, d3Coronal, d3Sagital, d3AxialFake, dCnvt, dCnvtCor;
 	SUVpoints suvPnt = null;
 	double curMax, SUVpeak, SUVmean;
 	private Timer m_timer = null;
@@ -82,13 +82,15 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	}
 
 	class myMouse {
-		int xPos, yPos, widthX, widthY, page=1, xDrag, yDrag, button1, startSlice, numSlice;
+		int xPos, yPos, widthX, widthY, page=1, xDrag, yDrag, button1;
+		int widthSag, startSlice, numSlice;
 		double zoomZ, zoom1, zoomY;
 		Point3d pan3d = null;
 		
 		int getMousePage(MouseEvent evt0, boolean save) {
 			double scale = getScale();
 			widthX = (int) (scale * d3Pipe.data1.width);
+			widthSag = (int) (scale * d3Pipe.data1.height);
 			if(evt0 == null) return 0;
 			Dimension dm2;
 			int x1, y1;
@@ -115,6 +117,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			if( save) {
 				double scale = getScale();
 				widthX = (int) (scale * d3Pipe.data1.width);
+				widthSag = (int) (scale * d3Pipe.data1.height);
 				button1 = evt0.getButton();
 				xDrag = x;
 				yDrag = y;
@@ -210,7 +213,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		indx -= diff;
 		while( indx < 0) indx += JFijiPipe.NUM_MIP;
 		while( indx >= JFijiPipe.NUM_MIP) indx -= JFijiPipe.NUM_MIP;
-		mipPipe.cineIndx = indx;
+		mipPipe.setCineIndx(indx);
 		parent.setCineButtons(true);
 		repaint();
 	}
@@ -450,6 +453,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			mouse1.zoom1 = d3Pipe.zoom1;
 			mouse1.zoomZ = d3Pipe.data1.width * mouse1.widthY;
 			mouse1.zoomZ /= mouse1.widthX * d3Pipe.data1.numFrms * d3Pipe.zoomX * d3Pipe.data1.y2xFactor / d3Pipe.data1.numTimeSlots;
+			mouse1.zoomZ /= dCnvtCor;
 			mouse1.zoomY = d3Pipe.zoomY;
 			return;
 		}
@@ -458,6 +462,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	}
 	
 	void panDragSub(Point2d pt1) {
+		Double tmp1, tmp2;
 		double x1 = pt1.x;
 		double y1 = pt1.y;
 		Point3d pan1 = new Point3d(mouse1.pan3d);
@@ -478,8 +483,12 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 				break;
 
 			case 3:
+				maxY += d3Pipe.data1.y2XCnvtAsp;
 				pan1.y += x1;
 				pan1.z += y1;
+/*				tmp1 = maxY;
+				tmp2 = pan1.y;
+				IJ.log("maxY="+tmp1.toString()+", pan1.y="+tmp2.toString());*/
 				break;
 		}
 		if( pan1.x > maxZ) pan1.x = maxZ;
@@ -568,24 +577,28 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 				ct4fused.shiftXY[0] = ctPipe.shiftXY[0];
 				ct4fused.shiftXY[1] = ctPipe.shiftXY[1];
 				ct4fused.zoomX = ctPipe.zoomX;
-				ct4fused.data1.mriOffZ = ctPipe.data1.mriOffZ;
 				ct4fused.data1.panZCt2Pet = ctPipe.data1.panZCt2Pet;
-				ct4fused.mriOffX = ctPipe.mriOffX;
-				ct4fused.mriOffY = ctPipe.mriOffY;
-				ct4fused.mriOffSag = ctPipe.mriOffSag;
+				ct4fused.mri1.copyOffs(ctPipe);
 				ct4fused.corSagShift = ctPipe.corSagShift;
 				ct4fused.mriScl = ctPipe.mriScl;
 				ct4fused.avgSliceDiff = ctPipe.avgSliceDiff;	// usually 1.0
+				ct4fused.data1.zstart = ctPipe.data1.zstart;
+				ct4fused.sagCut = ctPipe.sagCut;
+				if( ctPipe.isConverted()) {
+					ct4fused.data1.zpos = null;
+					ct4fused.data1.imageNumber = null;
+				}
 			}
 			// MRI data can be non square
-			aspect = ct4fused.data1.height * ct4fused.data1.y2XMri / ct4fused.data1.width;
+			JFijiPipe.JData cdata1 = ct4fused.data1;
+			aspect = cdata1.height * cdata1.y2XCnvt * cdata1.y2XMri / cdata1.width;
 			ct4fused.aspect = aspect;
-			ct4fused.mriOffY0 = (1.0 - aspect)*ct4fused.data1.width/2;
-			ct4fused.corFactor = (d3Pipe.aspect*d3Pipe.zoomX * ct4fused.data1.height) / (d3Pipe.data1.height * ct4fused.zoomX * aspect);
-			ct4fused.sagFactor = (d3Pipe.zoomX * ct4fused.data1.width) / (d3Pipe.data1.width * ct4fused.zoomX);
+			ct4fused.mriOffY0 = (1.0 - aspect)*cdata1.width/2;
+			ct4fused.corFactor = (d3Pipe.aspect*d3Pipe.zoomX * cdata1.height) / (d3Pipe.data1.height * ct4fused.zoomX * aspect);
+			ct4fused.sagFactor = (d3Pipe.zoomX * cdata1.width) / (d3Pipe.data1.width * ct4fused.zoomX);
 			ct4fused.obliqueFactor = 0;
-			ct4fused.sagOffset = ct4fused.data1.width* ( 1- d3Pipe.zoomX/ct4fused.zoomX)/2 ;
-			ct4fused.corOffset = (ct4fused.sagOffset - ct4fused.mriOffY0 + d3Pipe.mriOffY0*ct4fused.corFactor)/ ct4fused.data1.y2XMri;
+			ct4fused.sagOffset = cdata1.width* ( 1- d3Pipe.zoomX/ct4fused.zoomX)/2 ;
+			ct4fused.corOffset = (ct4fused.sagOffset - ct4fused.mriOffY0 + d3Pipe.mriOffY0*ct4fused.corFactor)/ (cdata1.y2XMri*cdata1.y2XCnvt);
 			// Terry Weizeman shows this problem
 			ct4fused.sagOffset -= ct4fused.sagFactor*(d3Pipe.shiftXY[0] - ct4fused.shiftXY[0]);
 			ct4fused.corOffset -= ct4fused.corFactor*(d3Pipe.shiftXY[1] - ct4fused.shiftXY[1]);
@@ -606,6 +619,9 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		d3Pipe.imgPos[1] = new Point(1, 0);
 		d3Pipe.imgPos[2] = new Point(2, 0);
 		parent.fillPatientData();
+		dCnvt = d3Pipe.data1.y2XCnvt;
+		dCnvtCor = d3Pipe.data1.y2XCnvtCor;
+		if( d3Pipe.isConverted()) parent.enableCineButton(false);
 		isGated = runGated = d3Pipe.data1.numTimeSlots > 1;
 		parent.setGatedButtonVisible(isGated);
 		parent.setTitle(parent.getTitleBar(0));
@@ -693,23 +709,25 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		pt1 = new Point(mouse1.xPos % mouse1.widthX, mouse1.yPos);
 		x1 = mouse1.xPos / mouse1.widthX + JFijiPipe.DSP_AXIAL;
 		pt2 = d3Pipe.scrn2Pos(pt1, scl1, j, x1);
+		double pty0 = pt2.y;
+		if( dCnvt < 1) pty0 /= dCnvtCor;
 		switch (i) {
-			case 1:
+			case JFijiPipe.DSP_AXIAL:
 				d3Axial = ChoosePetCt.round(d3Axial);
-				d3Coronal = pt2.y;
+				d3Coronal = pt2.y/dCnvt;
 				d3Sagital = pt2.x;
 				break;
 
-			case 2:
+			case JFijiPipe.DSP_CORONAL:
 				d3Coronal = ChoosePetCt.round(d3Coronal);
 				d3Sagital = pt2.x;
-				d3Axial = pt2.y;
+				d3Axial = pty0;
 				break;
 
-			case 3:
+			case JFijiPipe.DSP_SAGITAL:
 				d3Sagital = ChoosePetCt.round(d3Sagital);
-				d3Axial = pt2.y;
-				d3Coronal = pt2.x;
+				d3Axial = pty0;
+				d3Coronal = pt2.x/dCnvt;
 				if( showMip) {
 					Point2d pt3 = mipPipe.scrn2Pos(pt1, scl1, 1);
 					x1 = ChoosePetCt.round(pt3.x);
@@ -730,6 +748,10 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		d3AxialFake = d3Axial;
 		calculateSUVandCT();
 		parent.hideAllPopupMenus();
+/*		String tmp = "Ax= "+ ChoosePetCt.round10(d3Axial).toString() +
+			", Cor= " + ChoosePetCt.round10(d3Coronal).toString() +
+			", Sag= "  + ChoosePetCt.round10(d3Sagital).toString();
+		IJ.log(tmp);*/
 		repaint();
 	}
 
@@ -996,7 +1018,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		if( resizeCnt < 2 ) {
 			if(++resizeCnt == 2) parent.fitWindow();
 		}
-		double petSag, scl2=1, scl1 = getScale();
+		double dAx0, petSag, scl2=1, scl1 = getScale();
 		int i, ctPos, numGate, numFrm, gateOffset = 0;
 		Point pt1 = new Point(0, 0);
 		numGate = d3Pipe.data1.numTimeSlots;
@@ -1035,10 +1057,17 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			}
 		}
 
+		dAx0 = d3Axial;
+		if( dCnvt < 1) dAx0 *= dCnvtCor;
 		g.setColor(Color.green);
-		drawMarkers(g, JFijiPipe.DSP_AXIAL, d3Sagital, d3Coronal, scl1);
-		drawMarkers(g, JFijiPipe.DSP_CORONAL, d3Sagital, d3Axial, scl1);
-		if( !showMip) drawMarkers(g, JFijiPipe.DSP_SAGITAL, d3Coronal, d3Axial, scl1);
+//		Double sag0 = d3Sagital;
+//		IJ.log("d3Sagital: " + sag0.toString());
+		drawMarkers(g, JFijiPipe.DSP_AXIAL, d3Sagital, d3Coronal*dCnvt, scl1);
+//		drawMarkers(g, JFijiPipe.DSP_AXIAL, d3Sagital, d3Coronal, scl1);
+		drawMarkers(g, JFijiPipe.DSP_CORONAL, d3Sagital, dAx0, scl1);
+//		drawMarkers(g, JFijiPipe.DSP_CORONAL, d3Sagital, d3Axial, scl1);
+		if( !showMip) drawMarkers(g, JFijiPipe.DSP_SAGITAL, d3Coronal*dCnvt, dAx0, scl1);
+//		if( !showMip) drawMarkers(g, JFijiPipe.DSP_SAGITAL, d3Coronal*dCnvt, d3Axial, scl1);
 		drawBrownFat(g);
 		drawAnnotations(g);
 		g.setColor(Color.red);
@@ -1087,15 +1116,30 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		if( indx == JFijiPipe.DSP_AXIAL) {
 			i = x1 = 0;
 			if( d3Pipe.zoom1 > 1.0) i = 3;
-			h2 = ChoosePetCt.round(d3Pipe.data1.height * scale * d3Pipe.getZoom(0));
+			h2 = ChoosePetCt.round(d3Pipe.data1.height * d3Pipe.data1.y2XMri * scale * dCnvt * d3Pipe.getZoom(0));
 			offY = ChoosePetCt.round(sz1.width * d3Pipe.multYOff * scale);
 		} else {
-			h2 = ChoosePetCt.round(d3Pipe.data1.numFrms * scale * d3Pipe.getZoom(2));
+			h2 = ChoosePetCt.round(d3Pipe.data1.numFrms * dCnvtCor * scale * d3Pipe.getZoom(2));
 			x1 = w1;
 		}
 		if( indx == JFijiPipe.DSP_SAGITAL) x1 = w1*2;
 		if( h2 < h1) h1 = h2;
-		Point pt2 = d3Pipe.pos2Scrn(pt1, scale, i, indx, intMode);
+		Point pt2 = d3Pipe.pos2Scrn(pt1, scale, i, indx, false);
+		switch( indx) {
+/*			case JFijiPipe.DSP_SAGITAL:
+				if(!d3Pipe.isConverted()) break; // usual case....
+//				pt2.x = ChoosePetCt.round(d3Pipe.outUnclipped*dCnvt);
+				// fall through to coronal
+
+			case JFijiPipe.DSP_CORONAL:
+				if( dCnvt < 1) pt2.y *= dCnvtCor;
+				break;*/
+
+			case JFijiPipe.DSP_AXIAL:
+//				pt2.y *= dCnvt;
+//				pt2.y = ChoosePetCt.round(d3Pipe.saveRaw.y * dCnvt);
+				break;
+		}
 		Point[] p4 = new Point[4];
 		for( i=0; i<4; i++) p4[i] = new Point();
 		for( i=0; i<2; i++) {
@@ -1169,7 +1213,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		PetCtPanel origCaller = petFrm.getPetCtPanel1();
 		BrownFat bfDlg = origCaller.bfDlg;
 		if( bfDlg == null) {
-			BrownFat bf1 = BrownFat.instance;
+			BrownFat bf1 = BrownFat.getInstance();
 			if( bf1 == null) return;
 			bf1.drawOther3Data(g, this, origCaller);
 			return;
@@ -1208,16 +1252,20 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 	}
 
 	double updateMultYOff(boolean loading) {
-		double multYOff = 0, zoomY = 1.0, mult1;
-		int width = d3Pipe.data1.width;
-		int height = ChoosePetCt.round(d3Pipe.data1.width * d3Pipe.zoom1);
-		int num = ChoosePetCt.round(d3Pipe.data1.numFrms * d3Pipe.zoomX * d3Pipe.data1.y2xFactor / d3Pipe.data1.numTimeSlots);
+		double multYOff = 0, zoomY = 1.0, mult1, wid1, height;
+		double width = d3Pipe.data1.width;
+		double num = d3Pipe.data1.numFrms * d3Pipe.getZF() * d3Pipe.data1.y2XMri / d3Pipe.data1.numTimeSlots;
 		Dimension sz1 = getSize();
+		wid1 = width;
+		if( dCnvt > 2) {
+			wid1 = d3Pipe.data1.height * dCnvt;
+		}
+		height = wid1 *  d3Pipe.zoom1;
 		saveHeight = sz1.height;
-		if( num > width) {
+		if( num > wid1) {
 			if( height >= num) height = num;
-			multYOff = 0.5 * (num-height)/width;
-			zoomY = ((double) height) / width;
+			multYOff = 0.5 * (num-height)/wid1;
+			zoomY = ((double) height) / wid1;
 		}
 		if(!loading && multYOff > 0) {	// while loading getSize isn't the final value
 			Dimension sz0 = getWindowDim(d3Pipe);
@@ -1226,6 +1274,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			multYOff -= 1.0-mult1;
 			if( multYOff < 0) multYOff = 0;
 		}
+		if( dCnvt < 0.2) multYOff = 0;
 		d3Pipe.multYOff = multYOff;
 		d3Pipe.zoomY = zoomY;
 		if(ct4fused != null) {
@@ -1289,7 +1338,8 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		int width1, heigh0, heigh1;
 		width1 = pipe1.data1.width;
 		heigh1 = ChoosePetCt.round(pipe1.data1.height * pipe1.data1.y2XMip * pipe1.data1.y2XMri);
-		scale0 = pipe1.zoomX * pipe1.data1.y2xFactor * pipe1.data1.y2XMri;
+		scale0 = pipe1.zoomX * pipe1.data1.y2xFactor * pipe1.data1.y2XMri * dCnvtCor;
+		if( dCnvt < 1.0) heigh1 *= dCnvt;
 		heigh0 = ChoosePetCt.round(pipe1.data1.numFrms * scale0 / pipe1.data1.numTimeSlots);
 		if( heigh1 < heigh0) heigh1 = heigh0;
 		sz1 = new Dimension(width1*3, heigh1);

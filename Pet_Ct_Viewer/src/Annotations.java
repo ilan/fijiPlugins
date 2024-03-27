@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.prefs.Preferences;
@@ -75,6 +74,7 @@ public class Annotations extends javax.swing.JDialog {
 		jRadSaveMemory.setSelected(true);
 		m_dirtyFlg = false;
 		jLabz.setText(" ");
+//		parPanel.tstByteBuff();
 		fillStrings();
 		radButAction(1);
 		setActiveArrow(0);
@@ -260,11 +260,12 @@ public class Annotations extends javax.swing.JDialog {
 	// in StackOverflow is to suppress the warning as there is no clean solution.
 @SuppressWarnings("unchecked")
 	void readFiles(int indx) {
-		byte[] inByt;
-		ByteBuffer buf8 = ByteBuffer.allocate(8);
-		buf8.order(ByteOrder.LITTLE_ENDIAN);
-		ByteBuffer buf2 = ByteBuffer.allocate(2);
-		buf2.order(ByteOrder.LITTLE_ENDIAN);
+		byte[] inByt, buf2;
+//		ByteBuffer buf8 = ByteBuffer.allocate(8);
+//		buf8.order(ByteOrder.LITTLE_ENDIAN);
+//		ByteBuffer buf2 = ByteBuffer.allocate(2);
+//		buf2.order(ByteOrder.LITTLE_ENDIAN);
+		buf2 = new byte[2];
 		int i, size1;
 		String flName = getFileName(indx, true);
 		String tmp;
@@ -281,44 +282,42 @@ public class Annotations extends javax.swing.JDialog {
 		m_measurements[indx] = new ArrayList<>();
 		try {
 			FileInputStream in = new FileInputStream(fl1);
-			FileChannel fc = in.getChannel();
-			fc.read(buf8);
-			inByt = buf8.array();
+			inByt = new byte[8];
+			in.read(inByt);
 			tmp = new String(inByt);
-			size1 = myGetShort(fc, buf2);
+			size1 = myGetShort(in, buf2);
 			if( size1 != indx || !tmp.startsWith("ver 1.4")) {
 				in.close();
 				return;
 			}
 
 			if( indx==2) {
-				size1 = myGetShort(fc, buf2);
+				size1 = myGetShort(in, buf2);
 				for( i=0; i<size1; i++) {
 					myBookMark bm = new myBookMark();
-					bm.readData(fc);
+					bm.readData(in);
 					m_BMList.add(bm);
 				}
 			}
 
-			size1 = myGetShort(fc, buf2);
+			size1 = myGetShort(in, buf2);
 			for( i=0; i<size1; i++) {
 				myMeasure meas1 = new myMeasure();
-				meas1.readData(fc);
+				meas1.readData(in);
 				m_measurements[indx].add(meas1);
 			}
 
-			size1 = myGetShort(fc, buf2);
+			size1 = myGetShort(in, buf2);
 			for( i=0; i<size1; i++) {
 				myChina chin1 = new myChina();
-				chin1.readData(fc);
+				chin1.readData(in);
 				m_china[indx].add(chin1);
 			}
 
-			size1 = myGetShort(fc, buf2);
+			size1 = myGetShort(in, buf2);
 			if( size1 > 0) {
-				ByteBuffer bufTxt = ByteBuffer.allocate(size1);
-				fc.read(bufTxt);
-				inByt = bufTxt.array();
+				inByt = new byte[size1];
+				in.read(inByt);
 				m_floatingText[indx] = new String(inByt);
 			}
 			in.close();
@@ -450,10 +449,6 @@ public class Annotations extends javax.swing.JDialog {
 
 	void saveFiles(int indx) {
 		ReadOrthancSub orthSub;
-		ByteBuffer buf8 = ByteBuffer.allocate(8);
-		buf8.order(ByteOrder.LITTLE_ENDIAN);
-		ByteBuffer buf2 = ByteBuffer.allocate(2);
-		buf2.order(ByteOrder.LITTLE_ENDIAN);
 		try {
 			String tmp1, flName = getFileName(indx, false);
 			if( flName == null) return;
@@ -483,51 +478,65 @@ public class Annotations extends javax.swing.JDialog {
 			flName = getFileName(indx, true);
 			fl1 = new File(flName);
 			FileOutputStream out = new FileOutputStream(fl1);
-			FileChannel fc = out.getChannel();
 			String ver = "ver 1.4\0";	// make a c++ string, zero terminated
 			byte[] buf0 = ver.getBytes();
-			buf8.put(buf0);
-			buf8.position(0);
-			fc.write(buf8);
-			myPutShort(fc, buf2, indx);
+			out.write(buf0);
+			myPutShort(out, indx);
 
 			if( indx==2) {
-				myPutShort(fc, buf2, szBM);
+				myPutShort(out, szBM);
 				for( i=0; i<szBM; i++) {
 					myBookMark bm = m_BMList.get(i);
-					bm.writeData(fc);
+					bm.writeData(out);
 				}
 			}
 
-			myPutShort(fc, buf2, szMeas);
+			myPutShort(out, szMeas);
 			for( i=0; i<szMeas; i++) {
 				myMeasure meas1 = m_measurements[indx].get(i);
-				meas1.writeData(fc);
+				meas1.writeData(out);
 			}
 
-			myPutShort(fc, buf2, szChina);
+			myPutShort(out, szChina);
 			for( i=0; i<szChina; i++) {
 				myChina chin1 = m_china[indx].get(i);
-				chin1.writeData(fc);
+				chin1.writeData(out);
 			}
 
-			myPutShort(fc, buf2, szTxt);
+			myPutShort(out, szTxt);
 			if( szTxt > 0) {
-				ByteBuffer bufTxt = ByteBuffer.allocate(szTxt);
 				buf0 = m_floatingText[indx].getBytes();
-				bufTxt.put(buf0);
-				bufTxt.position(0);
-				fc.write(bufTxt);
+				out.write(buf0);
 			}
 			out.close();
 			if( isOrth) orthSub.write2Orth(fl1, 0);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
-	
-	private short myGetShort(FileChannel fc, ByteBuffer buf2) {
+
+	private short myGetShort(FileInputStream in1, byte[] buf2) {
 		short retVal = 0;
 		try {
-			buf2.position(0);
+			in1.read(buf2);
+			retVal = (short)(buf2[1]*256 + buf2[0]);
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
+		return retVal;
+	}
+
+	private void myPutShort(FileOutputStream in1, int val1) {
+		try {
+			byte[] b2 = new byte[2];
+			b2[0] = (byte)val1;
+			b2[1] = (byte)(val1/256);
+			in1.write(b2);
+		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
+	}
+
+/*	private short myGetShort(FileChannel fc, ByteBuffer buf2) {
+		short retVal = 0;
+		try {
+//			int lim = buf2.limit();
+//			lim = buf2.position();
+			buf2.clear();
 			fc.read(buf2);
 			retVal =  buf2.getShort(0);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
@@ -536,11 +545,11 @@ public class Annotations extends javax.swing.JDialog {
 
 	private void myPutShort(FileChannel fc, ByteBuffer buf2, int val1) {
 		try {
-			buf2.position(0);
+//			buf2.position(0);
 			buf2.putShort(0, (short) val1);
 			fc.write(buf2);
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
-	}
+	}*/
 
 	String getFileName(int indx, boolean fullName) {
 		String flName;
@@ -1046,6 +1055,7 @@ public class Annotations extends javax.swing.JDialog {
 				jComboText.addItem(line);
 			}
 			br.close();
+			fis.close();
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 
@@ -1225,12 +1235,16 @@ public class Annotations extends javax.swing.JDialog {
 			zval0 = (short) m_saveSlice1;
 		}
 
-		void readData(FileChannel fc) {
+		void readData(FileInputStream in1) {
 			try {
-				ByteBuffer buf = ByteBuffer.allocate(40);
+/*				ByteBuffer buf = ByteBuffer.allocate(40);
 				buf.order(ByteOrder.LITTLE_ENDIAN);
 				fc.read(buf);
-				buf.position(0);
+				buf.position(0);*/	// broken, only 1 read
+				byte[] byt1 = new byte[40];
+				in1.read(byt1);
+				ByteBuffer buf = ByteBuffer.wrap(byt1);
+				buf.order(ByteOrder.LITTLE_ENDIAN);
 				x[0] = buf.getInt();
 				y[0] = buf.getInt();
 				x[1] = buf.getInt();
@@ -1245,7 +1259,7 @@ public class Annotations extends javax.swing.JDialog {
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
 
-		void writeData(FileChannel fc) {
+		void writeData(FileOutputStream out) {
 			try {
 				ByteBuffer buf = ByteBuffer.allocate(40);
 				buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -1260,8 +1274,8 @@ public class Annotations extends javax.swing.JDialog {
 				buf.putShort(zval0);
 				buf.putShort((short)0);	// padding
 				buf.putDouble(val1);
-				buf.position(0);
-				fc.write(buf);
+				byte[] buf0 = buf.array();
+				out.write(buf0);
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
 
@@ -1585,12 +1599,22 @@ public class Annotations extends javax.swing.JDialog {
 		int x, y;
 		short z;
 
-		void readData(FileChannel fc) {
+		void readData(FileInputStream in1) {
 			try {
-				ByteBuffer buf = ByteBuffer.allocate(16);
+/*				ByteBuffer buf = ByteBuffer.allocate(16);
 				buf.order(ByteOrder.LITTLE_ENDIAN);
 				fc.read(buf);
-				buf.position(0);
+				buf.position(0);	// broken, single read
+				type = buf.get();
+				size = buf.get();
+				buf.getShort();	// padding
+				x = buf.getInt();
+				y = buf.getInt();
+				z = buf.getShort();*/
+				byte[] buf0 = new byte[16];
+				in1.read(buf0);
+				ByteBuffer buf = ByteBuffer.wrap(buf0);
+				buf.order(ByteOrder.LITTLE_ENDIAN);
 				type = buf.get();
 				size = buf.get();
 				buf.getShort();	// padding
@@ -1600,7 +1624,7 @@ public class Annotations extends javax.swing.JDialog {
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
 
-		void writeData(FileChannel fc) {
+		void writeData(FileOutputStream out) {
 			try {
 				ByteBuffer buf = ByteBuffer.allocate(16);
 				buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -1610,8 +1634,8 @@ public class Annotations extends javax.swing.JDialog {
 				buf.putInt(x);
 				buf.putInt(y);
 				buf.putInt(z);	// short -> int pads with 2 zeros
-				buf.position(0);
-				fc.write(buf);
+				byte[] buf0 = buf.array();
+				out.write(buf0);
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
 
@@ -1730,13 +1754,17 @@ public class Annotations extends javax.swing.JDialog {
 			width = new float[3];
 		}
 
-		void readData(FileChannel fc) {
+		void readData(FileInputStream in1) {
 			try {
 				int i;
-				ByteBuffer buf = ByteBuffer.allocate(44);
+/*				ByteBuffer buf = ByteBuffer.allocate(44);
 				buf.order(ByteOrder.LITTLE_ENDIAN);
 				fc.read(buf);
-				buf.position(0);
+				buf.position(0);	// broken*/
+				byte[] buf0 = new byte[44];
+				in1.read(buf0);
+				ByteBuffer buf = ByteBuffer.wrap(buf0);
+				buf.order(ByteOrder.LITTLE_ENDIAN);
 				offst = buf.getInt();
 				type = buf.getInt();
 				zoomIndx = buf.getInt();
@@ -1762,7 +1790,7 @@ public class Annotations extends javax.swing.JDialog {
 			setLevelWidth(2, parPanel.mipPipe, winMax);
 		}
 
-		void writeData(FileChannel fc) {
+		void writeData(FileOutputStream out) {
 			try {
 				int i;
 				ByteBuffer buf = ByteBuffer.allocate(44);
@@ -1774,8 +1802,8 @@ public class Annotations extends javax.swing.JDialog {
 				for( i=0; i<3; i++) buf.putFloat(width[i]);
 				buf.putInt(pan.x);
 				buf.putInt(pan.y);
-				buf.position(0);
-				fc.write(buf);
+				byte[] buf0 = buf.array();
+				out.write(buf0);
 			} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 		}
 

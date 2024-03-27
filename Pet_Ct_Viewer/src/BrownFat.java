@@ -3,7 +3,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.io.FileInfo;
 import ij.io.Opener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -26,14 +25,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.OutputStream;
-import static java.lang.Integer.parseInt;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
@@ -48,7 +44,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import net.imagej.ops.OpService;
 import org.scijava.vecmath.Point2d;
 
 /*
@@ -63,10 +58,23 @@ import org.scijava.vecmath.Point2d;
  */
 public class BrownFat extends javax.swing.JDialog implements WindowFocusListener {
 
-    /** Creates new form BrownFat
+	private static BrownFat instanc = null;
+
+	synchronized public static BrownFat getInstance() {
+		return instanc;
+	}
+
+	public static BrownFat makeNew(java.awt.Frame parent) {
+		if( instanc != null) return instanc;
+
+		instanc = new BrownFat(parent, false);
+		return instanc;
+	}
+
+	/** Creates new form BrownFat
 	 * @param parent
 	 * @param modal */
-    public BrownFat(java.awt.Frame parent, boolean modal) {
+    private BrownFat(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 		init0(parent);
@@ -80,7 +88,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 
 	private void init() {
 		int val;
-		instance = this;
 		allowDelete = false;
 		bf.nifListSz = 0;
 		elementList.add(jButTrash);
@@ -191,7 +198,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		WindowManager.removeWindow(this);
 		bf.parentPet.repaintAll();
 		saveRegistryValues();
-		instance = null;
+		instanc = null;
 		killMe = true;
 		super.dispose();
 	}
@@ -1548,8 +1555,19 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				srcZ = 1;
 				break;
 		}
+//		logTimeDiff(0);
+		numBadMip = 0;
 		drawMipSub(g, false, currXY, srcX, srcY, srcZ, pointDiameter);
+//		logTimeDiff(20);
 		drawMipSub(g, true, currXY, srcX, srcY, srcZ, pointDiameter);
+//		logTimeDiff(30);
+		if( numBadMip > 0) {
+			String tmp1 = "There are " + numBadMip + " blue dots not showing.\n";
+			tmp1 += "The index of the first missing blue dot is: " + badIndx +"\n";
+			tmp1 += "Try to switch to a different view: coronal, sagital or axial.\n";
+			tmp1 += "This may solve the problem. Then you can switch back again.";
+			IJ.log(tmp1);
+		}
 	}
 	
 	private void drawMipSub(Graphics2D g, boolean red, JFijiPipe.mipXYentry currXY,
@@ -1571,40 +1589,61 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		zlo = currXY.zlo;
 		pointDia2 = pointDiameter / 2;
 		widthX = (int)(scl1 * bf.parentPet.petPipe.data1.width);
-		for( j = 0; j < numPnt; j++) {
-			j1 = j;
-			if( red) j1 = bf.redPoints[j];
-			z = getVolPoint(srcZ, j1);
-			x = getVolPoint(srcX, j1);
-			y = getVolPoint(srcY, j1);
-			currSlice = currXY.xydata.get(z-zlo);
-			if(currSlice.zpos != z) {	// hopefully this will never happen
-				IJ.log("The z position doesn't match the volume position");
-				return;
-			}
-			wid = currSlice.xval.length;
-			xSlc = currSlice.xval;
-			ySlc = currSlice.yval;
-			for( i=0; i<wid; i++) {
-				if( x == xSlc[i] && y == ySlc[i]) break;
-			}
-			if( i >= wid) continue;	// point not in MIP - common case
-			if(changeColor) {
-				rc1 = getVolPoint(3, j1);	// labelIndx
-				if( rc0 != rc1) {
-					Color col2 = new Color(getDotColor(rc1));
-					g.setColor(col2);
+		try {
+//			rowIndx = 0;
+			for( j = 0; j < numPnt; j++) {
+				j1 = jIndx = j;
+//				if( jIndx == 1345)
+//					rowIndx = 0;
+				if( red) j1 = bf.redPoints[j];
+				z = getVolPoint(srcZ, j1);
+				x = getVolPoint(srcX, j1);
+				y = getVolPoint(srcY, j1);
+				if(z-zlo >= currXY.xydata.size()) {
+					addBadMip();
+					continue;
 				}
-				rc0 = rc1;
+				currSlice = currXY.xydata.get(z-zlo);
+				if(currSlice.zpos != z) {	// hopefully this will never happen
+					IJ.log("The z position doesn't match the volume position");
+					return;
+				}
+				wid = currSlice.xval.length;
+				xSlc = currSlice.xval;
+				ySlc = currSlice.yval;
+//				rowIndx = 1;
+				for( i=0; i<wid; i++) {
+					if( x == xSlc[i] && y == ySlc[i]) break;
+				}
+				if( i >= wid) continue;	// point not in MIP - common case
+//				if(j%50==0) logTimeDiff(j+10);
+//				rowIndx = 2;
+				if(changeColor) {
+					rc1 = getVolPoint(3, j1);	// labelIndx
+					if( rc0 != rc1) {
+						Color col2 = new Color(getDotColor(rc1));
+						g.setColor(col2);
+					}
+					rc0 = rc1;
+				}
+				pt1 = new Point2d(i, z);
+//				rowIndx = 3;
+				pt2 = bf.parentPet.mipPipe.pos2Scrn(pt1, scl1, 1, 2, true);
+				x = pt2.x - pointDia2;
+				y = pt2.y - pointDia2;
+//				rowIndx = 4;
+				g.fillOval(x+2*widthX, y, pointDiameter, pointDiameter);
 			}
-			pt1 = new Point2d(i, z);
-			pt2 = bf.parentPet.mipPipe.pos2Scrn(pt1, scl1, 1, 2, true);
-			x = pt2.x - pointDia2;
-			y = pt2.y - pointDia2;
-			g.fillOval(x+2*widthX, y, pointDiameter, pointDiameter);
+		} catch(Exception e) { 
+			ChoosePetCt.stackTrace2Log(e);
 		}
 	}
-	
+
+	int addBadMip() {
+		if( numBadMip++ <= 0) badIndx = jIndx;
+		return numBadMip;
+	}
+
 	int getVolPoint(int dst1, int indx) {
 		SUVpoints.SavePoint currPnt = bf.suvPnt.getPoint(indx);
 		switch( dst1) {
@@ -3000,6 +3039,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				jComboROIlabel.addItem(line);
 			}
 			br.close();
+			fis.close();
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e); }
 	}
 
@@ -3133,7 +3173,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		txt1 = txt1.trim();
 		jTextName.setText(txt1);
 		if( jTextSeriesName.getText().isEmpty()) {
-			seriesOnScreen = getSeries4dateID(styDate, bf.parentPet.parent.m_patID);
+			seriesOnScreen = Extra.getSeries4dateID(styDate, bf.parentPet.parent.m_patID);
 			jTextSeriesName.setText(setSeries3dName(seriesOnScreen));
 		}
 		activateBuildButton();
@@ -3322,92 +3362,10 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		}
 		ImagePlus myImage = new ImagePlus(windowName, stack);
 		myImage.copyScale(petPipe.data1.srcImage);
-		String meta1 = makeMetaData(seriesName, nSize, null,
+		String meta1 = Extra.makeMetaData(seriesName, nSize, null,
 				ChoosePetCt.SOPCLASS_TYPE_NM, bf.parentPet.petPipe.data1.metaData);
 		myImage.setProperty("Info", meta1);
 		myImage.show();
-	}
-	
-	static String makeMetaData(String seriesName, int numFrm, ImagePlus im1,
-			int SOPtype, String srcMeta) {
-		Date dt1 = new Date();
-		String SOP = generateSOPInstanceUID(dt1);
-		String modality = "SC";
-		String AET = ChoosePetCt.getDicomValue(srcMeta, "0002,0016");
-		if( AET == null) AET = "A123";
-		String SOPClass = ChoosePetCt.SOPCLASS_SC;
-		if( SOPtype == ChoosePetCt.SOPCLASS_TYPE_NM) {
-			SOPClass = ChoosePetCt.SOPCLASS_NM;
-			modality = "NM";
-		}
-		String meta = "0002,0002  Media Storage SOP Class UID: " + SOPClass + "\n";
-		// use transfer syntax explicit little endian
-		meta += "0002,0003  Media Storage SOP Inst UID: " + SOP + "\n" +
-			"0002,0010  Transfer Syntax UID: 1.2.840.10008.1.2.1\n" +
-			"0002,0012  Implementation Class UID: 1.2.16.840.1.113664.3\n" +
-			"0002,0013  Implementation Version Name: fijiMaker\n" +
-			"0002,0016  Source Application Entity Title: " + AET + "\n";
-		meta += "0008,0005  Specific Character Set: ISO_IR 100\n" +
-			"0008,0008  Image Type: DERIVED\\SECONDARY\n" +
-			"0008,0016  SOP Class UID: " + SOPClass + "\n";
-		meta += "0008,0018  SOP Instance UID: " + SOP + "\n";
-		meta = append2Meta("0008,0020", meta, srcMeta);
-		meta = append2Meta("0008,0021", meta, srcMeta);
-		meta = append2Meta("0008,0050", meta, srcMeta);
-//		meta = append2Meta("0008,0060", meta, srcMeta);
-		meta += "0008,0060  Modality: " + modality + "\n";
-		meta = append2Meta("0008,0080", meta, srcMeta);
-		meta = append2Meta("0008,0090", meta, srcMeta);
-		meta = append2Meta("0008,1030", meta, srcMeta);
-		meta += "0008,103E  Series Description: "+ seriesName +"\n";
-		meta = append2Meta("0010,0010", meta, srcMeta);
-		meta = append2Meta("0010,0020", meta, srcMeta);
-		meta = append2Meta("0010,0030", meta, srcMeta);
-		meta = append2Meta("0010,0040", meta, srcMeta);
-		meta = append2Meta("0010,1020", meta, srcMeta);
-		meta = append2Meta("0010,1030", meta, srcMeta);
-
-		meta = append2Meta("0018,0050", meta, srcMeta);
-		meta = append2Meta("0020,000D", meta, srcMeta);
-		meta += "0020,000E  Series Instance UID: " + SOP + ".1\n";
-		meta = append2Meta("0020,0032", meta, srcMeta);
-		meta = append2Meta("0020,0037", meta, srcMeta);
-		meta = append2Meta("0020,0052", meta, srcMeta);
-
-		meta += "0028,0002  Samples per Pixel: 3\n";
-		meta += "0028,0004  Photometric Interpretation: RGB\n";
-		meta += "0028,0008  Number of Frames: " + numFrm + "\n";
-		if( im1 != null) {
-			meta += "0028,0010 Rows: " + im1.getHeight() + "\n";
-			meta += "0028,0011 Columns: " + im1.getWidth() + "\n";
-		} else {
-			meta = append2Meta("0028,0010", meta, srcMeta);
-			meta = append2Meta("0028,0011", meta, srcMeta);
-		}
-		meta = append2Meta("0028,0030", meta, srcMeta);
-		meta += "0028,0100  Bits Allocated: 8\n";
-		meta += "0028,0101  Bits Stored: 8\n";
-		meta += "0028,0102  High Bit: 7\n";
-		return meta;
-	}
-	
-	static String append2Meta(String key, String metaIn, String srcMeta) {
-		String tmp1, meta = metaIn;
-		int k0 = srcMeta.indexOf(key);
-		if( k0 > 0) {
-			int k1 = srcMeta.indexOf("\n", k0);
-			if( k1 < 0) return meta;
-			tmp1 = srcMeta.substring(k0, k1+1);
-			meta += tmp1;
-		}
-		return meta;
-	}
-
-	static String generateSOPInstanceUID(Date dt0) {
-		Date dt1 = dt0;
-		if( dt1 == null) dt1 = new Date();
-		SimpleDateFormat df1 = new SimpleDateFormat("2.16.840.1.113664.3.yyyyMMdd.HHmmss", Locale.US);
-		return df1.format(dt1);
 	}
 	
 	String setSeries3dName( ArrayList<String> serNames) {
@@ -3430,44 +3388,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( i >= n) break;
 		}
 		return retName;
-	}
-	
-	static ArrayList<String> getSeries4dateID( Date inDate, String inID) {
-		ArrayList<String> retSer = new ArrayList<>();
-		int i, j;
-		ImagePlus img1;
-		String meta, ID0, ID1, serName;
-		Date serDate, serDate0 = null;
-		int [] fullList = WindowManager.getIDList();
-		if( fullList == null) return retSer;
-		ID0 = ChoosePetCt.compressID(inID);
-		for( i=0; i<fullList.length; i++) {
-			img1 = WindowManager.getImage(fullList[i]);
-			j = img1.getStackSize();
-			if( j <= 0) continue;
-			meta = ChoosePetCt.getMeta(1, img1);
-			if( meta == null) continue;
-			ID1 = ChoosePetCt.compressID(ChoosePetCt.getDicomValue(meta, "0010,0020"));
-			if( !ID0.equals(ID1)) continue;
-			serDate = ChoosePetCt.getStudyDateTime(meta, -1);
-			if( i==0) serDate0 = serDate;
-			else if( !isSameDay(serDate0, serDate)) continue;
-			serName = ChoosePetCt.getDicomValue(meta, "0008,103E");
-			if( serName == null || serName.isEmpty()) serName = ChoosePetCt.getDicomValue( meta, "0054,0400");
-			retSer.add(serName);
-		}
-		return retSer;
-	}
-	
-	static boolean isSameDay(Date dat0, Date dat1) {
-		int year, day;
-		GregorianCalendar cal = new GregorianCalendar();
-		cal.setTime(dat0);
-		year = cal.get(Calendar.YEAR);
-		day = cal.get(Calendar.DAY_OF_YEAR);
-		cal.setTime(dat1);
-		if( cal.get(Calendar.YEAR) != year) return false;
-		return cal.get(Calendar.DAY_OF_YEAR) == day;
 	}
 
 	int setPixelColor(int gray, Color inColor) {
@@ -3824,7 +3744,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			fos.write(out1);
 			fos.close();
 			if(myFileName == null) {
-				File fl2 = new File(getFileName(bf.parentPet.petPipe));
+				File fl2 = new File(Extra.getFileName(bf.parentPet.petPipe));
 				FileWriter fgr = new FileWriter(fl2);
 				out1 = fl1.getPath();
 				fgr.write(out1);
@@ -3837,45 +3757,6 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	
 	javax.swing.JTextField getJTextSUVlo() {
 		return jTextSUVlo;
-	}
-
-	static String getFileName(JFijiPipe pipe1) {
-		String flName;
-		ImagePlus srcImage;
-		if(pipe1 == null) return null;
-		srcImage = pipe1.data1.srcImage;
-		FileInfo info1 = srcImage.getOriginalFileInfo();
-		if( info1 == null) return null;
-		String path = info1.directory;
-		flName = path + "/graphic.brownFat.gr2";
-		return flName;
-	}
-	
-	static boolean isBfFile(String path) {
-		File fl1 = new File(path + "/graphic.brownFat.gr2");
-		return fl1.exists();
-	}
-	
-	static String getSpreadSheetName(JFijiPipe pipe1) {
-		String flName, flRet = null;
-		File fl1, fl2;
-//		if(flRet == null) return null;	// turn off check
-		FileReader rd1;
-		BufferedReader bf1;
-		try {
-			flName = getFileName(pipe1);
-			if( flName == null) return null;
-			fl1 = new File(flName);
-			if( !fl1.exists()) return null;
-			rd1 = new FileReader(fl1);
-			bf1 = new BufferedReader(rd1);
-			flName = bf1.readLine();
-			rd1.close();
-			flName = flName.trim();
-			fl2 = new File(flName);
-			if( fl2.exists()) flRet = flName;
-		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
-		return flRet;
 	}
 	
 	void loadStoredROIs( String flName, int numFrm) {
@@ -4110,6 +3991,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				}
 				
 			}
+			bf1.close();
 			rd1.close();
 //			if( getRoiSize(0)>0) {
 				bf.nifLimits = false;
@@ -5695,7 +5577,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( in1 == null) return;
 			int i = in1.indexOf(" - ");
 			if( i>0) {
-				labelIndx = parseInt(in1.substring(0, i));
+				labelIndx = Integer.parseInt(in1.substring(0, i));
 				tmp = in1.substring(i+3);
 			}
 			ROIlabel = tmp;
@@ -5788,7 +5670,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( in1 == null) return;
 			int i = in1.indexOf(" - ");
 			if( i>0) {
-				labelIndx = parseInt(in1.substring(0, i));
+				labelIndx = Integer.parseInt(in1.substring(0, i));
 				tmp = in1.substring(i+3);
 			}
 			ROIlabel = tmp;
@@ -5952,6 +5834,11 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	Poly3Save getPolyVectEntry(int indx) {
 		if( bf == null) return null;
 		return bf.polyVect.get(indx);
+	}
+
+	void logTimeDiff( int curPoint) {
+		if( bf == null) return;
+		bf.parentPet.logPoint(curPoint);
 	}
 
 	Nifti3 getNifListEntry(int indx) {
@@ -6808,7 +6695,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addComponent(jSpinShiftRoiNm, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabShiftMaxRoi)))
-                .addContainerGap(289, Short.MAX_VALUE))
+                .addContainerGap(352, Short.MAX_VALUE))
         );
         jShiftTabLayout.setVerticalGroup(
             jShiftTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -6826,7 +6713,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                     .addComponent(jSpinShiftY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabShiftZ)
                     .addComponent(jSpinShiftZ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(241, Short.MAX_VALUE))
+                .addContainerGap(230, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("follow up", jShiftTab);
@@ -6924,7 +6811,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(j3dTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(jTextSuvDisplay)
-                                    .addComponent(jTextCtStrength, javax.swing.GroupLayout.DEFAULT_SIZE, 41, Short.MAX_VALUE)))
+                                    .addComponent(jTextCtStrength)))
                             .addGroup(j3dTabLayout.createSequentialGroup()
                                 .addComponent(jButColorIn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -6941,7 +6828,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jCheckInvert)
                     .addComponent(jButBuild))
-                .addContainerGap(95, Short.MAX_VALUE))
+                .addContainerGap(151, Short.MAX_VALUE))
         );
         j3dTabLayout.setVerticalGroup(
             j3dTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -6973,7 +6860,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButBuild))
                     .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addContainerGap(88, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("3D", j3dTab);
@@ -7005,7 +6892,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                     .addComponent(jButMask)
                     .addComponent(jLabMask3)
                     .addComponent(jLabMask4))
-                .addContainerGap(134, Short.MAX_VALUE))
+                .addContainerGap(195, Short.MAX_VALUE))
         );
         jMaskLayout.setVerticalGroup(
             jMaskLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -7020,7 +6907,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addComponent(jLabMask4)
                 .addGap(16, 16, 16)
                 .addComponent(jButMask)
-                .addContainerGap(178, Short.MAX_VALUE))
+                .addContainerGap(160, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("mask", jMask);
@@ -7312,7 +7199,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                             .addComponent(jChRadInverseDiffMoment)
                             .addComponent(jChRadCM2)
                             .addComponent(jChRadCM1))))
-                .addContainerGap(85, Short.MAX_VALUE))
+                .addContainerGap(154, Short.MAX_VALUE))
         );
         jRadioLayout.setVerticalGroup(
             jRadioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -7391,7 +7278,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                     .addComponent(jButReport)
                     .addComponent(jButRoiPointList)
                     .addComponent(stdyLab))
-                .addContainerGap(406, Short.MAX_VALUE))
+                .addContainerGap(433, Short.MAX_VALUE))
         );
         jOtherLayout.setVerticalGroup(
             jOtherLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -7402,7 +7289,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
                 .addComponent(jButRoiPointList)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButReport)
-                .addContainerGap(214, Short.MAX_VALUE))
+                .addContainerGap(212, Short.MAX_VALUE))
         );
 
         j3Dtab.addTab("other", jOther);
@@ -7411,11 +7298,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 562, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 593, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 350, Short.MAX_VALUE)
+            .addComponent(j3Dtab, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -7773,13 +7662,12 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	PetCtPanel lockedParent = null;
 	Color dotColor = Color.blue;
 	double[] savePercentSUV = null, saveNestleSUV = null;
-	static BrownFat instance = null;
 	boolean killMe = false, drawingRoi = false, isPercent = false, isPer1, isDirty = true;
 	boolean isFat, isBone, isOther, isHeavy, OkShiftROI, isInit = false, allowDelete;
 	boolean isSliceLimits = true, isNiftiDirty = false, isSliceChange = false, isNestle = false;
 	boolean nextWarn = false, allowSliceChange = true, isCalcRadio = false, isDelete = false;
 	int RoiState = 1, lastPeakType;
-	OpService ops = null;
+//	OpService ops = null;
 	Poly3Save currPoly = null;
 	Point currMousePos = new Point(-1,0);
 	Date Roi1StartTime = null, NiftiStartTime = null;
@@ -7790,7 +7678,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 	int [] prevSpinValue = new int[4];
 	int [] maskParms = null;
 	int black, saveRoiPntIndx, saveRoiIndx;
-	int CtCenterVal;
+	int CtCenterVal, jIndx;
+	Integer numBadMip, badIndx;
 	double oc_suv, oc_ml;
 	ArrayList<Component> elementList = new ArrayList<>();
 	ArrayList<bfGroup> m_bf = new ArrayList<>();

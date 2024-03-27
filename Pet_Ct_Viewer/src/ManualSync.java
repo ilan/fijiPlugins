@@ -1,3 +1,5 @@
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.prefs.Preferences;
 import javax.swing.SpinnerNumberModel;
 
@@ -15,12 +17,12 @@ import javax.swing.SpinnerNumberModel;
  *
  * @author ilan
  */
-public class ManualSync extends javax.swing.JDialog {
+public class ManualSync extends javax.swing.JDialog implements WindowFocusListener {
 	PetCtFrame parent;
-	JFijiPipe refPipe, setPipe;
+	JFijiPipe refPipe, setPipe = null;
 	Preferences jPrefer;
-	boolean isMRI = true;
-	int currStoreIndx = 0;
+	boolean isMRI = true, isInit = true;
+	int currStoreIndx = 0, prevSliceType = 0;
 
 	/** Creates new form ManualSync
 	 * @param parent
@@ -34,43 +36,127 @@ public class ManualSync extends javax.swing.JDialog {
 	
 	private void init() {
 		jPrefer = parent.jPrefer;
+		addWindowFocusListener(this);
 		setPipes();
 		getStoreValues();
 	}
+
+	@Override
+	public void windowGainedFocus(WindowEvent we) {
+		if( setPipe == null) return;
+		int currSlcTyp = setPipe.sliceType;
+		if( prevSliceType == currSlcTyp) return;
+		prevSliceType = currSlcTyp;
+		if( isInit) return;
+		setXYX();
+		updateTitle();
+	}
+
+	@Override
+	public void windowLostFocus(WindowEvent we) {}
 	
 	void resetValues() {
-		double reflo, refhi, setlo, sethi;
 		int xShft, yShft, zShft;
 		setPipes();
-		refPipe.data1.mriOffZ = 0;
+		JFijiPipe.mriOff mri0 = setPipe.mri1;
+/*		refPipe.data1.mriOffZ = 0;
 		refPipe.mriOffX = refPipe.mriOffY = 0;
-		zShft = setPipe.data1.mriOffZ;
+		zShft = setPipe.data1.mriOffZ;*/
+		refPipe.mri1.init();
+		zShft = mri0.getOff(JFijiPipe.OFFZ);
 		if( isMRI && zShft != 0) {
 			parent.getPetCtPanel1().maybeSetMriOffset();
 			zShft = 0;
-			xShft = setPipe.mriOffX;
-			yShft = setPipe.mriOffY;
+//			xShft = setPipe.mriOffX;
+//			yShft = setPipe.mriOffY;
+			xShft = mri0.getOff(JFijiPipe.OFFX);
+			yShft = mri0.getOff(JFijiPipe.OFFY);
 		} else {
 			xShft = yShft = 0;
-			reflo = refPipe.data1.zpos.get(0);
-			setlo = setPipe.data1.zpos.get(0);
-			int n = refPipe.data1.numFrms;
-			refhi = refPipe.data1.zpos.get(n-1);
-			n = setPipe.data1.numFrms;
-			sethi = setPipe.data1.zpos.get(n-1);
-			zShft = (int) ((refhi - sethi + reflo - setlo)/(2*setPipe.data1.sliceThickness));
+			zShft = resetZ();
 		}
-		jSpinOffset.setValue(zShft);
+		jSpinOffZ.setValue(zShft);
 		jSpinOffY.setValue(yShft);
 		jSpinOffX.setValue(xShft);
-		jSpinOffSag.setValue(0);
 		jCheckIgnore.setSelected(false);
 		setPipeIgnore(false);
 		parent.repaint();
 	}
-	
+
+	private void updateTitle() {
+		String val;
+		switch( parent.getPetCtPanel1().m_sliceType) {
+			default:
+				val = "Axial";
+				break;
+
+			case JFijiPipe.DSP_CORONAL:
+				val = "Coronal";
+				break;
+
+			case JFijiPipe.DSP_SAGITAL:
+				val = "Sagittal";
+				break;
+		}
+		setTitle("Sync MRI data -> " + val);
+	}
+
+	private int resetZ() {
+		double reflo, refhi, setlo, sethi;
+		int zShft = 0;
+		switch (setPipe.sliceType) {
+			case JFijiPipe.DSP_AXIAL:
+				reflo = refPipe.getZpos(0);
+				setlo = setPipe.getZpos(0);
+				int n = refPipe.data1.numFrms;
+				refhi = refPipe.getZpos(n-1);
+				n = setPipe.data1.numFrms;
+				sethi = setPipe.getZpos(n-1);
+				zShft = ChoosePetCt.round((refhi - sethi + reflo - setlo)/(2*setPipe.data1.sliceThickness));
+				break;
+
+			case JFijiPipe.DSP_CORONAL:
+/*				reflo = refPipe.getPixelSpacing(1);
+				setlo = setPipe.getPixelSpacing(1);
+				refhi = refPipe.data1.height;
+				sethi = setPipe.data1.height;*/
+				break;
+
+			case JFijiPipe.DSP_SAGITAL:
+				break;
+		}
+		return zShft;
+	}
+
 	void offsetChanged(int indx) {
-		SpinnerNumberModel spin1 = (SpinnerNumberModel) jSpinOffset.getModel();
+		String tmp0 = "sync store ";
+		switch (indx) {
+			case 1:
+				setCurrSpin(jSpinOffX, JFijiPipe.OFFX);
+				break;
+
+			case 2:
+				setCurrSpin(jSpinOffY, JFijiPipe.OFFY);
+				break;
+
+			case 3:
+				setCurrSpin(jSpinOffZ, JFijiPipe.OFFZ);
+				break;
+
+			case 5:
+				break;
+		}
+		if( indx == 5) {
+			tmp0 = tmp0 + "ignore" + currStoreIndx;
+			boolean ignorXY = jCheckIgnore.isSelected();
+			jPrefer.putBoolean(tmp0, ignorXY);
+			setPipeIgnore(ignorXY);
+		} else {
+			tmp0 = tmp0 + "offs" + currStoreIndx;
+			String tmp1 = java.util.Arrays.toString(setPipe.mri1.mriOffs);
+			jPrefer.put(tmp0, tmp1);
+		}
+/*		SpinnerNumberModel spin1 = (SpinnerNumberModel) jSpinOffZ.getModel();
 		int i = spin1.getNumber().intValue();
 		setPipe.data1.mriOffZ = i;
 		setPipe.corSagShift = parent.getPetCtPanel1().getCorSagShift(setPipe);
@@ -95,17 +181,12 @@ public class ManualSync extends javax.swing.JDialog {
 		setPipe.mriOffX = i;
 		if(indx == 1) saveVal = i;
 
-		spin1 = (SpinnerNumberModel) jSpinOffSag.getModel();
-		i = spin1.getNumber().intValue();
-		setPipe.mriOffSag = i;
-		if(indx == 4) saveVal = i;
 		// now save value to registry
 		i = currStoreIndx;
 		String tmp1 = "sync store ";
 		if(indx ==1) tmp1 += "x";
 		if(indx ==2) tmp1 += "y";
 		if(indx ==3) tmp1 += "z";
-		if(indx ==4) tmp1 += "sag";
 		if(indx ==5) tmp1 += "ignore";
 		tmp1 = tmp1 + i;
 		if(indx ==5) {
@@ -115,9 +196,24 @@ public class ManualSync extends javax.swing.JDialog {
 		} else
 			jPrefer.putInt(tmp1, saveVal);
 		tmp1 = "sync store label" + i;
-		jPrefer.put(tmp1,jTextStore.getText());
+		jPrefer.put(tmp1,jTextStore.getText());*/
 		parent.getPetCtPanel1().updateDisp3Value(isMRI);
 		parent.repaint();
+	}
+
+	private int setCurrSpin(javax.swing.JSpinner cur1, int type) {
+		int i, wid2 = setPipe.data1.width / 2;
+		SpinnerNumberModel spin1 = (SpinnerNumberModel) cur1.getModel();
+		i = spin1.getNumber().intValue();
+		if( type == JFijiPipe.OFFX || type == JFijiPipe.OFFY) {
+			if( i < -wid2 || i > wid2) {
+				if( i < 0) i = -wid2;
+				else i = wid2;
+				cur1.setValue(i);
+			}
+		}
+		setPipe.mri1.setOff(type, i);
+		return i;
 	}
 	
 	private void setPipeIgnore(boolean ignoreXY) {
@@ -134,7 +230,6 @@ public class ManualSync extends javax.swing.JDialog {
 	void lableChanged() {
 		String tmp1 = "sync store label" + currStoreIndx;
 		jPrefer.put(tmp1,jTextStore.getText());
-		
 	}
 	
 	void getStoreValues() {
@@ -145,33 +240,62 @@ public class ManualSync extends javax.swing.JDialog {
 		String val1 = jPrefer.get(indxStr, null);
 		if( val1 == null) val1 = defVal;
 		jTextStore.setText(val1);
-		indxStr = "sync store z" + indx;
+/*		indxStr = "sync store z" + indx;
 		int ival1 = jPrefer.getInt(indxStr, 0);
-		jSpinOffset.setValue(ival1);
+		jSpinOffZ.setValue(ival1);
 		indxStr = "sync store x" + indx;
 		ival1 = jPrefer.getInt(indxStr, 0);
 		jSpinOffX.setValue(ival1);
 		indxStr = "sync store y" + indx;
 		ival1 = jPrefer.getInt(indxStr, 0);
-		jSpinOffY.setValue(ival1);
-		indxStr = "sync store sag" + indx;
-		ival1 = jPrefer.getInt(indxStr, 0);
-		jSpinOffSag.setValue(ival1);
+		jSpinOffY.setValue(ival1);*/
+		int offS[] = getStoreSub(indx);
+		if( offS != null && offS.length == 9)
+			System.arraycopy(offS,0,setPipe.mri1.mriOffs,0,9);
+		setXYX();
 		indxStr = "sync store ignore" + indx;
 		boolean ignore = jPrefer.getBoolean(indxStr, false);
 		jCheckIgnore.setSelected(ignore);
 		setPipeIgnore(ignore);
 	}
-	
+
+	private  void setXYX() {
+		JFijiPipe.mriOff m1 = setPipe.mri1;
+		jSpinOffX.setValue(m1.getOff(JFijiPipe.OFFX));
+		jSpinOffY.setValue(m1.getOff(JFijiPipe.OFFY));
+		jSpinOffZ.setValue(m1.getOff(JFijiPipe.OFFZ));
+		isInit = false;
+	}
+
+	private int [] getStoreSub(int indx) {
+		String indxStr = "sync store offs" + indx;
+		String tmp, val1 = jPrefer.get(indxStr, null);
+		if( val1 == null) return null;
+		val1 = val1.substring(1, val1.length()-1);
+		String[] split1 = val1.split(",");
+		int len1 = split1.length;
+		if ( len1 != 9) return null;	// should be 3*3 elements
+		int[] offS = new int[len1];
+		for( int i=0; i<len1; i++) {
+			tmp = split1[i].trim();
+			if( tmp.charAt(0) == '-') {
+				tmp = tmp.substring(1);
+				offS[i] = Integer.parseInt(tmp)*(-1);
+			} else {
+				offS[i] = Integer.parseInt(tmp);
+			}
+		}
+		return offS;
+	}
 	private void setPipes() {
 		PetCtPanel panel1 = parent.getPetCtPanel1();
-		if( isMRI) {
+//		if( isMRI) {
 			refPipe = panel1.getCorrectedOrUncorrectedPipe(false);
 			setPipe = panel1.getMriOrCtPipe();
-		} else {
+/*		} else {
 			setPipe = panel1.getCorrectedOrUncorrectedPipe(false);
 			refPipe = panel1.getMriOrCtPipe();
-		}
+		}*/
 	}
 
 	/** This method is called from within the constructor to
@@ -190,13 +314,11 @@ public class ManualSync extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         jButReset = new javax.swing.JButton();
         jLabZ = new javax.swing.JLabel();
-        jSpinOffset = new javax.swing.JSpinner();
+        jSpinOffZ = new javax.swing.JSpinner();
         jLabX = new javax.swing.JLabel();
         jSpinOffX = new javax.swing.JSpinner();
         jLabY = new javax.swing.JLabel();
         jSpinOffY = new javax.swing.JSpinner();
-        jLabSag = new javax.swing.JLabel();
-        jSpinOffSag = new javax.swing.JSpinner();
         jLabel7 = new javax.swing.JLabel();
         jButHelp = new javax.swing.JButton();
         jCheckIgnore = new javax.swing.JCheckBox();
@@ -223,9 +345,9 @@ public class ManualSync extends javax.swing.JDialog {
 
         jLabZ.setText("Z:");
 
-        jSpinOffset.addChangeListener(new javax.swing.event.ChangeListener() {
+        jSpinOffZ.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSpinOffsetStateChanged(evt);
+                jSpinOffZStateChanged(evt);
             }
         });
 
@@ -245,14 +367,6 @@ public class ManualSync extends javax.swing.JDialog {
             }
         });
 
-        jLabSag.setText("sag:");
-
-        jSpinOffSag.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSpinOffSagStateChanged(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -262,33 +376,27 @@ public class ManualSync extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabZ)
                 .addGap(1, 1, 1)
-                .addComponent(jSpinOffset, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinOffZ, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabX)
-                .addGap(3, 3, 3)
-                .addComponent(jSpinOffX, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinOffX, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabY)
-                .addGap(1, 1, 1)
-                .addComponent(jSpinOffY, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabSag)
-                .addGap(1, 1, 1)
-                .addComponent(jSpinOffSag, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(45, Short.MAX_VALUE))
+                .addComponent(jSpinOffY, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(jButReset)
                 .addComponent(jLabZ)
-                .addComponent(jSpinOffset, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinOffZ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabX)
                 .addComponent(jSpinOffX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabY)
-                .addComponent(jSpinOffY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jLabSag)
-                .addComponent(jSpinOffSag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jSpinOffY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         jLabel7.setText("Choose where to store data and set label:");
@@ -341,12 +449,12 @@ public class ManualSync extends javax.swing.JDialog {
                                 .addGap(18, 18, 18)
                                 .addComponent(jButHelp))
                             .addComponent(jLabel3)
+                            .addComponent(jLabel7)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel6)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jCheckIgnore))
-                            .addComponent(jLabel7))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                                .addComponent(jCheckIgnore)))
+                        .addGap(0, 36, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -385,10 +493,6 @@ public class ManualSync extends javax.swing.JDialog {
 		lableChanged();
     }//GEN-LAST:event_jTextStoreKeyReleased
 
-    private void jSpinOffSagStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinOffSagStateChanged
-		offsetChanged(4);
-    }//GEN-LAST:event_jSpinOffSagStateChanged
-
     private void jSpinOffYStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinOffYStateChanged
 		offsetChanged(2);
     }//GEN-LAST:event_jSpinOffYStateChanged
@@ -397,9 +501,9 @@ public class ManualSync extends javax.swing.JDialog {
 		offsetChanged(1);
     }//GEN-LAST:event_jSpinOffXStateChanged
 
-    private void jSpinOffsetStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinOffsetStateChanged
+    private void jSpinOffZStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinOffZStateChanged
         offsetChanged(3);
-    }//GEN-LAST:event_jSpinOffsetStateChanged
+    }//GEN-LAST:event_jSpinOffZStateChanged
 
     private void jButResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButResetActionPerformed
 		resetValues();
@@ -417,7 +521,6 @@ public class ManualSync extends javax.swing.JDialog {
     private javax.swing.JButton jButHelp;
     private javax.swing.JButton jButReset;
     private javax.swing.JCheckBox jCheckIgnore;
-    private javax.swing.JLabel jLabSag;
     private javax.swing.JLabel jLabX;
     private javax.swing.JLabel jLabY;
     private javax.swing.JLabel jLabZ;
@@ -427,10 +530,9 @@ public class ManualSync extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JSpinner jSpinOffSag;
     private javax.swing.JSpinner jSpinOffX;
     private javax.swing.JSpinner jSpinOffY;
-    private javax.swing.JSpinner jSpinOffset;
+    private javax.swing.JSpinner jSpinOffZ;
     private javax.swing.JSpinner jSpinStore;
     private javax.swing.JTextField jTextStore;
     // End of variables declaration//GEN-END:variables

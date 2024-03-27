@@ -320,7 +320,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		JFijiPipe d3Pipe = display3Panel1.d3Pipe;
 		int ser = d3Pipe.data1.seriesType;
 		if( ser == ChoosePetCt.SERIES_CT || ser == ChoosePetCt.SERIES_CT_VARICAM
-				|| ser == ChoosePetCt.SER_FORCE_CT) {
+				|| ser == ChoosePetCt.SER_FORCE_CT || d3Pipe.data1.isCt()) {
 			display3Panel1.d3Color = JFijiPipe.COLOR_GRAY;
 			jMenuAuto.setVisible(false);
 			jMenuBrain.setVisible(false);
@@ -497,6 +497,10 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		display3Panel1.showMip = !display3Panel1.showMip;
 		updateMenu();
 		display3Panel1.repaint();
+	}
+
+	void enableCineButton( boolean enab1) {
+		jButMip.setEnabled(enab1);
 	}
 
 	void setCineButtons(boolean vis1) {
@@ -937,7 +941,6 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("3 view");
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         jButZoom.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/zoom.gif"))); // NOI18N
@@ -1064,7 +1067,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
         });
         jMenuFile.add(jMenuSaveMip);
 
-        jMenuSaveSignificant.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuSaveSignificant.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         jMenuSaveSignificant.setText("Save Significant Image");
         jMenuSaveSignificant.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
