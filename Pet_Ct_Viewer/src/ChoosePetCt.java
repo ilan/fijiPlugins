@@ -688,10 +688,11 @@ public class ChoosePetCt extends javax.swing.JDialog implements TableModelListen
 				if( orientation != DicomFormat.ORIENT_AXIAL && orientation != ORIENT_AXIAL_ROTATED) return SERIES_UNKNOWN;
 				tmp = getDicomValue(meta, "0054,0400");
 				if( tmp == null) {
-					tmp = getDicomValue(meta, "0054,0202");	// last chance
+					tmp = getDicomValue(meta, "0054,0202");	// another chance
 					if( tmp == null) {
 						array1 = parseMultString(getDicomValue(meta, "0028,0051"));
-						if( !multStringContains( array1, "ATTN")) return SERIES_UNKNOWN;
+						if( !multStringContains( array1, "ATTN")
+							&& !multStringContains(array1, "UNIF")) return SERIES_UNKNOWN;
 						tmp = "STEP";
 					}
 					if( tmp.startsWith("STEP")) {

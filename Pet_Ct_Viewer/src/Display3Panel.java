@@ -555,7 +555,8 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		LoadLDataSub();
 		if( ct4fused != null) {
 			d3Pipe.imgPos[0].x = d3Pipe.imgPos[1].x = d3Pipe.imgPos[2].x = -1;
-			d3Pipe.aspect = aspect = 1.0 * d3Pipe.data1.height / d3Pipe.data1.width;
+//			d3Pipe.aspect = aspect = 1.0 * d3Pipe.data1.height / d3Pipe.data1.width;
+			d3Pipe.aspect = aspect = d3Pipe.getAspect();
 			d3Pipe.mriOffY0 = (1.0 - aspect)*d3Pipe.data1.width/2;
 			ct4fused.imgPos = d3Pipe.imgPos;
 			d3Pipe.offscrMode = ct4fused.offscrMode = 1;
@@ -582,7 +583,6 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 				ct4fused.corSagShift = ctPipe.corSagShift;
 				ct4fused.mriScl = ctPipe.mriScl;
 				ct4fused.avgSliceDiff = ctPipe.avgSliceDiff;	// usually 1.0
-				ct4fused.data1.zstart = ctPipe.data1.zstart;
 				ct4fused.sagCut = ctPipe.sagCut;
 				if( ctPipe.isConverted()) {
 					ct4fused.data1.zpos = null;
@@ -591,8 +591,8 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			}
 			// MRI data can be non square
 			JFijiPipe.JData cdata1 = ct4fused.data1;
-			aspect = cdata1.height * cdata1.y2XCnvt * cdata1.y2XMri / cdata1.width;
-			ct4fused.aspect = aspect;
+//			aspect = cdata1.height * cdata1.y2XCnvt * cdata1.y2XMri / cdata1.width;
+			ct4fused.aspect = aspect = ct4fused.getAspect();
 			ct4fused.mriOffY0 = (1.0 - aspect)*cdata1.width/2;
 			ct4fused.corFactor = (d3Pipe.aspect*d3Pipe.zoomX * cdata1.height) / (d3Pipe.data1.height * ct4fused.zoomX * aspect);
 			ct4fused.sagFactor = (d3Pipe.zoomX * cdata1.width) / (d3Pipe.data1.width * ct4fused.zoomX);
@@ -1274,7 +1274,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			multYOff -= 1.0-mult1;
 			if( multYOff < 0) multYOff = 0;
 		}
-		if( dCnvt < 0.2) multYOff = 0;
+		if( dCnvt < 0.2 || d3Pipe.data1.y2XMri > 1.1) multYOff = 0;
 		d3Pipe.multYOff = multYOff;
 		d3Pipe.zoomY = zoomY;
 		if(ct4fused != null) {

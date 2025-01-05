@@ -1019,8 +1019,9 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		dstPipe.mriOffY = cpyPipe.mriOffY;*/
 		d3frm.repaint();
 	}
-	
-	boolean maybeChangeUseXYShift(boolean useXY) {
+
+	// this routine is old and is no longer used. useXY=false
+/*	boolean maybeChangeUseXYShift(boolean useXY) {
 		boolean oldVal = petPipe.useShiftXY;
 		if( useXY == oldVal) return false;	// no change
 		petPipe.useShiftXY = useXY;
@@ -1052,7 +1053,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 			}
 		}
 		return true;
-	}
+	}*/
 	
 	void changeQuality(boolean qualityFlg) {
 		parent.qualityRendering = qualityFlg;
@@ -1135,7 +1136,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 //		IJ.log("Done load");
 		if( petPipe == null) return;	// error
-		petPipe.aspect = aspect = 1.0 * petPipe.data1.height/petPipe.data1.width;
+//		petPipe.aspect = aspect = 1.0 * petPipe.data1.height/petPipe.data1.width;
+		petPipe.aspect = aspect = petPipe.getAspect();
 // BN Lee has data Abdul Sawb bin Mohad which is 139*130
 		petPipe.mriOffY0 = (1.0 - aspect)*petPipe.data1.width/2;
 		maybeAddBlankSlicesInPet();
@@ -1189,7 +1191,9 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 		if( mriPipe != null) {
 			mriPipe.zoomX = setPetRelativeZoom(mriPipe);
-			mriPipe.mriScl = mriPipe.zoomX / ctPipe.zoomX;
+//			Double tmp2 = mriPipe.zoomX / ctPipe.zoomX;
+//			if( tmp2 != 1.0) IJ.log("mriScl = " + tmp2.toString());
+//			mriPipe.mriScl = mriPipe.zoomX / ctPipe.zoomX; // bad. don't use this
 			if( mriPipe.data1.isCt()) {
 				mriPipe.winLevel = ctPipe.winLevel;
 				mriPipe.winWidth = ctPipe.winWidth;
@@ -1212,11 +1216,11 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		if( petPipe.data1.pixelCenter != null && ctPipe.data1.pixelCenter != null) {
 			xshift = ctPipe.data1.pixelCenter[0] - petPipe.data1.pixelCenter[0];
 			yshift = ctPipe.data1.pixelCenter[1] - petPipe.data1.pixelCenter[1];
-			if( ctPipe.data1.isHalfPix != petPipe.data1.isHalfPix) {
+/*			if( ctPipe.data1.isHalfPix != petPipe.data1.isHalfPix) { // double correct, bad!
 				tmpd = ctPipe.data1.maybeFixShift() - petPipe.data1.maybeFixShift();
 				xshift += tmpd;
 				yshift += tmpd;
-			}
+			}*/
 		}
 		if( petRelativeZoom >= 1.0) {
 			// Norazizah shows a problem
@@ -1270,8 +1274,8 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 				// Abdul sawab bin Mohd has non square PET data
 				JFijiPipe.JData cdata1 = currPipe.data1;
 //				aspect = cdata1.height * cdata1.y2XMri / cdata1.width;
-				aspect = cdata1.height*cdata1.y2XCnvt * cdata1.y2XMri / cdata1.width;
-				currPipe.aspect = aspect;
+//				aspect = cdata1.height*cdata1.y2XCnvt * cdata1.y2XMri / cdata1.width;
+				currPipe.aspect = aspect = currPipe.getAspect();
 				currPipe.mriOffY0 = (1.0 - aspect)*cdata1.width/2;
 				currPipe.corFactor = (petPipe.aspect*petPipe.zoomX * cdata1.height) / (petPipe.data1.height * currPipe.zoomX * aspect);
 				currPipe.sagFactor = (petPipe.zoomX * cdata1.width) / (petPipe.data1.width * currPipe.zoomX);
@@ -1332,22 +1336,105 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}*/
 
+	ArrayList<Float> getZlimits(JFijiPipe p0) {
+		ArrayList<Float> ret = new ArrayList<>();
+		float first, last;
+		first = (float) p0.data1.zStart;
+		last =  (float) p0.data1.zEnd;
+		ret.add( first);
+		ret.add( last);
+		ret.add((float)((first+last)/2));	// mean
+		ret.add(Math.abs(last-first));	// size
+		return ret;
+	}
+
+	private double checkHalfPixel(double inShft, double mri0, double ct0) {
+		double chk0, chk1, chka = Math.abs(inShft);
+		double ret = inShft;
+		chk0 = 0.001 + mri0/2;
+		chk1 = 0.001 + ct0/2;
+		if( chka < chk0 || chka < chk1) ret = 0;
+		return ret;
+	}
+
+	// this calculates the MRI inset value, normally zero.
+	// type1 = 0 for X, or 1 for Y
+/*	private int setMriInset(int type1) {
+		double ctSpc, mriSpc, ctCm, mriCm, diff1;
+		int ctFull, mriFull;
+		if( mriPipe == null || ctPipe == null) return 0;
+		ctSpc = ctPipe.getPixelSpacing(type1);
+		mriSpc = mriPipe.getPixelSpacing(type1);
+		if( type1==1) {
+			ctFull = ctPipe.data1.height;
+			mriFull = mriPipe.data1.height;
+		} else {
+			ctFull = ctPipe.data1.width;
+			mriFull = mriPipe.data1.width;
+		}
+		ctCm = ctFull*ctSpc;
+		mriCm = mriFull*mriSpc;
+		diff1 = ctCm - mriCm;
+		if( diff1 <= 0) return 0;
+		return 0;
+	}*/
+
 	void maybeSetMriOffset() {
-		double halfPixel, xshift=0, yshift=0;
+		double xshift=0, yshift=0, zshift=0;
+		double ctSpcX, ctSpcY, mriSpcX, mriSpcY;
+		//int insetX, insetY;
 		if( mriPipe == null) return;
-		halfPixel = 0.001 + mriPipe.getPixelSpacing(0) / 2;
+		// BN Lee has some MRI data where the z values don't even overlap. Try to fix
+		ArrayList<Float> mriLm, ctLim;
+		ctLim = getZlimits(ctPipe);
+		mriLm = getZlimits(mriPipe);
+		double avSz2, difCen, difEdge, thickness;
+		thickness = mriPipe.data1.sliceThickness;
+		avSz2 = mriLm.get(3) + ctLim.get(3);
+		difCen = ctLim.get(2)-mriLm.get(2);
+		difEdge = ctLim.get(0) - mriLm.get(0);
+		ctSpcX = ctPipe.getPixelSpacing(0);
+		ctSpcY = ctPipe.getPixelSpacing(1);
+		mriSpcX = mriPipe.getPixelSpacing(0);
+		mriSpcY = mriPipe.getPixelSpacing(1);
+
+		// make an implicit assumption that only mri pixelCenter is contributing
 		if( ctPipe.data1.pixelCenter != null && mriPipe.data1.pixelCenter != null) {
 			xshift = mriPipe.data1.pixelCenter[0] - ctPipe.data1.pixelCenter[0];
 			yshift = mriPipe.data1.pixelCenter[1] - ctPipe.data1.pixelCenter[1];
 		}
-		if(Math.abs(xshift) < halfPixel) xshift = 0;
-		if(Math.abs(yshift) < halfPixel) yshift = 0;
-		xshift = xshift/mriPipe.getPixelSpacing(0);
-		yshift = yshift/mriPipe.getPixelSpacing(1);
-//		mriPipe.mriOffX = ChoosePetCt.round(xshift);
-//		mriPipe.mriOffY = ChoosePetCt.round(yshift);
-		mriPipe.mri1.setOffAll(JFijiPipe.OFFX,  ChoosePetCt.round(xshift));
-		mriPipe.mri1.setOffAll(JFijiPipe.OFFY,  ChoosePetCt.round(yshift));
+		//xshift = xshift/relSpaceX;
+		//yshift = yshift/relSpaceY;
+		xshift = checkHalfPixel(xshift, ctSpcX, mriSpcX);
+		yshift = checkHalfPixel(yshift, ctSpcY, mriSpcY);
+		//insetX = setMriInset(0);
+		// OFFTBLX and Y are mutable
+		mriPipe.mri1.setBegin(JFijiPipe.OFFTBLX, ChoosePetCt.round(xshift));
+		mriPipe.mri1.setBegin(JFijiPipe.OFFTBLY, ChoosePetCt.round(yshift));
+
+		if( Math.abs(difCen/avSz2) > 0.25) {
+			zshift = difCen/thickness;
+			difEdge /= thickness;
+			xshift = yshift = 0; // the data is bad, don't use these
+			// for Norimi Binti Musa, zero gives perfect alignment (data generated to fit)
+//			mriPipe.mri1.setBegin(JFijiPipe.OFFZ0,  ChoosePetCt.round(difEdge));
+			IJ.log("It looks like the MRI is not aligned to the CT (" +
+				mriPipe.data1.seriesName + ")\n" +
+				"You will have to manually align them.\n" +
+				"(Hint: Press Reset, then set axial Z=" + (int)difEdge +
+				"(head) or Z=" +  (int)(difCen/thickness) +"(body))");
+		}
+/*		double mriOffy0, aspect = mriPipe.getAspect();
+		IJ.log("x=" + ChoosePetCt.round10(xshift)+", y="+ ChoosePetCt.round10(yshift)+
+			", z="+ChoosePetCt.round10(zshift)+ 
+			" ,aspect="+aspect + " ,ratio=" + 1.0*petPipe.data1.width/mriPipe.data1.width);
+		mriOffy0 = mriPipe.mriOffY0;
+		if( mriOffy0 != 0) IJ.log("mriOffY0=" + mriOffy0);*/
+		mriPipe.mriOffX = ChoosePetCt.round(xshift)/2;	// mriOffX-Y are needed
+		mriPipe.mriOffY = ChoosePetCt.round(yshift)/2;
+		mriPipe.mri1.setBegin(JFijiPipe.OFFX,  ChoosePetCt.round(xshift));
+		mriPipe.mri1.setBegin(JFijiPipe.OFFY,  ChoosePetCt.round(yshift));
+		mriPipe.mri1.setSpecial(petPipe);
 	}
 
 	/**
@@ -1463,7 +1550,7 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	void layoutMip(Graphics2D g, boolean fused) {
 		if( isInitializing) return;	// still loading
 		if( mipPipe == null) return;
-		double upet=1.0, sagShift = 0, scl1 = getScalePet();
+		double upet=1.0, scl1 = getScalePet(), sagShift = 0;
 		if( scl1 == 0) return;	// maybe closed window?
 		if( lastScale != scl1) {
 			lastScale = scl1;
@@ -1776,30 +1863,49 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 	}
 
 	double updateMultYOff() {
-		double multYOff = 0, zoomY = 1.0;
+		double multYOff = 0, zoomY = 1.0, edge1, zm1 = 0;
+		boolean isMip = isMIPdisplay();
+		leaveIt:
 		if( getObliqueSliceType() == JFijiPipe.DSP_AXIAL && (!parent.autoResize || showMip)) {
 			int width = petPipe.data1.width;
 			int height = ChoosePetCt.round(petPipe.data1.width * petPipe.zoom1);
 			int num = ChoosePetCt.round(petPipe.data1.numFrms * petPipe.zoomX * petPipe.data1.y2xFactor / petPipe.data1.numTimeSlots);
 			if( num > width) {
-				if( height >= num) height = num;
+				if( height >= num) {
+					zm1 = petPipe.mri1.zm1;
+					if( zm1 == 0) {
+						edge1 = 1.0*(height-num)/width;
+						if( edge1 > 0.5) {
+							IJ.log("Sometimes switching to MIP display causes a zoom reset.");
+							setAllZoom(-1000);
+							break leaveIt;
+						}
+						zm1 = petPipe.zoom1;
+					}
+//					edge1 = 1.0*(height-num)/width;
+					height = num;
+				}
 				multYOff = 0.5 * (num-height)/width;
 				zoomY = ((double) height) / width;
 			}
 		}
 		petPipe.multYOff = multYOff;
 		petPipe.zoomY = zoomY;
+		if(isMip) petPipe.mri1.zm1 = zm1;
 		if( upetPipe != null) {
 			upetPipe.multYOff = multYOff;
 			upetPipe.zoomY = zoomY;
+			if(isMip) upetPipe.mri1.zm1 = zm1;
 		}
 		if( ctPipe != null) {
 			ctPipe.multYOff = multYOff;
 			ctPipe.zoomY = zoomY;
+			if(isMip) ctPipe.mri1.zm1 = zm1;
 		}
 		if( mriPipe != null) {
 			mriPipe.multYOff = multYOff;
 			mriPipe.zoomY = zoomY;
+			if(isMip) mriPipe.mri1.zm1 = zm1;
 		}
 		return multYOff;
 	}
@@ -2267,10 +2373,12 @@ public class PetCtPanel extends JPanel implements MouseListener, MouseMotionList
 		Point pt1 = new Point();
 //		pt1.x = shift2Ct(currPipe, pt1.x) - currPipe.mriOffX;
 //		pt1.y = shift2Ct(currPipe, pt1.y) - currPipe.mriOffY;
-		pt1.x = ChoosePetCt.round(shift2Ct1(currPipe, 0));
-		pt1.y = ChoosePetCt.round(shift2Ct1(currPipe, 1));
+		pt1.x = ChoosePetCt.round(shift2Ct1(currPipe, 0) - currPipe.mriOffX);
+		pt1.y = ChoosePetCt.round(shift2Ct1(currPipe, 1) - currPipe.mriOffY);
 		z1 = currPipe.findCtPos(petAxial, false);
 		if( z1 < 0 || pt1.x < 0 || pt1.y < 0) return;
+//		tmp = pt1.y;
+//		IJ.log("yshift = "+ tmp.toString());
 		currLine = currPipe.data1.getLineOfData(0, pt1.y, z1);
 		if( !currLine.goodData) return;
 		spac1 = currLine.pixelSpacing[0];

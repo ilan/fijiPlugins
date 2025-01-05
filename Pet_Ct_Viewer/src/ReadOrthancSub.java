@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.json.simple.JSONArray;
@@ -74,7 +75,7 @@ public class ReadOrthancSub {
 		HttpURLConnection uc = null;
 		String tmp;
 		try {
-			URL url = new URL(urlString);
+			URL url = Paths.get(urlString).toUri().toURL();
 			uc = (HttpURLConnection) url.openConnection();
 			HttpsTrustModifier.Trust(uc);
 			if( userPW != null) {

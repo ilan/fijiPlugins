@@ -255,12 +255,14 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		display3Panel1.d3Axial = outVal + m_obliqueShift.z;
 
 		inVal = par1.getPetCtPanel1().petCoronal;
-		outVal = petCtPipe.corFactor * inVal + petCtPipe.corOffset - petCtPipe.mriOffY;
+//		outVal = petCtPipe.corFactor * inVal + petCtPipe.corOffset - petCtPipe.mriOffY;
+		outVal = petCtPipe.corFactor * inVal + petCtPipe.corOffset + petCtPipe.mriOffY*2;
 		if( isChangeSub(display3Panel1.d3Coronal, outVal)) change = true;
 		display3Panel1.d3Coronal = outVal + ctFix * m_obliqueShift.y;
 
 		inVal = par1.getPetCtPanel1().petSagital;
-		outVal = petCtPipe.sagFactor * inVal + petCtPipe.sagOffset - petCtPipe.mriOffX;
+//		outVal = petCtPipe.sagFactor * inVal + petCtPipe.sagOffset - petCtPipe.mriOffX;
+		outVal = petCtPipe.sagFactor * inVal + petCtPipe.sagOffset - petCtPipe.mriOffX - petCtPipe.mriOffY;
 		if(  isChangeSub(display3Panel1.d3Sagital, outVal)) change = true;
 		display3Panel1.d3Sagital = outVal + ctFix * m_obliqueShift.x;
 

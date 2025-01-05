@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -1709,9 +1710,9 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		if( tmp.isEmpty()) return;
 		Integer[] inVal = new Integer[3];
 		Integer[] outVal;
-		inVal[1] = Integer.parseInt(tmp);
+		inVal[1] = Integer.valueOf(tmp);
 		tmp = jTextSliceHi.getText();
-		inVal[2] = Integer.parseInt(tmp);
+		inVal[2] = Integer.valueOf(tmp);
 		if( inVal[2] < inVal[1]) {	// what if the user put them in backwards?
 			inVal[0] = inVal[1];
 			inVal[1] = inVal[2];
@@ -3894,7 +3895,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				for( j=0; j<3; j++) {
 					k = currLine.indexOf(',');
 					tmp1 = currLine.substring(0, k).trim();
-					vals[j] = Integer.parseInt(tmp1);
+					vals[j] = Integer.valueOf(tmp1);
 					currLine = currLine.substring(k+1);
 				}
 				if( vals[2] > numFrm) {	// wierd case
@@ -4578,6 +4579,15 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		prefer.putInt("nifti hiz", val);
 	}
 
+	ArrayList<String> myTokens(String in) {
+		ArrayList<String> ret = new ArrayList<>();
+		StringTokenizer tokenizer = new StringTokenizer(in, " ");
+		while (tokenizer.hasMoreElements()) {
+			ret.add(tokenizer.nextToken());
+		}
+		return ret;
+	}
+
 	void doActualRunNifti(int type, String exDir) {
 		int i, j, width, height, numZ, numZ1, headerSz, frmSz, coef0;
 		int dataType = 2, bitPix = 8;
@@ -4797,7 +4807,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			if( tmp.startsWith("Linux")) OSchar = "L";
 			if( tmp.startsWith("Mac")) OSchar = "M";
 			checkIt = new File(mask);
-			String shape = IJ.getDirectory("imagej") + "lib/petct/shaping_elong" +OSchar + " ";
+			String shape = IJ.getDirectory("imagej") + "lib/petct/shaping_elong" + OSchar;
 			tmp = " " + jTextParms.getText() + " ";
 			if( jCheckDefLimits.isSelected()) {
 				tmp += xmin.toString() + " " + xmax.toString() + " ";
@@ -4811,10 +4821,13 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 				val = numZ1 - 1;
 				tmp += " 0 " + val.toString() + " ";
 			}
-			tmp = shape + src + tmp + mask;
+			tmp = src + tmp + mask;
 //			IJ.log(tmp);
 			if (!checkIt.exists()) {
-				Process myProc = Runtime.getRuntime().exec(tmp);
+				ArrayList<String> cmd = myTokens(shape + " " + tmp);
+				ProcessBuilder builder = new ProcessBuilder(cmd);
+				Process myProc = builder.start();
+//				Process myProc = Runtime.getRuntime().exec(shape + " " + tmp);
 				if( myProc == null) return;
 			}
 			while(true) {

@@ -12,7 +12,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
@@ -221,7 +221,7 @@ public class myWriteDicom {
 				j = flName.lastIndexOf(".");
 				if( j>0) flName = flName.substring(0, j) + ".dcm";
 				outFile1 = new File(parPath + flName);
-				doImgPlusSaveDataSub(i);
+				if( doImgPlusSaveDataSub(i) < 0) break;
 			}
 			IJ.showStatus("Done.");
 			IJ.showProgress(1.0);
@@ -250,7 +250,14 @@ public class myWriteDicom {
 		writeElement(2, 0x16, AE);
 	}
 
-	void doImgPlusSaveDataSub(int sliceNum) {
+	// ByteBuffer position() fails on java 8
+	ByteBuffer BBposition( ByteBuffer in, int val) {
+		Buffer b1 = in;
+		b1.position(val);
+		return (ByteBuffer)b1;
+	}
+
+	int doImgPlusSaveDataSub(int sliceNum) {
 		int pos1, pos2, group, element, i, numFrms, coef0 = 0;
 		int offst, depth, dataSz, sz1, j, k, tmpi1, group2 = 0;
 		int coefAll;
@@ -278,14 +285,13 @@ public class myWriteDicom {
 			depth = img1.getBitDepth();
 			coefAll = coef0 - rescaleIntercept;
 			outBuf = new byte[32768];
-			out1 = ByteBuffer.wrap(outBuf);
-			out1 = out1.order(ByteOrder.LITTLE_ENDIAN);
+			out1 = ByteBuffer.wrap(outBuf).order(ByteOrder.LITTLE_ENDIAN);
 			flOut1 = new FileOutputStream(outFile1);
-			out1.position(128);	// buffer was initialized to zero
+			out1 = BBposition(out1, 128);	// buffer was initialized to zero
 			out1.putInt(0x4d434944);	// DICM
 			flOut1.write(outBuf, 0, 132);
-			out1.position(0);
-			maybeAddDicomElements();
+			out1 = BBposition(out1, 0);
+			//maybeAddDicomElements();
 			if( isModify) tmpSOPInstanceUID = generateSOPInstanceUID();
 			for(j=0; j<goodDcmList.size(); j++) {
 				currElement = goodDcmList.get(j);
@@ -357,7 +363,7 @@ public class myWriteDicom {
 			if( depth == 32) dataSz /= 2;	// float data is illegal for PET
 
 			// group 0x7fe0 - pixel data
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 /*			if (explicitLE) {
 				intElement = dataSz*numFrms + 12;
 				writeElement(0x7fe0, 0, UL);
@@ -439,9 +445,10 @@ public class myWriteDicom {
 				StoreSCU.main(parms);
 			}
 		} catch (Exception e) { ChoosePetCt.stackTrace2Log(e);}
+		return 0;	// all OK
 	}
 
-	void maybeAddDicomElements() {
+/*	void maybeAddDicomElements() {	// this duplicates 0x10, 0x10 - no good
 		int i, j, n;
 		int[] chkVals = new int[] {0x10, 0x20, 0x30, 0x40, 0x1020, 0x1030};
 		checkDcmElement currElement, addElement;
@@ -467,7 +474,7 @@ public class myWriteDicom {
 			}
 			goodDcmList.add(i++, addElement);
 		}
-	}
+	}*/
 
 	void changeStrElement(int element) {
 		String tmp1 = null;
@@ -580,10 +587,10 @@ public class myWriteDicom {
 				if( !isEchoScu()) return;
 			}*/
 			outBuf = new byte[32768];
-			out1 = ByteBuffer.wrap(outBuf);
-			out1 = out1.order(ByteOrder.LITTLE_ENDIAN);
+			out1 = ByteBuffer.wrap(outBuf).order(ByteOrder.LITTLE_ENDIAN);
+			//out1 = out1.order(ByteOrder.LITTLE_ENDIAN);
 			flOut1 = new FileOutputStream(outFile1);
-			out1.position(128);	// buffer was initialized to zero
+			out1 = BBposition(out1, 128);	// buffer was initialized to zero
 			out1.putInt(0x4d434944);	// DICM
 			flOut1.write(outBuf, 0, 132);
 			if( specialType == 3) {	// raw data
@@ -605,7 +612,7 @@ public class myWriteDicom {
 			sz1 = w1*h1;
 			SOPInstanceUID = generateSOPInstanceUID();
 
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 			intElement = 0;	// for now, fix later
 			writeElement( 2, 0, UL);
 			writeElement(2, 1, OB);
@@ -625,11 +632,11 @@ public class myWriteDicom {
 			writeElement(2, 0x16, AE);
 			pos1 = out1.position();
 			i = pos1 - 12;	// don't count element 2,0, len=12
-			out1.position(8);
+			out1 = BBposition(out1, 8);
 			out1.putInt(i);	// update the group lenght
 			flOut1.write(outBuf, 0, pos1);
 
-			out1.position(0);	// start group 8 - general module
+			out1 = BBposition(out1, 0);	// start group 8 - general module
 			strElement = "DERIVED\\SECONDARY";
 			writeElement( 8, 8, CS);
 			strElement = SOPClassUID;
@@ -687,7 +694,7 @@ public class myWriteDicom {
 			flOut1.write(outBuf, 0, pos1);
 
 			// group 10 - patient module
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 			strElement = ChoosePetCt.getDicomValue(meta, "0010,0010");
 			writeElement(0x10, 0x10, PN);	// patient name
 			strElement = ChoosePetCt.getDicomValue(meta, "0010,0020");
@@ -700,7 +707,7 @@ public class myWriteDicom {
 			flOut1.write(outBuf, 0, pos1);
 
 			// group 20
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 			strElement = ChoosePetCt.getDicomValue(meta, "0020,000D");
 			if( strElement == null) strElement = SOPInstanceUID + ".1";
 			writeElement(0x20, 0xd, UI);	// study Instance UID
@@ -747,7 +754,7 @@ public class myWriteDicom {
 				dataSz1 = sz1;
 				if( bitsAlloc > 8) dataSz1 <<= 1;
 			}
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 			writeElement(0x28, 2, US);	// samples per pixel
 			writeElement(0x28, 4, CS);	// photometric interpretation
 			intElement = 0;
@@ -772,7 +779,7 @@ public class myWriteDicom {
 //			out1.position(0);
 			
 			// group 0x7fe0 - pixel data
-			out1.position(0);
+			out1 = BBposition(out1, 0);
 			dataSz = dataSz1 * numFrms;
 /*			if (explicitLE) {
 				intElement = dataSz + 12;
@@ -1007,7 +1014,7 @@ public class myWriteDicom {
 		return j>0 && j<k;
 	}
 
-	boolean isEchoScu() {
+/*	boolean isEchoScu() {	// never used, comment out
 		int j,k;
 		j = AETitle.indexOf('@');
 		k = AETitle.indexOf(':');
@@ -1035,7 +1042,7 @@ public class myWriteDicom {
 			return false;
 		}
 		return true;
-	}
+	}*/
 
 	// This write is used for SaveAs Dicom
 	public int writeDicomHeader(String path, String seriesName, int serNum, Object pat1) {
@@ -1128,7 +1135,7 @@ public class myWriteDicom {
 					if (explicitLE) {
 						out1.putInt(intElement);
 					} else {
-						out1.position(out1.position()-4);
+						out1 = BBposition(out1, out1.position()-4);
 						out1.putInt(intElement);
 					}
 				}
