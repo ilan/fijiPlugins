@@ -289,7 +289,7 @@ public class RenalPanel extends javax.swing.JPanel implements MouseListener,
 	}
 
 	ArrayList<Double> getTimeScale() {
-		ArrayList<Double> time1 = new ArrayList<Double>();
+		ArrayList<Double> time1 = new ArrayList<>();
 		int i, n = rPipe.data1.numFrms;
 		double delta;
 		delta = parent.frameDuration / 1000.0;
@@ -617,7 +617,7 @@ public class RenalPanel extends javax.swing.JPanel implements MouseListener,
 		XYSeriesCollection ds1 = new XYSeriesCollection();
 		XYSeries ser1;
 		ArrayList<Double> time1, yval1;
-		ArrayList<Integer> serColor = new ArrayList<Integer>();
+		ArrayList<Integer> serColor = new ArrayList<>();
 		int i, j, n=4, len1;
 		time1 = getTimeScale();
 		len1 = time1.size();
@@ -702,7 +702,7 @@ public class RenalPanel extends javax.swing.JPanel implements MouseListener,
 		double time0 = 0, yval0;
 		XYSeries ser1;
 		ArrayList<Double> time1, yval1, yval2;
-		ArrayList<Integer> serColor = new ArrayList<Integer>();
+		ArrayList<Integer> serColor = new ArrayList<>();
 		int i, j, n=2, len1;
 		time1 = getTimeScale();
 		len1 = time1.size();
@@ -1034,7 +1034,7 @@ public class RenalPanel extends javax.swing.JPanel implements MouseListener,
 		byte[] pixByte = null;
 		double pixSum;
 		short currShort;
-		ArrayList<Double> yval1 = new ArrayList<Double>();
+		ArrayList<Double> yval1 = new ArrayList<>();
 		Rectangle rc1 = poly1.getBounds();
 		int x, pixCnt, xmax, y, i, n = p1.data1.numFrms;
 		int off1, coef0, depth = p1.data1.depth;

@@ -124,7 +124,7 @@ public class ChooseGastric extends javax.swing.JDialog implements TableModelList
 		DefaultTableModel mod1;
 		mod1 = (DefaultTableModel) jTable1.getModel();
 		mod1.setNumRows(0);
-		imgList = new ArrayList<ImagePlus>();
+		imgList = new ArrayList<>();
 		ImagePlus img1;
 		String meta, patName, patID, study, series, tmp1;
 		Date date1;

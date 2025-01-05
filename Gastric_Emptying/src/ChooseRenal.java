@@ -65,7 +65,7 @@ public class ChooseRenal extends javax.swing.JDialog {
 		DefaultTableModel mod1;
 		mod1 = (DefaultTableModel) jTable1.getModel();
 		mod1.setNumRows(0);
-		imgList = new ArrayList<ImagePlus>();
+		imgList = new ArrayList<>();
 		ImagePlus img1;
 		BI_dbSaveInfo curr1;
 		String meta, patName, patID, study, series, tmp1;

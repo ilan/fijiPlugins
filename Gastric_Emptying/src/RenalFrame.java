@@ -278,7 +278,7 @@ public class RenalFrame extends javax.swing.JFrame {
 			Thread.sleep(100);
 			im1 = new Robot().createScreenCapture(rc1);
 			ImagePlus myImage = new ImagePlus("Renal clearance", im1);
-			String meta1 = BrownFat.makeMetaData("Renal clearance", 1, myImage,
+			String meta1 = Extra.makeMetaData("Renal clearance", 1, myImage,
 					ChoosePetCt.SOPCLASS_TYPE_SC, renalPanel1.rPipe.data1.metaData);
 			myImage.setProperty("Info", meta1);
 			myImage.show();

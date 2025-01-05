@@ -365,7 +365,7 @@ public class GastricPanel extends javax.swing.JPanel implements MouseListener, M
 		for( i=0; i<size1; i++) {
 			pix1[i] = (short) pixSum[i];
 		}
-		sumPipe.data1.pixels = new ArrayList<short []>();
+		sumPipe.data1.pixels = new ArrayList<>();
 		sumPipe.data1.pixels.add(pix1);
 		sumPipe.data1.numFrms = 1;
 		sumPipe.data1.maxPixel = maxVal;
@@ -597,7 +597,7 @@ public class GastricPanel extends javax.swing.JPanel implements MouseListener, M
 
 
 	ArrayList<Double> getYVals(int type1) {
-		ArrayList<Double> yval1 = new ArrayList<Double>();
+		ArrayList<Double> yval1 = new ArrayList<>();
 		float [] pixFloat = null;
 		short [] pixels = null;
 		byte [] pixByte = null;
@@ -673,7 +673,7 @@ public class GastricPanel extends javax.swing.JPanel implements MouseListener, M
 	}
 
 	ArrayList<Double> getTimeScale() {
-		ArrayList<Double> time1 = new ArrayList<Double>();
+		ArrayList<Double> time1 = new ArrayList<>();
 		int i, n = antPipe.data1.numFrms;
 		double currTime;
 		for( i = 1; i <= n; i++) {
