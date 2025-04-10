@@ -65,6 +65,7 @@ public class myWriteDicom {
 	FileOutputStream flOut1 = null;
 	int intElement, writeStatus = -1;
 	Integer newSeriesNum = -1, specialType = 0, subType = 0;
+	double scaleFactor = 1.0;
 	int m_delay = 500;
 	String newSeriesName = null, newSeriesUID = null;
 	String meta = null, AETitle = null;
@@ -345,6 +346,9 @@ public class myWriteDicom {
 					Integer tmpEl = img1.getHeight();
 					if( element == 0x11) tmpEl = img1.getWidth();
 					strElement = tmpEl.toString();
+				}
+				if( group == 0x28 && element == 0x30 && scaleFactor != 1.0) {
+					strElement = modifyScale( meta, "28,0030");
 				}
 				if( type1 == US || type1 == UL)
 					intElement = ChoosePetCt.parseInt(strElement);
@@ -1711,7 +1715,28 @@ public class myWriteDicom {
 		Integer rnd = (int)(Math.random()*1000000.);
 		return rnd.toString();
 	}
-	
+
+	int getIntElement( String meta, String key1) {
+		return ChoosePetCt.parseInt(ChoosePetCt.getDicomValue(meta, key1));
+	}
+
+	String modifyScale( String meta, String key1) {
+		String val;
+		int i;
+		val = ChoosePetCt.getDicomValue(meta, key1);
+		String[] token = val.split("\\\\");
+		Double[] val1 = new Double[token.length];
+		for( i=0; i<token.length; i++) {
+			val1[i] = Double.parseDouble(token[i])*scaleFactor;
+		}
+		val = "";
+		for( i=0; i<token.length-1; i++) {
+			val += val1[i].toString() + "\\";
+		}
+		val += val1[token.length-1].toString();
+		return val;
+	}
+
 	int getRescaleIntercept( String meta) {
 		return ChoosePetCt.parseInt(ChoosePetCt.getDicomValue(meta, "28,1052"));
 	}

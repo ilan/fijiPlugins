@@ -392,7 +392,7 @@ public class LungMIP extends javax.swing.JDialog {
 				insert.yOff = val0;
 				val1++;
 				zmax = pip1.data1.width;
-				sThick = pip1.data1.pixelSpacing[0];
+				sThick = pip1.data1.pixelSpacing[JFijiPipe.COL];
 				if( insert.type == JFijiPipe.DSP_SAGITAL) {
 					angle1 = 270;
 					xyChoice = 0;

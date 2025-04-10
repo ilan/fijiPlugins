@@ -76,6 +76,10 @@ public class PetOptions extends javax.swing.JDialog {
 		jCheckExCt.setSelected(prefer1.getBoolean("external ct file", true));
 		jCheckExMask.setSelected(prefer1.getBoolean("external mask", true));
 		jCheckExCtMask.setSelected(prefer1.getBoolean("external ctmask", true));
+
+		jChkMRIchop.setVisible(false);	// comment out 1 of these 2 lines
+//		jChkMRIchop.setSelected(prefer1.getBoolean("allow MRI chop", false));
+
 		curSpin = prefer1.getInt("significant spin val", 0);
 		SpinnerNumberModel spin1 = (SpinnerNumberModel) jSpinSig.getModel();
 		spin1.setValue(curSpin);
@@ -120,6 +124,7 @@ public class PetOptions extends javax.swing.JDialog {
 		prefer1.putBoolean("external ct file", jCheckExCt.isSelected());
 		prefer1.putBoolean("external mask", jCheckExMask.isSelected());
 		prefer1.putBoolean("external ctmask", jCheckExCtMask.isSelected());
+		prefer1.putBoolean("allow MRI chop", jChkMRIchop.isSelected());
 		int suvType = getSUVtype(2);
 		prefer1.putInt("SUV type2", suvType);
 		suvType = getSUVtype(1);	// this determines last peak type
@@ -346,6 +351,7 @@ public class PetOptions extends javax.swing.JDialog {
         jTextSignificantImage = new javax.swing.JTextField();
         jButBrowseSig = new javax.swing.JButton();
         jSpinSig = new javax.swing.JSpinner();
+        jChkMRIchop = new javax.swing.JCheckBox();
         jPanelExtended = new javax.swing.JPanel();
         jPanelNifti = new javax.swing.JPanel();
         jCheckForceTmp = new javax.swing.JCheckBox();
@@ -598,6 +604,8 @@ public class PetOptions extends javax.swing.JDialog {
                 .addComponent(jSpinSig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
+        jChkMRIchop.setText("Allow MRI chop");
+
         javax.swing.GroupLayout jPanelBasicLayout = new javax.swing.GroupLayout(jPanelBasic);
         jPanelBasic.setLayout(jPanelBasicLayout);
         jPanelBasicLayout.setHorizontalGroup(
@@ -652,24 +660,27 @@ public class PetOptions extends javax.swing.JDialog {
                         .addComponent(jLabelRight)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(maxFactor, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanelBasicLayout.createSequentialGroup()
-                        .addComponent(jLabelPgUpDn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextPgUpDn, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabelSlices)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckSUL)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckIgnoreSUV))
-                    .addGroup(jPanelBasicLayout.createSequentialGroup()
-                        .addComponent(jCheckQuality)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabmm))
                     .addComponent(jCheckInvertScroll)
-                    .addComponent(jPanelSigImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanelSigImage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(jPanelBasicLayout.createSequentialGroup()
+                            .addComponent(jCheckQuality)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabmm)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jChkMRIchop))
+                        .addGroup(jPanelBasicLayout.createSequentialGroup()
+                            .addComponent(jLabelPgUpDn)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jTextPgUpDn, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabelSlices)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jCheckSUL)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jCheckIgnoreSUV))))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanelBasicLayout.setVerticalGroup(
@@ -714,11 +725,12 @@ public class PetOptions extends javax.swing.JDialog {
                 .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jCheckQuality)
                     .addComponent(jTextZTri, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabmm))
+                    .addComponent(jLabmm)
+                    .addComponent(jChkMRIchop))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jCheckInvertScroll)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanelLuts, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanelLuts, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelBasicLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButSave)
@@ -799,7 +811,7 @@ public class PetOptions extends javax.swing.JDialog {
                     .addComponent(jLabMinPix))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jTextSUV, javax.swing.GroupLayout.DEFAULT_SIZE, 48, Short.MAX_VALUE)
+                    .addComponent(jTextSUV)
                     .addComponent(jTextMinVol))
                 .addContainerGap())
         );
@@ -873,7 +885,7 @@ public class PetOptions extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 597, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 597, Short.MAX_VALUE)
         );
 
         pack();
@@ -959,6 +971,7 @@ public class PetOptions extends javax.swing.JDialog {
     private javax.swing.JCheckBox jCheckSUL;
     private javax.swing.JCheckBox jCheckSphere;
     private javax.swing.JCheckBox jCheckSphere2;
+    private javax.swing.JCheckBox jChkMRIchop;
     private javax.swing.JComboBox jComboSUV;
     private javax.swing.JComboBox jComboSUV2;
     private javax.swing.JLabel jLabMinPix;

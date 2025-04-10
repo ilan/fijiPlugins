@@ -35,6 +35,7 @@ public class ManualSync extends javax.swing.JDialog implements WindowFocusListen
 	private void init() {
 		jPrefer = parent.jPrefer;
 		panel1 = parent.getPetCtPanel1();
+		jCheckTable.setVisible(false);	// not useful. Hide it...
 		addWindowFocusListener(this);
 		setPipes();
 		getStoreValues();
@@ -117,6 +118,7 @@ public class ManualSync extends javax.swing.JDialog implements WindowFocusListen
 			String tmp1 = java.util.Arrays.toString(setPipe.mri1.mriOffs);
 			jPrefer.put(tmp0, tmp1);
 		}
+		panel1.updatePipeInfo();
 		panel1.updateDisp3Value(isMRI);
 		parent.repaint();
 	}

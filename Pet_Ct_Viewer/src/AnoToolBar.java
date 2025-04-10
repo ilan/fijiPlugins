@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import org.scijava.vecmath.Point2d;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.vecmath.Point2d;
+import org.jogamp.vecmath.Point3d;
 
 /**
  *
@@ -688,7 +688,7 @@ public class AnoToolBar {
 		if( m_numTemp == 1) m_saveSlice1 = vals[VSLICE];
 		if( m_numTemp >= numPnts) {
 			getParentInfo();
-			pixelSize = pet1.data1.pixelSpacing[0];
+			pixelSize = pet1.data1.pixelSpacing[JFijiPipe.COL];
 			pixSizeZ = pet1.data1.sliceThickness;
 			z0 = x1 = pixelSize / Annotations.MEASURE_SCALE;
 			z1 = pixSizeZ / Annotations.MEASURE_SCALE;

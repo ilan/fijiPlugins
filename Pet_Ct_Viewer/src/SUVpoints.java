@@ -1,7 +1,7 @@
+import ij.ImageJ;
 import ij.ImagePlus;
 import java.util.ArrayList;
 import javax.swing.JCheckBox;
-import net.imagej.ImageJ;
 
 /**
  *
@@ -203,7 +203,7 @@ public class SUVpoints {
 		}
 		if( pntSave == null) return retVal;
 		retVal = pntSave.petVal;
-		sclX = sclY = pet1.data1.pixelSpacing[0];
+		sclX = sclY = pet1.data1.pixelSpacing[JFijiPipe.COL];
 		sclZ = Math.abs(pet1.data1.sliceThickness);
 		if( sclX <= 0 || sclZ == 0) return retVal;
 		if( sliceType != JFijiPipe.DSP_AXIAL) {

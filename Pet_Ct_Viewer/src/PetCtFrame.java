@@ -34,8 +34,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.scijava.vecmath.Point2d;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.vecmath.Point2d;
+import org.jogamp.vecmath.Point3d;
 
 /*
  * PetCtFrame.java
@@ -128,12 +128,14 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		triThick = jPrefer.getDouble("tricubic zmin", 2.0);
 		startAnnotations = jPrefer.getBoolean("start annotations", false);
 		ignoreSUV = jPrefer.getBoolean("ignore SUV", false);
+		allowMRIchop = jPrefer.getBoolean("allow MRI chop", false);
 		jMenuShowSource.setSelected(jPrefer.getBoolean("show source", true));
 		jMenuShowCursor.setSelected(jPrefer.getBoolean("show cursor", false));
 		SUVmm = jPrefer.getInt("SUV mm", 20);
 		SUVtype = jPrefer.getInt("SUV type", 0);
 		SUVmm2 = jPrefer.getInt("SUV mm2", 20);
 		SUVtype2 = jPrefer.getInt("SUV type2", 0);
+		jCheckTop.setSelected(jPrefer.getBoolean("set to top1", false));
 		if(getUserLUT(ChoosePetCt.EXT_BLUES_LUT) != null) {
 			tmp = jPrefer.get("ext blues name", "The blues");
 			jCheckBlues.setText(tmp);
@@ -192,6 +194,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		conferenceList.add(this);
 		if(extList == null) extList = new ArrayList<>();
 		addWindowFocusListener(this);
+		jPopupCtMenu.setInvoker(petCtPanel1);
+		jPopupMipMenu.setInvoker(petCtPanel1);
+		jPopupPetMenu.setInvoker(petCtPanel1);
+		jPopupFusedMenu.setInvoker(petCtPanel1);
 	}
 	
 	void initToolBar2() {
@@ -800,6 +806,17 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 
 	boolean isShowCursor() {
 		return jMenuShowCursor.isSelected();
+	}
+
+	boolean isTop() {
+		return jCheckTop.isSelected();
+	}
+
+	private void changeTop() {
+		boolean top = isTop();
+		jPrefer.putBoolean("set to top1", top);
+		petCtPanel1.updatePipeInfo();
+		petCtPanel1.repaint();
 	}
 
 	void maybeClearSource() {
@@ -1481,6 +1498,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
         jSeparator4 = new javax.swing.JSeparator();
         jCheck3Pet = new javax.swing.JCheckBoxMenuItem();
         jCheckAltROI = new javax.swing.JCheckBoxMenuItem();
+        jCheckTop = new javax.swing.JCheckBoxMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         jCheckInverse = new javax.swing.JCheckBoxMenuItem();
         jCheckGrayScale = new javax.swing.JCheckBoxMenuItem();
@@ -1657,6 +1675,15 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
             }
         });
         jPopupPetMenu.add(jCheckAltROI);
+
+        jCheckTop.setText("Top");
+        jCheckTop.setToolTipText("show axial at top of display");
+        jCheckTop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckTopActionPerformed(evt);
+            }
+        });
+        jPopupPetMenu.add(jCheckTop);
         jPopupPetMenu.add(jSeparator2);
 
         jCheckInverse.setSelected(true);
@@ -2541,6 +2568,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		petCtPanel1.MRIflg = !petCtPanel1.MRIflg;
 		hideAllPopupMenus();
 //		jMenuSyncMri.setEnabled(petCtPanel1.MRIflg);
+		petCtPanel1.calculateSUVandCT();
 		petCtPanel1.repaint();
 }//GEN-LAST:event_jCheckMriActionPerformed
 
@@ -2828,6 +2856,10 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 		resizeForm();
     }//GEN-LAST:event_formComponentResized
 
+    private void jCheckTopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckTopActionPerformed
+		changeTop();
+    }//GEN-LAST:event_jCheckTopActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -2871,6 +2903,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
     private javax.swing.JCheckBoxMenuItem jCheckMriLut;
     private javax.swing.JCheckBoxMenuItem jCheckReprojection;
     private javax.swing.JCheckBoxMenuItem jCheckSourceColor;
+    private javax.swing.JCheckBoxMenuItem jCheckTop;
     private javax.swing.JCheckBoxMenuItem jCheckUncorrected;
     private javax.swing.JCheckBoxMenuItem jCheckUsePetLut;
     private javax.swing.JCheckBoxMenuItem jCheckUsePetWin;
@@ -2953,7 +2986,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	boolean operatorNameFlg = false, sphereSUV = false, invertScroll = false;
 	boolean startROIs = false, startAnnotations = false, qualityRendering = false;
 	boolean isInitialized = false, ignoreSUV = false, isSetTitle = false;
-	boolean isFWHM = false;
+	boolean isFWHM = false, allowMRIchop = false;
 	Double sliceMaxFactor, sigmaGauss, triThick, loSave;
 //	int fuseFactor = 120;
 	Preferences jPrefer = null;
@@ -2972,7 +3005,7 @@ public class PetCtFrame extends javax.swing.JFrame implements KeyListener, Windo
 	static int keyIndex = 0;
 	int view3Slop = 6;
 	long currKeyTime;
-	boolean useBF = true;	// change to true
+	boolean top1 = false, useBF = true;	// change to true
 	static PetCtFrame gotFocus = null;
 	static ArrayList<Object> extList = null;
 	static ArrayList<Object> conferenceList = null;

@@ -6,8 +6,8 @@ import java.awt.geom.Line2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.*;
-import org.scijava.vecmath.Point2d;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.vecmath.Point2d;
+import org.jogamp.vecmath.Point3d;
 
 /*
  * Display3Panel.java
@@ -848,7 +848,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		if( pt1.y < 0 || pt1.y >= height1) return false;
 		currLine = d3Pipe.data1.getLineOfData(0, liney, z1);
 		if( !currLine.goodData) return false;
-		spac1 = currLine.pixelSpacing[0];
+		spac1 = currLine.pixelSpacing[JFijiPipe.COL];
 		if( spac1 <= 0) return false;
 		radpx = (radMm/spac1);
 		totalSum = curMax = 0;
@@ -932,7 +932,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			if( z1 < 0 || pt1.x < 0 || pt1.y < 0) return false;
 			currLine = ctPipe.data1.getLineOfData(0, pt1.y, z1);
 			if( !currLine.goodData) return false;
-			spac1 = currLine.pixelSpacing[0];
+			spac1 = currLine.pixelSpacing[JFijiPipe.COL];
 			if( spac1 <= 0) return false;
 			deltaX = (int) (4.0/spac1);
 			sumVals = sumLine(currLine, deltaX, pt1.x, -1, -1);
@@ -1015,8 +1015,8 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 
 	void drawAll(Graphics2D g) {
 		if( isInitializing) return;
-		if( resizeCnt < 2 ) {
-			if(++resizeCnt == 2) parent.fitWindow();
+		if( resizeCnt < 3 ) {	// do it twice, on 2 and 3
+			if(++resizeCnt > 1) parent.fitWindow();
 		}
 		double dAx0, petSag, scl2=1, scl1 = getScale();
 		int i, ctPos, numGate, numFrm, gateOffset = 0;
@@ -1040,18 +1040,18 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			d3Pipe.drawFusedImage(g, scl1, ct4fused, pt1, this, JFijiPipe.DSP_AXIAL);
 		}
 		petSag = d3Pipe.prepareCoronalSagital(d3Coronal, d3Sagital, d3Color, gateOffset, 0);
-		d3Pipe.drawCorSagImages(g, scl1, this, true);	// coronal
+		d3Pipe.drawCorSagImages(g, scl1, this,0);	// coronal
 		if( ct4fused != null) {
 			ct4fused.prepareCoronalSagital(d3Coronal, d3Sagital, d3FusedColor, 0, petSag);
-			ct4fused.drawCorSagImages(g, scl2, this, true);
+			ct4fused.drawCorSagImages(g, scl2, this, 0);
 			pt1.x = 1;
 			d3Pipe.drawFusedImage(g, scl1, ct4fused, pt1, this, JFijiPipe.DSP_CORONAL);
 		}
 		if( showMip) drawMip(g, scl1);
 		else {
-			d3Pipe.drawCorSagImages(g, scl1, this, false);	// sagital
+			d3Pipe.drawCorSagImages(g, scl1, this, 1);	// sagital
 			if( ct4fused != null) {
-				ct4fused.drawCorSagImages(g, scl2, this, false);
+				ct4fused.drawCorSagImages(g, scl2, this, 2);
 				pt1.x = 2;
 				d3Pipe.drawFusedImage(g, scl1, ct4fused, pt1, this, JFijiPipe.DSP_SAGITAL);
 			}
@@ -1118,6 +1118,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			if( d3Pipe.zoom1 > 1.0) i = 3;
 			h2 = ChoosePetCt.round(d3Pipe.data1.height * d3Pipe.data1.y2XMri * scale * dCnvt * d3Pipe.getZoom(0));
 			offY = ChoosePetCt.round(sz1.width * d3Pipe.multYOff * scale);
+			if( offY == 0) h2 = h1;
 		} else {
 			h2 = ChoosePetCt.round(d3Pipe.data1.numFrms * dCnvtCor * scale * d3Pipe.getZoom(2));
 			x1 = w1;
@@ -1255,6 +1256,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		double multYOff = 0, zoomY = 1.0, mult1, wid1, height;
 		double width = d3Pipe.data1.width;
 		double num = d3Pipe.data1.numFrms * d3Pipe.getZF() * d3Pipe.data1.y2XMri / d3Pipe.data1.numTimeSlots;
+//		double num1 = d3Pipe.numW();	// doesn't work for non-axial data
 		Dimension sz1 = getSize();
 		wid1 = width;
 		if( dCnvt > 2) {
@@ -1274,6 +1276,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 			multYOff -= 1.0-mult1;
 			if( multYOff < 0) multYOff = 0;
 		}
+		if( parent.isTop()) multYOff = 0;
 		if( dCnvt < 0.2 || d3Pipe.data1.y2XMri > 1.1) multYOff = 0;
 		d3Pipe.multYOff = multYOff;
 		d3Pipe.zoomY = zoomY;
@@ -1337,7 +1340,7 @@ public class Display3Panel extends JPanel implements MouseListener, MouseMotionL
 		double scale0;
 		int width1, heigh0, heigh1;
 		width1 = pipe1.data1.width;
-		heigh1 = ChoosePetCt.round(pipe1.data1.height * pipe1.data1.y2XMip * pipe1.data1.y2XMri);
+		heigh1 = ChoosePetCt.round(pipe1.data1.height * pipe1.data1.y2XMip * pipe1.data1.y2XMri * pipe1.yfactA);
 		scale0 = pipe1.zoomX * pipe1.data1.y2xFactor * pipe1.data1.y2XMri * dCnvtCor;
 		if( dCnvt < 1.0) heigh1 *= dCnvt;
 		heigh0 = ChoosePetCt.round(pipe1.data1.numFrms * scale0 / pipe1.data1.numTimeSlots);

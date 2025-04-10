@@ -45,7 +45,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import org.scijava.vecmath.Point2d;
+import org.jogamp.vecmath.Point2d;
 
 /*
  * BrownFat.java
@@ -405,6 +405,11 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 //		if( oldLast == bf.lastRoiVal) changedRoiChoice(true); // make it happen
 		m_bf.add(bf);
 //		IJ.log("m_bf ="+ m_bf.size());
+	}
+
+	private JFijiPipe getCurrCtPipe() {
+		JFijiPipe curr = bf.parentPet.getMriOrCtPipe();
+		return curr;
 	}
 
 	void setSpin0Val() {
@@ -1914,7 +1919,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		x1 = poly1.poly.xpoints[1];
 		y1 = poly1.poly.ypoints[1];
 		double xScale, yScale, zScale, radius;
-		xScale = yScale = pip0.data1.pixelSpacing[0];
+		xScale = yScale = pip0.data1.pixelSpacing[JFijiPipe.COL];
 		zScale = xScale * pip0.data1.y2xFactor;
 		sizeY = pip0.data1.height;
 		sizeZ = pip0.getNormalizedNumFrms();
@@ -2467,7 +2472,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 						break;
 				}
 				currLine = bf.parentPet.petPipe.data1.getLineOfData(angle1, depth, sliceNum+gateOffset);
-				ctSlice = bf.parentPet.ctPipe.findCtPos(sliceNum, false);
+				ctSlice = getCurrCtPipe().findCtPos(sliceNum, false);
 				for( k=0; k<width1; k++) {
 					if (currLine.pixels != null) petVal = currLine.pixels[k] * currLine.slope;
 					else petVal = currLine.pixFloat[k];
@@ -2782,7 +2787,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 						break;
 				}
 				currLine = petPipe.data1.getLineOfData(angle1, depth, sliceNum+gateOffset);
-				ctSlice = bf.parentPet.ctPipe.findCtPos(sliceNum, false);
+				ctSlice = getCurrCtPipe().findCtPos(sliceNum, false);
 				insideFlg = false;
 				for( k=0; k<width1; k++) {
 					isSpect = currLine.SUVfactor <= 0;
@@ -2975,7 +2980,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			}
 			if( useCT) {
 				if( prevPetZ != zMip) {
-					ctSlice = bf.parentPet.ctPipe.findCtPos(zMip, false);
+					ctSlice = getCurrCtPipe().findCtPos(zMip, false);
 					prevPetZ = zMip;
 				}
 				if( !isCtFat(ctSlice, val3[0], val3[1], suvAndCt, JFijiPipe.DSP_AXIAL, wideCT)) continue;
@@ -3051,7 +3056,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 //		int average1;
 		short val1;
 		boolean isSag = (type == JFijiPipe.DSP_SAGITAL);
-		JFijiPipe ctPipe = bf.parentPet.ctPipe;
+		JFijiPipe ctPipe = getCurrCtPipe();
 		double slope, rescaleIntercept = ctPipe.data1.shiftIntercept();
 		short[] data1 = ctPipe.data1.pixels.get(sliceNum);
 		slope = ctPipe.data1.getRescaleSlope(sliceNum);
@@ -3209,7 +3214,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 		activateBuildButton();
 		black = 255 << 24;
 		petPipe = bf.parentPet.petPipe;
-		ctPipe = bf.parentPet.ctPipe;
+		ctPipe = getCurrCtPipe();
 		ctWidth = ctPipe.data1.width;
 		zoomX = petPipe.zoomX;
 		width = petPipe.data1.width;
@@ -4669,7 +4674,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					break;
 
 				case 4:
-					pip0 = bf.parentPet.ctPipe;
+					pip0 = getCurrCtPipe();
 					dataType = 4;
 					bitPix = 16;
 					break;
@@ -4703,8 +4708,8 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			}
 			frmSz = width * height;
 			if(pip0.data1.pixelSpacing != null) {
-				spaceX = pip0.data1.pixelSpacing[0];
-				spaceY = pip0.data1.pixelSpacing[1];
+				spaceX = pip0.data1.pixelSpacing[JFijiPipe.COL];
+				spaceY = pip0.data1.pixelSpacing[JFijiPipe.ROW];
 			}
 			pixEdge = ChoosePetCt.parseMultFloat(ChoosePetCt.getDicomValue(pip0.data1.metaData, "0020,0032"));
 			if(pixEdge != null) {
@@ -5340,7 +5345,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 			out1 = "SUV, HU, x, y, z\n";
 			fos.write(out1);
 			orient = bf.parentPet.m_sliceType;
-			JFijiPipe ctPipe = bf.parentPet.ctPipe;
+			JFijiPipe ctPipe = getCurrCtPipe();
 //			double rescaleIntercept = ctPipe.data1.shiftIntercept();
 			short[] data1 = null;
 			width1 = ctPipe.data1.width;
@@ -5364,7 +5369,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 						break;
 				}
 				if( z0 != zprev) {
-					ctSlice = bf.parentPet.ctPipe.findCtPos(z0, false);
+					ctSlice = getCurrCtPipe().findCtPos(z0, false);
 					data1 = ctPipe.data1.pixels.get(ctSlice);
 					slope = ctPipe.data1.getRescaleSlope(ctSlice);
 					zprev = z0;
@@ -5827,7 +5832,7 @@ public class BrownFat extends javax.swing.JDialog implements WindowFocusListener
 					k++;	// number of actual slices
 				}
 				if( k>0) meanMax = meanMax / k;
-				vol1 = bf.parentPet.petPipe.data1.pixelSpacing[0] / 10;	// assume x=y
+				vol1 = bf.parentPet.petPipe.data1.pixelSpacing[JFijiPipe.COL] / 10;	// assume x=y
 				vol1 = vol1*vol1*vol1*bf.parentPet.petPipe.data1.y2xFactor*numPnt;
 				SUVmean = SUVtotal / numPnt;
 				SD = bf.suvPnt.calcSD(SUVmean);

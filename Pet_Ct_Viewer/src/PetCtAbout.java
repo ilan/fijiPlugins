@@ -80,7 +80,7 @@ public class PetCtAbout extends javax.swing.JDialog {
         jLabel11.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jLabel11.setText("Version:");
 
-        jLabVersion.setText("5.05");
+        jLabVersion.setText("5.12");
 
         jButClose.setText("Close");
         jButClose.addActionListener(new java.awt.event.ActionListener() {

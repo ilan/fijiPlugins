@@ -32,6 +32,15 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuSyncActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JCheckBoxMenuItem" name="jCheckTop">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Top"/>
+            <Property name="toolTipText" type="java.lang.String" value="Show axial at top of display"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckTopActionPerformed"/>
+          </Events>
+        </MenuItem>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator2">
         </Component>
         <MenuItem class="javax.swing.JMenuItem" name="jMenuAuto">

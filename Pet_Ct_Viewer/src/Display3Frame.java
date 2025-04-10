@@ -24,7 +24,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.scijava.vecmath.Point3d;
+import org.jogamp.vecmath.Point3d;
 
 /*
  * Display3Frame.java
@@ -79,7 +79,9 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 			display3Panel1.setBackground(new java.awt.Color(0, 0, 0));
 		}
 		display3Panel1.splitCursor = jPrefer.getBoolean("split cursor", false);
+		jCheckTop.setSelected(jPrefer.getBoolean("set to top3", false));
 		addWindowFocusListener(this);
+		jPopupD3.setInvoker(display3Panel1);
 	}
 
 	public boolean init1(ChoosePetCt dlg1) {
@@ -314,6 +316,10 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		sliceIn  = ChoosePetCt.round(inVal);
 		sliceOut = ChoosePetCt.round(outVal);
 		return sliceIn != sliceOut;
+	}
+
+	boolean isTop() {
+		return jCheckTop.isSelected();
 	}
 
 	void initFinish() {
@@ -757,6 +763,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
         jMenuMixReset = new javax.swing.JMenuItem();
         jCheckSplitCursor = new javax.swing.JCheckBoxMenuItem();
         jMenuSync = new javax.swing.JMenuItem();
+        jCheckTop = new javax.swing.JCheckBoxMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         jMenuAuto = new javax.swing.JMenuItem();
         jMenuBrain = new javax.swing.JMenuItem();
@@ -821,6 +828,15 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
             }
         });
         jPopupD3.add(jMenuSync);
+
+        jCheckTop.setText("Top");
+        jCheckTop.setToolTipText("Show axial at top of display");
+        jCheckTop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckTopActionPerformed(evt);
+            }
+        });
+        jPopupD3.add(jCheckTop);
         jPopupD3.add(jSeparator2);
 
         jMenuAuto.setText("Auto level");
@@ -1286,6 +1302,13 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
 		dcm1.writeLogMessage();
     }//GEN-LAST:event_jMenuSaveSignificantActionPerformed
 
+    private void jCheckTopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckTopActionPerformed
+		boolean top = isTop();
+		jPrefer.putBoolean("set to top3", top);
+		display3Panel1.updateMultYOff(false);
+		display3Panel1.repaint();
+    }//GEN-LAST:event_jCheckTopActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private Display3Panel display3Panel1;
@@ -1307,6 +1330,7 @@ public class Display3Frame extends javax.swing.JFrame implements KeyListener, Wi
     private javax.swing.JCheckBoxMenuItem jCheckMriLut;
     private javax.swing.JCheckBoxMenuItem jCheckSourceColor;
     private javax.swing.JCheckBoxMenuItem jCheckSplitCursor;
+    private javax.swing.JCheckBoxMenuItem jCheckTop;
     private javax.swing.JTextField jLevelVal;
     private javax.swing.JMenuItem jMenuAbout;
     private javax.swing.JMenuItem jMenuAuto;
