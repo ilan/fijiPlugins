@@ -154,6 +154,8 @@ public class DicomFrame extends javax.swing.JFrame {
 
 	void saveDicom() {
 		int serNum;
+		int i = checkForWrongSize();
+		if( i > 1) return;
 		seriesName = jTextserName.getText().trim();
 		if( origSerName != null && origSerName.equals(seriesName)) {
 			seriesName = null;
@@ -173,6 +175,26 @@ public class DicomFrame extends javax.swing.JFrame {
 		jPrefer.putDouble("DicomFrame patWeight", updated.patWeight);
 		dcm1.writeDicomHeader(path, seriesName, serNum, maybeUpdated(updated));
 		dispose();
+	}
+
+	int checkForWrongSize() {
+		if( img1 == null) return 0;
+		int row0, row1, col0, col1;
+		col1 = img1.getWidth();
+		row1 = img1.getHeight();
+		col0 = dcm1.getIntElement(meta, "28,0010");
+		row0 = dcm1.getIntElement(meta, "28,0011");
+		if( col1 == col0 && row1 == row0) return 0;
+		int but1 = JOptionPane.YES_OPTION;
+		String tmp = "Detected a change in the frame size.\n";
+		tmp += "If this is a surprise, you should press No and then exit Save as Dicom\n";
+		tmp += "If it is OK, then you should change the name of the series to something meaningful to you.\n";
+		tmp += "Again answer No, change the series name (top box) and the series number.\n";
+		tmp += "Then again press Save Dicom and answer Yes.\n";
+		tmp += "Continue?";
+		int ans = JOptionPane.showConfirmDialog(this, tmp, "Change in size", but1);
+		if( ans == 0) dcm1.scaleFactor = (1.0*col0)/col1;
+		return ans+1;
 	}
 
 	myWriteDicom.patInfo getUpdatedInfo() {

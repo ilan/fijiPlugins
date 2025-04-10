@@ -30,7 +30,7 @@ import org.jfree.chart.title.TextTitle;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.scijava.vecmath.Point2d;
+import org.jogamp.vecmath.Point2d;
 
 /*
  * To change this template, choose Tools | Templates
